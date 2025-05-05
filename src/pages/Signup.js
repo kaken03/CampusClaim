@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import './Signup.css';
 import Navbar from '../components/Navbar';
 import { Link, useNavigate } from 'react-router-dom';
-import { auth } from '../firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { updateProfile } from 'firebase/auth';
+import { getAuth, updateProfile } from 'firebase/auth';
+import { setDoc, doc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 function Signup() {
   const [email, setEmail] = useState('');
@@ -12,6 +13,7 @@ function Signup() {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const auth = getAuth();
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -23,7 +25,16 @@ function Signup() {
       await updateProfile(user, {
         displayName: name,
       });
-  
+
+      // Save user info to Firestore
+    await setDoc(doc(db, 'users', user.uid), {
+      fullName: name,
+      email: user.email,
+      createdAt: new Date()
+    });
+
+      await auth.updateCurrentUser(user); // optional but safe
+
       alert('Account created successfully!');
       navigate('/login'); // Redirect to login page
     } catch (err) {
