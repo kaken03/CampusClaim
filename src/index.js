@@ -7,10 +7,12 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Home from './pages/Home'; // Assuming you have a Home component
 import Profile from './pages/Profile';
+import Timeline from './pages/Timeline';
 import Notification from './pages/Notification';
 import About from './pages/About';
 import ContactUs from './pages/ContactUs';
 import reportWebVitals from './reportWebVitals';
+import PostDetails from './components/PostDetails'; // Import PostDetails
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -22,9 +24,12 @@ root.render(
         <Route path="/signup" element={<Signup />} />
         <Route path="/home" element={<Home />} /> {/* Assuming Home is part of App */}
         <Route path="/profile" element={<Profile />} />
-      <Route path="/notifications" element={<Notification />} />
-      <Route path="/about" element={<About />} />
-      <Route path="/contact" element={<ContactUs />} />
+        <Route path="/timeline" element={<Timeline />} />
+        <Route path="/notifications" element={<Notification />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<ContactUs />} />
+        <Route path="/notifications" element={<Notification />} /> {/* Add Notification route */}
+        <Route path="/post/:postId" element={<PostDetails />} /> {/* Add PostDetails route */}
         {/* Add more routes as needed */}
       </Routes>
     </Router>

@@ -12,10 +12,11 @@ function Profile() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [role, setRole] = useState('student'); // Default role
   const [course, setCourse] = useState('');
   const [year, setYear] = useState('');
+  const [department, setDepartment] = useState('');
   const [location, setLocation] = useState('');
-  const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
 
   const fetchUserData = useCallback(async () => {
@@ -26,10 +27,11 @@ function Profile() {
       setFullName(data.fullName || user.displayName || '');
       setEmail(data.email || user.email || '');
       setPhone(data.phone || '');
+      setRole(data.role || 'student');
       setCourse(data.course || '');
       setYear(data.year || '');
+      setDepartment(data.department || '');
       setLocation(data.location || '');
-      setLoading(false);
     }
   }, [user]);
 
@@ -51,9 +53,11 @@ function Profile() {
         fullName,
         email,
         phone,
-        course,
-        year,
-        location
+        role,
+        course: role === 'student' ? course : '',
+        year: role === 'student' ? year : '',
+        department: role === 'teacher' ? department : '',
+        location,
       }, { merge: true });
 
       alert('Profile updated successfully!');
@@ -64,13 +68,11 @@ function Profile() {
     }
   };
 
-  if (loading) return <p>Loading...</p>;
-
   return (
     <div className="about-page">
       <NavbarHome />
       <div className="about-container">
-        <h1>Your Profile</h1>
+        <h1>My Profile</h1>
         <div style={styles.profileBox}>
           <div>
             <label>Full Name</label>
@@ -82,26 +84,54 @@ function Profile() {
             <label>Phone Number</label>
             <input value={phone} onChange={e => setPhone(e.target.value)} disabled={!isEditing} />
 
-            <label>Course</label>
-            <select value={course} onChange={e => setCourse(e.target.value)} disabled={!isEditing}>
-              <option value="">Select Course</option>
-              <option value="BSHM">BSHM</option>
-              <option value="BSIT">BSIT</option>
-              <option value="BSENTREP">BSENTREP</option>
-              <option value="BSED">BSED</option>
+            <label>Role</label>
+            <select value={role} onChange={e => setRole(e.target.value)} disabled={!isEditing}>
+              <option value="student">Student</option>
+              <option value="teacher">Teacher</option>
+              <option value="facilitator">Facilitator</option>
             </select>
 
-            <label>Year</label>
-            <select value={year} onChange={e => setYear(e.target.value)} disabled={!isEditing}>
-              <option value="">Select Year</option>
-              <option value="1st">1st</option>
-              <option value="2nd">2nd</option>
-              <option value="3rd">3rd</option>
-              <option value="4th">4th</option>
-            </select>
+            {role === 'student' && (
+              <>
+                <label>Course</label>
+                <select value={course} onChange={e => setCourse(e.target.value)} disabled={!isEditing}>
+                  <option value="">Select Course</option>
+                  <option value="BSHM">BSHM</option>
+                  <option value="BSIT">BSIT</option>
+                  <option value="BSENTREP">BSENTREP</option>
+                  <option value="BSED">BSED</option>
+                </select>
 
-            <label>Current Location</label>
-            <input value={location} onChange={e => setLocation(e.target.value)} disabled={!isEditing} />
+                <label>Year</label>
+                <select value={year} onChange={e => setYear(e.target.value)} disabled={!isEditing}>
+                  <option value="">Select Year</option>
+                  <option value="1st">1st</option>
+                  <option value="2nd">2nd</option>
+                  <option value="3rd">3rd</option>
+                  <option value="4th">4th</option>
+                </select>
+              </>
+            )}
+
+            {role === 'teacher' && (
+              <>
+                <label>Department</label>
+                <select value={department} onChange={e => setDepartment(e.target.value)} disabled={!isEditing}>
+                  <option value="">Select Department</option>
+                  <option value="BSHM">BSHM</option>
+                  <option value="BSIT">BSIT</option>
+                  <option value="BSENTREP">BSENTREP</option>
+                  <option value="BSED">BSED</option>
+                </select>
+              </>
+            )}
+
+            {(role === 'student' || role === 'teacher' || role === 'facilitator') && (
+              <>
+                <label>Current Location</label>
+                <input value={location} onChange={e => setLocation(e.target.value)} disabled={!isEditing} />
+              </>
+            )}
 
             {!isEditing ? (
               <button onClick={() => setIsEditing(true)}>Edit Profile</button>
