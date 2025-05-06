@@ -1,6 +1,6 @@
 import React from 'react';
 import NavbarHome from '../components/NavbarHome';
-import './About.css';
+import './ContactUs.css';
 
 function About() {
   return (

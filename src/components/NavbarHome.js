@@ -59,6 +59,7 @@ const NavbarHome = () => {
       </div>
       <div style={styles.navLinks}>
         <Link to="/profile" style={styles.navLink}>Profile</Link>
+        <Link to="/timeline" style={styles.navLink}>Timeline</Link>
         <Link to="/notifications" style={styles.navLink}>Notifications</Link>
         <Link to="/about" style={styles.navLink}>About</Link>
         <Link to="/contact" style={styles.navLink}>Contact Us</Link>

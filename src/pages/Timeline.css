@@ -1,0 +1,108 @@
+.timeline-page {
+  background-color: #f0f2f5;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.timeline-container {
+  max-width: 800px;
+  margin: 0 auto;
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.timeline-container h1 {
+  font-size: 1.8rem;
+  color: #333;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.timeline-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.timeline-item {
+  background: #f9f9f9;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.timeline-item h3 {
+  font-size: 1.2rem;
+  color: #007BFF;
+  margin-bottom: 10px;
+}
+
+.timeline-image {
+  width: 100%;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.timeline-type {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #555;
+  margin-bottom: 5px;
+}
+
+.timeline-date {
+  font-size: 0.9rem;
+  color: #888;
+  margin-bottom: 10px;
+}
+
+.timeline-comments {
+  list-style-type: none;
+  padding: 0;
+}
+
+.timeline-comment {
+  font-size: 0.9rem;
+  color: #555;
+  margin-bottom: 5px;
+}
+
+.timeline-no-comments {
+  font-size: 0.9rem;
+  color: #888;
+}
+
+.timeline-textarea {
+  width: 100%;
+  height: 60px;
+  padding: 10px;
+  margin-top: 10px;
+  font-size: 0.9rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  outline: none;
+  resize: none;
+}
+
+.timeline-button {
+  margin-top: 10px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  color: #fff;
+  background-color: #007BFF;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.timeline-button:hover {
+  background-color: #0056b3;
+}
+
+.timeline-no-posts {
+  text-align: center;
+  color: #888;
+  font-size: 1rem;
+}
