@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../firebase'; // your firebase config file
-import { collection, query, orderBy, onSnapshot, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, deleteDoc, updateDoc,  Timestamp } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 function PostFeed() {
@@ -11,6 +11,24 @@ function PostFeed() {
   const [commentText, setCommentText] = useState('');
   const auth = getAuth();
   const user = auth.currentUser;
+
+  // Utility function to calculate "time ago"
+  const timeAgo = (timestamp) => {
+    const now = new Date();
+    const timeDiff = now - new Date(timestamp); // Difference in milliseconds
+
+    const seconds = Math.floor(timeDiff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    const weeks = Math.floor(days / 7);
+
+    if (seconds < 60) return `${seconds}s ago`;
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
+    return `${weeks}w ago`;
+  };
 
   useEffect(() => {
     const collectionName = category === 'lost' ? 'LostItems' : 'FoundItems';
@@ -47,13 +65,17 @@ function PostFeed() {
     const postRef = doc(db, category === 'lost' ? 'LostItems' : 'FoundItems', postId);
     const post = posts.find((p) => p.id === postId);
 
-    // Add the user's full name to the comment
+    // Add the user's full name and a timestamp to the comment
     const userName = user?.displayName || 'Anonymous';
-    const updatedComments = [...(post.comments || []), `${userName}: ${commentText}`];
+    const newComment = {
+      text: commentText,
+      author: userName,
+      timestamp: Timestamp.now(), // Firebase timestamp
+    };
+    const updatedComments = [...(post.comments || []), newComment];
 
     await updateDoc(postRef, { comments: updatedComments });
     setCommentText('');
-    alert('Comment added!');
   };
 
   return (
@@ -62,19 +84,35 @@ function PostFeed() {
       <div style={styles.categorySelector}>
         <button
           onClick={() => setCategory('lost')}
-          style={category === 'lost' ? styles.activeCategoryButton : styles.categoryButton}
+          style={
+            category === 'lost'
+              ? { ...styles.activeCategoryButton, backgroundColor: '#FF4D4D', color: '#fff' } // Red for Lost Items
+              : styles.categoryButton
+          }
         >
           Lost Items
         </button>
         <button
           onClick={() => setCategory('found')}
-          style={category === 'found' ? styles.activeCategoryButton : styles.categoryButton}
+          style={
+            category === 'found'
+              ? { ...styles.activeCategoryButton, backgroundColor: '#007BFF', color: '#fff' } // Blue for Found Items
+              : styles.categoryButton
+          }
         >
           Found Items
         </button>
       </div>
       {posts.map((post) => (
-        <div key={post.id} style={styles.postCard}>
+        <div
+          key={post.id}
+          style={{
+            ...styles.postCard,
+            borderColor: category === 'lost' ? '#FF4D4D' : '#007BFF', // Red for Lost Items, Blue for Found Items
+            borderWidth: '2px',
+            borderStyle: 'solid',
+          }}
+        >
           <p style={styles.author}>
             <strong>{post.authorName}</strong> posted:
           </p>
@@ -112,9 +150,14 @@ function PostFeed() {
             <div style={styles.commentsContainer}>
               {post.comments?.length > 0 ? (
                 post.comments.map((comment, index) => (
-                  <p key={index} style={styles.comment}>
-                    {comment}
-                  </p>
+                  <div key={index} style={styles.comment}>
+                    <p>
+                      <strong>{comment.author}</strong>: {comment.text}
+                    </p>
+                    <p style={styles.commentTime}>
+                      {comment.timestamp ? timeAgo(comment.timestamp.toDate()) : 'Just now'}
+                    </p>
+                  </div>
                 ))
               ) : (
                 <p style={styles.noComments}>No comments yet.</p>
@@ -168,8 +211,6 @@ const styles = {
     padding: '10px 20px',
     margin: '0 5px',
     fontSize: '1rem',
-    color: '#fff',
-    backgroundColor: '#007BFF',
     border: '1px solid #007BFF',
     borderRadius: '5px',
     cursor: 'pointer',
@@ -240,14 +281,19 @@ const styles = {
     borderRadius: '5px',
   },
   commentsContainer: {
-    maxHeight: '150px', // Set a fixed height for the comments section
-    overflowY: 'auto', // Enable vertical scrolling
+    maxHeight: '150px',
+    overflowY: 'auto',
     marginBottom: '10px',
   },
   comment: {
     fontSize: '0.9rem',
     color: '#555',
     marginBottom: '5px',
+  },
+  commentTime: {
+    fontSize: '0.8rem',
+    color: '#888',
+    marginTop: '-5px',
   },
   noComments: {
     fontSize: '0.9rem',
