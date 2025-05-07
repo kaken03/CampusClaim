@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { db, storage } from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
 
 function PostBox() {
@@ -9,6 +9,7 @@ function PostBox() {
   const [image, setImage] = useState(null);
   const [postType, setPostType] = useState('lost'); // Default to "Lost Item"
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0); // Track upload progress
 
   const auth = getAuth();
 
@@ -16,40 +17,79 @@ function PostBox() {
     if (!text.trim() && !image) return;
 
     setLoading(true);
+    setProgress(0); // Reset progress
 
     try {
       let imageUrl = '';
       if (image) {
         const imageRef = ref(storage, `posts/${Date.now()}_${image.name}`);
-        await uploadBytes(imageRef, image);
-        imageUrl = await getDownloadURL(imageRef);
+        const uploadTask = uploadBytesResumable(imageRef, image);
+
+        // Monitor upload progress
+        uploadTask.on(
+          'state_changed',
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            setProgress(progress); // Update progress
+          },
+          (error) => {
+            console.error('Upload error:', error);
+            alert('Failed to upload image. Try again.');
+            setLoading(false);
+          },
+          async () => {
+            // Get the download URL after upload completes
+            imageUrl = await getDownloadURL(uploadTask.snapshot.ref);
+            console.log('Image uploaded successfully:', imageUrl);
+
+            // Proceed with posting the data
+            const user = auth.currentUser;
+            const displayName = user?.displayName || 'Anonymous';
+
+            const collectionName = postType === 'lost' ? 'LostItems' : 'FoundItems';
+            await addDoc(collection(db, collectionName), {
+              text,
+              imageUrl,
+              createdAt: serverTimestamp(),
+              authorName: displayName,
+              authorId: user?.uid,
+              type: postType, // Include the type of post
+            });
+
+            // Reset the form
+            setText('');
+            setImage(null);
+            setPostType('lost'); // Reset to default
+            alert('Post submitted!');
+            setLoading(false);
+          }
+        );
+      } else {
+        // Handle post without image
+        const user = auth.currentUser;
+        const displayName = user?.displayName || 'Anonymous';
+
+        const collectionName = postType === 'lost' ? 'LostItems' : 'FoundItems';
+        await addDoc(collection(db, collectionName), {
+          text,
+          imageUrl,
+          createdAt: serverTimestamp(),
+          authorName: displayName,
+          authorId: user?.uid,
+          type: postType, // Include the type of post
+        });
+
+        setText('');
+        setImage(null);
+        setPostType('lost'); // Reset to default
+        alert('Post submitted!');
+        setLoading(false);
       }
-
-      const user = auth.currentUser;
-      const displayName = user?.displayName || 'Anonymous';
-
-      // Determine the collection based on the post type
-      const collectionName = postType === 'lost' ? 'LostItems' : 'FoundItems';
-
-      await addDoc(collection(db, collectionName), {
-        text,
-        imageUrl,
-        createdAt: serverTimestamp(),
-        authorName: displayName,
-        authorId: user?.uid,
-        type: postType, // Include the type of post
-      });
-
-      setText('');
-      setImage(null);
-      setPostType('lost'); // Reset to default
-      alert('Post submitted!');
     } catch (err) {
       console.error('Post error:', err);
       alert('Failed to post. Try again.');
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -68,6 +108,14 @@ function PostBox() {
         disabled={loading}
         style={styles.fileInput}
       />
+      {loading && image && (
+        <div style={styles.progressContainer}>
+          <p style={styles.progressText}>Uploading: {Math.round(progress)}%</p>
+          <div style={styles.progressBar}>
+            <div style={{ ...styles.progressFill, width: `${progress}%` }}></div>
+          </div>
+        </div>
+      )}
       <div style={styles.radioGroup}>
         <label style={styles.radioLabel}>
           <input
@@ -116,7 +164,7 @@ const styles = {
     textAlign: 'center',
   },
   textarea: {
-    width: '100%',
+    width: '95%',
     height: '120px',
     padding: '12px',
     marginBottom: '15px',
@@ -132,6 +180,7 @@ const styles = {
     display: 'block',
     marginBottom: '15px',
     fontSize: '1rem',
+    width: '95%',
   },
   radioGroup: {
     display: 'flex',
