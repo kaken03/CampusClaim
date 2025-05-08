@@ -78,7 +78,7 @@ const NavbarHome = () => {
 
   const handleLogout = () => {
     alert('Logged out successfully!');
-    navigate('/login');
+    navigate('/');
   };
 
   const styles = {
