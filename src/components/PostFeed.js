@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { db } from '../firebase'; // your firebase config file
 import { collection, query, orderBy, onSnapshot, doc, deleteDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
@@ -14,6 +14,7 @@ function PostFeed() {
   const auth = getAuth();
   const user = auth.currentUser;
   const location = useLocation(); // For getting query parameters
+  const commentsRef = useRef({}); // A ref for tracking each post's comments container
 
   // Utility function to calculate "time ago"
   const timeAgo = (timestamp) => {
@@ -67,6 +68,15 @@ function PostFeed() {
 
     return () => unsubscribe(); // Clean up listener
   }, [category, highlightedPostId]);
+
+  useEffect(() => {
+    // Scroll the comments section to the bottom for each post
+    Object.values(commentsRef.current).forEach((ref) => {
+      if (ref) {
+        ref.scrollTop = ref.scrollHeight;
+      }
+    });
+  }, [posts]);
 
   const handleDelete = async (postId) => {
     if (window.confirm('Are you sure you want to delete this post?')) {
@@ -164,7 +174,13 @@ function PostFeed() {
               <button onClick={() => handleEdit(post.id)} style={styles.button}>
                 Save
               </button>
-              <button onClick={() => setEditingPostId(null)} style={styles.cancelButton}>
+              <button
+                onClick={() => {
+                  setEditingPostId(null);
+                  setEditText('');
+                }}
+                style={styles.cancelButton}
+              >
                 Cancel
               </button>
             </div>
@@ -174,7 +190,13 @@ function PostFeed() {
           <p style={styles.date}>{post.createdAt?.toDate().toLocaleString()}</p>
           {post.authorId === user?.uid && ( // Only show edit and delete buttons if the user is the author
             <div style={styles.actions}>
-              <button onClick={() => setEditingPostId(post.id)} style={styles.button}>
+              <button
+                onClick={() => {
+                  setEditingPostId(post.id);
+                  setEditText(post.text); // Prefill the edit text area with the current text of the post
+                }}
+                style={styles.button}
+              >
                 Edit
               </button>
               <button onClick={() => handleDelete(post.id)} style={styles.deleteButton}>
@@ -184,7 +206,14 @@ function PostFeed() {
           )}
           <div style={styles.commentsSection}>
             <h4>Comments:</h4>
-            <div style={styles.commentsContainer}>
+            <div
+              ref={(el) => (commentsRef.current[post.id] = el)} // Attach ref to each post's comments container
+              style={{
+                ...styles.commentsContainer,
+                overflowY: 'auto',
+                maxHeight: '200px', // Set a max height for scrolling
+              }}
+            >
               {post.comments?.length > 0 ? (
                 post.comments.map((comment, index) => (
                   <div key={index} style={styles.comment}>

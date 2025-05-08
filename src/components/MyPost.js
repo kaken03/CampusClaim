@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { db } from '../firebase';
 import {
   collection,
@@ -21,6 +21,8 @@ function MyPost() {
   const [commentTexts, setCommentTexts] = useState({}); // Separate comment state for each post
   const auth = getAuth();
   const user = auth.currentUser;
+
+  const commentsRef = useRef({}); // A ref for tracking each post's comments container
 
   // Utility function to calculate "time ago"
   const timeAgo = (timestamp) => {
@@ -66,6 +68,15 @@ function MyPost() {
 
     return () => unsubscribe();
   }, [category, user]);
+
+  useEffect(() => {
+    // Scroll the comments section to the bottom for each post
+    Object.values(commentsRef.current).forEach((ref) => {
+      if (ref) {
+        ref.scrollTop = ref.scrollHeight;
+      }
+    });
+  }, [posts]);
 
   const handleDelete = async (postId) => {
     if (window.confirm('Are you sure you want to delete this post?')) {
@@ -181,7 +192,13 @@ function MyPost() {
                 <button onClick={() => handleEdit(post.id)} style={styles.button}>
                   Save
                 </button>
-                <button onClick={() => setEditingPostId(null)} style={styles.cancelButton}>
+                <button
+                  onClick={() => {
+                    setEditingPostId(null);
+                    setEditText('');
+                  }}
+                  style={styles.cancelButton}
+                >
                   Cancel
                 </button>
               </div>
@@ -191,7 +208,13 @@ function MyPost() {
             <p style={styles.date}>{post.createdAt?.toDate().toLocaleString()}</p>
 
             <div style={styles.actions}>
-              <button onClick={() => setEditingPostId(post.id)} style={styles.button}>
+              <button
+                onClick={() => {
+                  setEditingPostId(post.id);
+                  setEditText(post.text); // Prefill the edit text area with the current text of the post
+                }}
+                style={styles.button}
+              >
                 Edit
               </button>
               <button onClick={() => handleDelete(post.id)} style={styles.deleteButton}>
@@ -201,7 +224,14 @@ function MyPost() {
 
             <div style={styles.commentsSection}>
               <h4>Comments:</h4>
-              <div style={styles.commentsContainer}>
+              <div
+                ref={(el) => (commentsRef.current[post.id] = el)} // Attach ref to each post's comments container
+                style={{
+                  ...styles.commentsContainer,
+                  overflowY: 'auto',
+                  maxHeight: '200px', // Set a max height for scrolling
+                }}
+              >
                 {post.comments?.length > 0 ? (
                   post.comments.map((comment, index) => (
                     <div key={index} style={styles.comment}>

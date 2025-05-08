@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { db, storage } from '../firebase';
+import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
+import { uploadToCloudinary } from '../utils/uploadToCloudinary'; // ✅ Use the external one
 
 function PostBox() {
   const [text, setText] = useState('');
   const [image, setImage] = useState(null);
-  const [postType, setPostType] = useState('lost'); // Default to "Lost Item"
+  const [postType, setPostType] = useState('lost');
   const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState(0); // Track upload progress
+  const [progress, setProgress] = useState(0);
 
   const auth = getAuth();
 
@@ -17,77 +17,41 @@ function PostBox() {
     if (!text.trim() && !image) return;
 
     setLoading(true);
-    setProgress(0); // Reset progress
+    setProgress(0);
 
     try {
       let imageUrl = '';
+
       if (image) {
-        const imageRef = ref(storage, `posts/${Date.now()}_${image.name}`);
-        const uploadTask = uploadBytesResumable(imageRef, image);
+        const uploadStart = Date.now();
+        imageUrl = await uploadToCloudinary(image); // ✅ Using external utility
 
-        // Monitor upload progress
-        uploadTask.on(
-          'state_changed',
-          (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            setProgress(progress); // Update progress
-          },
-          (error) => {
-            console.error('Upload error:', error);
-            alert('Failed to upload image. Try again.');
-            setLoading(false);
-          },
-          async () => {
-            // Get the download URL after upload completes
-            imageUrl = await getDownloadURL(uploadTask.snapshot.ref);
-            console.log('Image uploaded successfully:', imageUrl);
-
-            // Proceed with posting the data
-            const user = auth.currentUser;
-            const displayName = user?.displayName || 'Anonymous';
-
-            const collectionName = postType === 'lost' ? 'LostItems' : 'FoundItems';
-            await addDoc(collection(db, collectionName), {
-              text,
-              imageUrl,
-              createdAt: serverTimestamp(),
-              authorName: displayName,
-              authorId: user?.uid,
-              type: postType, // Include the type of post
-            });
-
-            // Reset the form
-            setText('');
-            setImage(null);
-            setPostType('lost'); // Reset to default
-            alert('Post submitted!');
-            setLoading(false);
-          }
-        );
-      } else {
-        // Handle post without image
-        const user = auth.currentUser;
-        const displayName = user?.displayName || 'Anonymous';
-
-        const collectionName = postType === 'lost' ? 'LostItems' : 'FoundItems';
-        await addDoc(collection(db, collectionName), {
-          text,
-          imageUrl,
-          createdAt: serverTimestamp(),
-          authorName: displayName,
-          authorId: user?.uid,
-          type: postType, // Include the type of post
-        });
-
-        setText('');
-        setImage(null);
-        setPostType('lost'); // Reset to default
-        alert('Post submitted!');
-        setLoading(false);
+        const uploadDuration = Date.now() - uploadStart;
+        setProgress(100);
+        console.log('Image uploaded in', uploadDuration, 'ms:', imageUrl);
       }
+
+      const user = auth.currentUser;
+      const displayName = user?.displayName || 'Anonymous';
+      const collectionName = postType === 'lost' ? 'LostItems' : 'FoundItems';
+
+      await addDoc(collection(db, collectionName), {
+        text,
+        imageUrl,
+        createdAt: serverTimestamp(),
+        authorName: displayName,
+        authorId: user?.uid,
+        type: postType,
+      });
+
+      setText('');
+      setImage(null);
+      setPostType('lost');
+      alert('Post submitted!');
     } catch (err) {
       console.error('Post error:', err);
       alert('Failed to post. Try again.');
+    } finally {
       setLoading(false);
     }
   };
@@ -181,6 +145,24 @@ const styles = {
     marginBottom: '15px',
     fontSize: '1rem',
     width: '95%',
+  },
+  progressContainer: {
+    marginBottom: '15px',
+  },
+  progressText: {
+    fontSize: '0.9rem',
+    marginBottom: '5px',
+  },
+  progressBar: {
+    height: '8px',
+    backgroundColor: '#eee',
+    borderRadius: '4px',
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#007BFF',
+    transition: 'width 0.4s ease',
   },
   radioGroup: {
     display: 'flex',
