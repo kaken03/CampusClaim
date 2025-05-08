@@ -69,94 +69,135 @@ function Profile() {
   };
 
   return (
-    <div className="about-page">
+    <div className="profile-page">
       <NavbarHome />
-      <div className="about-container">
-        <h1>My Profile</h1>
-        <div style={styles.profileBox}>
-          <div>
+      <div className="profile-container">
+        <h1 className="profile-title">My Profile</h1>
+        <div className="profile-box">
+          <div className="form-group">
             <label>Full Name</label>
-            <input value={fullName} onChange={e => setFullName(e.target.value)} disabled={!isEditing} />
-
+            <input
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              disabled={!isEditing}
+            />
+          </div>
+          <div className="form-group">
             <label>Email</label>
-            <input value={email} onChange={e => setEmail(e.target.value)} disabled={!isEditing} />
-
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={!isEditing}
+            />
+          </div>
+          <div className="form-group">
             <label>Phone Number</label>
-            <input value={phone} onChange={e => setPhone(e.target.value)} disabled={!isEditing} />
-
+            <input
+              type="text"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              disabled={!isEditing}
+            />
+          </div>
+          <div className="form-group">
             <label>Role</label>
-            <select value={role} onChange={e => setRole(e.target.value)} disabled={!isEditing}>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              disabled={!isEditing}
+            >
               <option value="student">Student</option>
               <option value="teacher">Teacher</option>
               <option value="facilitator">Facilitator</option>
             </select>
+          </div>
 
-            {role === 'student' && (
-              <>
+          {role === 'student' && (
+            <>
+              <div className="form-group">
                 <label>Course</label>
-                <select value={course} onChange={e => setCourse(e.target.value)} disabled={!isEditing}>
+                <select
+                  value={course}
+                  onChange={(e) => setCourse(e.target.value)}
+                  disabled={!isEditing}
+                >
                   <option value="">Select Course</option>
                   <option value="BSHM">BSHM</option>
                   <option value="BSIT">BSIT</option>
                   <option value="BSENTREP">BSENTREP</option>
                   <option value="BSED">BSED</option>
                 </select>
-
+              </div>
+              <div className="form-group">
                 <label>Year</label>
-                <select value={year} onChange={e => setYear(e.target.value)} disabled={!isEditing}>
+                <select
+                  value={year}
+                  onChange={(e) => setYear(e.target.value)}
+                  disabled={!isEditing}
+                >
                   <option value="">Select Year</option>
                   <option value="1st">1st</option>
                   <option value="2nd">2nd</option>
                   <option value="3rd">3rd</option>
                   <option value="4th">4th</option>
                 </select>
-              </>
-            )}
+              </div>
+            </>
+          )}
 
-            {role === 'teacher' && (
-              <>
-                <label>Department</label>
-                <select value={department} onChange={e => setDepartment(e.target.value)} disabled={!isEditing}>
-                  <option value="">Select Department</option>
-                  <option value="BSHM">BSHM</option>
-                  <option value="BSIT">BSIT</option>
-                  <option value="BSENTREP">BSENTREP</option>
-                  <option value="BSED">BSED</option>
-                </select>
-              </>
-            )}
+          {role === 'teacher' && (
+            <div className="form-group">
+              <label>Department</label>
+              <select
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                disabled={!isEditing}
+              >
+                <option value="">Select Department</option>
+                <option value="BSHM">BSHM</option>
+                <option value="BSIT">BSIT</option>
+                <option value="BSENTREP">BSENTREP</option>
+                <option value="BSED">BSED</option>
+              </select>
+            </div>
+          )}
 
-            {(role === 'student' || role === 'teacher' || role === 'facilitator') && (
-              <>
-                <label>Current Location</label>
-                <input value={location} onChange={e => setLocation(e.target.value)} disabled={!isEditing} />
-              </>
-            )}
+          <div className="form-group">
+            <label>Current Location</label>
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              disabled={!isEditing}
+            />
+          </div>
 
-            {!isEditing ? (
-              <button onClick={() => setIsEditing(true)}>Edit Profile</button>
-            ) : (
-              <div>
-                <button onClick={handleUpdate}>Save Changes</button>
-                <button onClick={() => {
+          {!isEditing ? (
+            <button className="edit-button" onClick={() => setIsEditing(true)}>
+              Edit Profile
+            </button>
+          ) : (
+            <div className="action-buttons">
+              <button className="save-button" onClick={handleUpdate}>
+                Save Changes
+              </button>
+              <button
+                className="cancel-button"
+                onClick={() => {
                   setIsEditing(false);
                   fetchUserData(); // Cancel edits and restore previous values
-                }}>Cancel</button>
-              </div>
-            )}
-          </div>
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
-
-const styles = {
-  profileBox: {
-    background: '#f9f9f9',
-    padding: '20px',
-    borderRadius: '10px'
-  }
-};
 
 export default Profile;

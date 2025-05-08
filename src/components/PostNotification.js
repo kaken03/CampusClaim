@@ -2,16 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { db } from '../firebase'; // Adjust the path if the firebase.js file is in a different directory
+import { useNavigate } from 'react-router-dom'; // For navigation
+import empty from '../assets/icons/empty.png'; // Adjust the path to your empty state icon
 
 function PostNotification() {
   const [notifications, setNotifications] = useState([]);
   const auth = getAuth();
   const user = auth.currentUser;
+  const navigate = useNavigate();
 
-  // Utility function to calculate "time ago"
   const timeAgo = (timestamp) => {
     const now = new Date();
-    const timeDiff = now - new Date(timestamp); // Difference in milliseconds
+    const timeDiff = now - new Date(timestamp);
 
     const seconds = Math.floor(timeDiff / 1000);
     const minutes = Math.floor(seconds / 60);
@@ -29,7 +31,6 @@ function PostNotification() {
   useEffect(() => {
     if (!user) return;
 
-    // Function to fetch notifications from a specific collection
     const fetchNotifications = (collectionName) => {
       const postsRef = collection(db, collectionName);
       const q = query(postsRef, where('authorId', '==', user.uid));
@@ -40,27 +41,23 @@ function PostNotification() {
           ...doc.data(),
         }));
 
-        // Collect notifications for comments on the user's posts
         const newNotifications = [];
         userPosts.forEach((post) => {
           if (post.comments && post.comments.length > 0) {
-            post.comments.forEach((comment) => {
-              // Only notify if the comment was made by another user
-              if (comment.authorId !== user.uid) {
-                newNotifications.push({
-                  postId: post.id,
-                  postText: post.text,
-                  commentText: comment.text, // Comment text
-                  commentAuthor: comment.author, // Comment author
-                  timestamp: comment.timestamp, // Comment timestamp
-                  collectionName, // Add collection name for navigation
-                });
-              }
+            const latestComment = post.comments[post.comments.length - 1]; // Get the latest comment
+            newNotifications.push({
+              notificationId: `${post.id}-${collectionName}`, // Unique notification ID per post
+              postId: post.id,
+              postText: post.text,
+              latestCommentText: latestComment.text,
+              latestCommentAuthor: latestComment.author,
+              latestTimestamp: latestComment.timestamp,
+              commentCount: post.comments.length, // Total number of comments
+              collectionName,
             });
           }
         });
 
-        // Merge notifications, sort by timestamp in descending order (newest first)
         setNotifications((prevNotifications) => {
           const mergedNotifications = [
             ...prevNotifications.filter((n) => n.collectionName !== collectionName),
@@ -68,55 +65,165 @@ function PostNotification() {
           ];
 
           return mergedNotifications.sort((a, b) => {
-            const timeA = new Date(a.timestamp.toDate());
-            const timeB = new Date(b.timestamp.toDate());
-            return timeB - timeA; // Newest first
+            const timeA = new Date(a.latestTimestamp.toDate());
+            const timeB = new Date(b.latestTimestamp.toDate());
+            return timeB - timeA;
           });
         });
       });
     };
 
-    // Listen to both LostItems and FoundItems collections
     const unsubscribeLostItems = fetchNotifications('LostItems');
     const unsubscribeFoundItems = fetchNotifications('FoundItems');
 
     return () => {
       unsubscribeLostItems();
       unsubscribeFoundItems();
-    }; // Clean up listeners
+    };
   }, [user]);
 
+  const handleNotificationClick = (postId, collectionName) => {
+    // Navigate to Home.js with query parameters for postId and collectionName
+    navigate(`/home?postId=${postId}&collection=${collectionName}`);
+  };
+
   return (
-    <div className="post-notification-container">
+    <div style={styles.container}>
+      <h2 style={styles.header}>Notifications</h2>
       {notifications.length > 0 ? (
-        <ul className="post-notification-list">
+        <ul style={styles.notificationList}>
           {notifications.map((notification, index) => (
-            <li key={index} className="post-notification-item">
-              <p>
-                <strong>New comment on your post:</strong> "{notification.postText}"{' '}
-                <span
-                  style={{
-                    color: notification.collectionName === 'LostItems' ? '#FF4D4D' : '#1877F2',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  ({notification.collectionName === 'LostItems' ? 'Lost Item' : 'Found Item'})
-                </span>
-              </p>
-              <p>
-                <strong>{notification.commentAuthor}:</strong> {notification.commentText}
-              </p>
-              <p className="post-notification-time">
-                {notification.timestamp ? timeAgo(notification.timestamp.toDate()) : 'Just now'}
-              </p>
+            <li
+              key={index}
+              style={styles.notificationItem}
+              onClick={() =>
+                handleNotificationClick(notification.postId, notification.collectionName)
+              }
+              role="button"
+              tabIndex={0}
+            >
+              <div style={styles.notificationContent}>
+                <p style={styles.notificationText}>
+                  <strong>New activity on your post:</strong> "{notification.postText}"{' '}
+                  <span
+                    style={{
+                      ...styles.tag,
+                      backgroundColor:
+                        notification.collectionName === 'LostItems' ? '#FF4D4D' : '#1877F2',
+                    }}
+                  >
+                    {notification.collectionName === 'LostItems' ? 'Lost Item' : 'Found Item'}
+                  </span>
+                </p>
+                <p style={styles.commentText}>
+                  <strong>Latest comment by {notification.latestCommentAuthor}:</strong>{' '}
+                  {notification.latestCommentText}
+                </p>
+                <p style={styles.metaText}>
+                  <strong>Total comments:</strong> {notification.commentCount}
+                </p>
+                <p style={styles.timeText}>
+                  {notification.latestTimestamp
+                    ? timeAgo(notification.latestTimestamp.toDate())
+                    : 'Just now'}
+                </p>
+              </div>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="no-post-notifications">No new comments on your posts.</p>
+        <div style={styles.emptyState}>
+          <img
+            src= {empty}
+            alt="No notifications"
+            style={styles.emptyStateIcon}
+          />
+          <p style={styles.noNotifications}>No new activity on your posts.</p>
+        </div>
       )}
     </div>
   );
 }
+
+const styles = {
+  container: {
+    maxWidth: '800px',
+    margin: '0 auto',
+    padding: '20px',
+    backgroundColor: '#f9f9f9',
+    borderRadius: '8px',
+    boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+  },
+  header: {
+    fontSize: '1.8rem',
+    fontWeight: 'bold',
+    color: '#1877F2',
+    textAlign: 'center',
+    marginBottom: '20px',
+  },
+  notificationList: {
+    listStyle: 'none',
+    padding: 0,
+    margin: 0,
+  },
+  notificationItem: {
+    backgroundColor: '#fff',
+    border: '1px solid #ddd',
+    borderRadius: '8px',
+    padding: '15px',
+    marginBottom: '15px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    cursor: 'pointer',
+    transition: 'transform 0.2s, box-shadow 0.2s',
+  },
+  notificationContent: {
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  notificationText: {
+    fontSize: '1rem',
+    color: '#333',
+    marginBottom: '10px',
+  },
+  tag: {
+    display: 'inline-block',
+    padding: '3px 8px',
+    fontSize: '0.8rem',
+    fontWeight: 'bold',
+    color: '#fff',
+    borderRadius: '5px',
+    marginLeft: '5px',
+  },
+  commentText: {
+    fontSize: '0.9rem',
+    color: '#555',
+    marginBottom: '8px',
+  },
+  metaText: {
+    fontSize: '0.9rem',
+    color: '#777',
+    marginBottom: '8px',
+  },
+  timeText: {
+    fontSize: '0.8rem',
+    color: '#999',
+  },
+  emptyState: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyStateIcon: {
+    width: '100px',
+    height: '100px',
+    marginBottom: '10px',
+  },
+  noNotifications: {
+    fontSize: '1rem',
+    textAlign: 'center',
+    color: '#777',
+  },
+};
 
 export default PostNotification;
