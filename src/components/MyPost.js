@@ -18,7 +18,7 @@ function MyPost() {
   const [category, setCategory] = useState('lost'); // Default to "Lost Items"
   const [editingPostId, setEditingPostId] = useState(null);
   const [editText, setEditText] = useState('');
-  const [commentText, setCommentText] = useState('');
+  const [commentTexts, setCommentTexts] = useState({}); // Separate comment state for each post
   const auth = getAuth();
   const user = auth.currentUser;
 
@@ -86,15 +86,23 @@ function MyPost() {
     alert('Post updated successfully!');
   };
 
+  const handleCommentChange = (postId, text) => {
+    // Update the comment text for the specific post
+    setCommentTexts((prev) => ({
+      ...prev,
+      [postId]: text,
+    }));
+  };
+
   const handleAddComment = async (postId) => {
-    if (!commentText.trim()) return;
+    if (!commentTexts[postId]?.trim()) return;
 
     const collectionName = category === 'lost' ? 'LostItems' : 'FoundItems';
     const postRef = doc(db, collectionName, postId);
     const post = posts.find((p) => p.id === postId);
     const userName = user?.displayName || 'Anonymous';
     const newComment = {
-      text: commentText,
+      text: commentTexts[postId],
       author: userName,
       timestamp: Timestamp.now(), // Firebase timestamp
     };
@@ -111,7 +119,10 @@ function MyPost() {
         )
       );
 
-      setCommentText(''); // Clear the comment input field
+      setCommentTexts((prev) => ({
+        ...prev,
+        [postId]: '', // Clear the input for the specific post
+      }));
     } catch (error) {
       console.error('Error adding comment: ', error);
       alert('Failed to add comment. Please try again.');
@@ -208,8 +219,8 @@ function MyPost() {
               </div>
               <textarea
                 placeholder="Add a comment..."
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
+                value={commentTexts[post.id] || ''} // Use specific post comment text
+                onChange={(e) => handleCommentChange(post.id, e.target.value)}
                 style={styles.textarea}
               />
               <button onClick={() => handleAddComment(post.id)} style={styles.button}>
@@ -232,7 +243,7 @@ const styles = {
   },
   title: {
     fontSize: '1.8rem',
-    color: '#333',
+    color: '#1877F2',
     textAlign: 'center',
     marginBottom: '20px',
   },
