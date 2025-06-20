@@ -11,11 +11,23 @@ function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  // Check if the user is already logged in
+  React.useEffect(() => {
+    const user = localStorage.getItem('user');
+    if (user) {
+      navigate('/home'); // Redirect to home if already logged in
+    }
+  }, [navigate]);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
       // Firebase login
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+      // Save user information to localStorage
+      localStorage.setItem('user', JSON.stringify(userCredential.user));
+
       alert('Login successful!');
       navigate('/home'); // Redirect to Home.js in the screens folder
     } catch (err) {
