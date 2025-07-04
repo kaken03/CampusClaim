@@ -11,6 +11,7 @@ CampusClaim is a web application designed to help students and faculty efficient
 - 📍 **Lost Item Reporting**: Quickly report a lost item with details and optional image.
 - 🔍 **Found Item Logging**: Upload found items with location and description.
 - 📨 **Claim Requests**: Owners can request to claim items and communicate with the finder.
+- ✉️ Private Message: Owners can communicate directly to the finder privately. 
 - 🔐 **User Authentication**: Sign up and log in securely with Firebase Authentication.
 - 🗃️ **Real-time Database**: All data is stored and updated live using Firebase Firestore.
 - 🖼️ **Image Upload Support**: Upload item photos via Firebase Storage.
