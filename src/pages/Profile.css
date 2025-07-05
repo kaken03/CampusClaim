@@ -1,99 +1,133 @@
+/* General page background */
 .profile-page {
-  background-color: #f9f9f9;
-  font-family: 'Arial', sans-serif;
-  padding-bottom: 40px;
+  min-height: 100vh;
+  background: #fff;
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
 }
 
+/* Center the profile container */
 .profile-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
+  max-width: 500px;
+  margin: 48px auto 0 auto;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 6px 32px rgba(0,0,0,0.10), 0 1.5px 6px rgba(0,0,0,0.04);
+  padding: 40px 32px 32px 32px;
+  position: relative;
 }
 
+/* Title styling */
 .profile-title {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #1877F2;
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #1d3557;
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 32px;
+  letter-spacing: 1px;
+  font-family: 'Segoe UI Semibold', 'Roboto', Arial, sans-serif;
 }
 
+/* Profile box */
 .profile-box {
-  background-color: #fff;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.form-group {
-  margin-bottom: 20px;
   display: flex;
   flex-direction: column;
+  gap: 22px;
+}
+
+/* Form group styling */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
 }
 
 .form-group label {
-  font-size: 0.9rem;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 5px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #65676b;
+  margin-bottom: 2px;
+  letter-spacing: 0.5px;
 }
 
 .form-group input,
 .form-group select {
+  padding: 10px 14px;
+  border: 1.5px solid #e4e6eb;
+  border-radius: 8px;
   font-size: 1rem;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+  background: #fafafa;
+  color: #262626;
+  transition: border-color 0.2s;
   outline: none;
-  transition: border-color 0.3s ease;
 }
 
 .form-group input:focus,
 .form-group select:focus {
-  border-color: #1877F2;
+  border-color: #1877f2;
+  background: #fff;
 }
 
-.edit-button,
-.save-button,
-.cancel-button {
-  font-size: 1rem;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.edit-button {
-  background-color: #1877F2;
-  color: #fff;
-}
-
-.save-button {
-  background-color: #28a745;
-  color: #fff;
-  margin-right: 10px;
-}
-
-.cancel-button {
-  background-color: #dc3545;
-  color: #fff;
-}
-
-.edit-button:hover {
-  background-color: #145db2;
-}
-
-.save-button:hover {
-  background-color: #218838;
-}
-
-.cancel-button:hover {
-  background-color: #c82333;
-}
-
+/* Action buttons */
 .action-buttons {
   display: flex;
-  justify-content: flex-start;
-  margin-top: 20px;
+  gap: 16px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+/* Edit button */
+.edit-button {
+  width: 100%;
+  background: #1d3557;
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 0;
+  font-size: 1.08rem;
+  cursor: pointer;
+  margin-top: 18px;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(24,119,242,0.08);
+}
+
+
+/* Save button */
+.save-button {
+  background: #1d3557;
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 28px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(24,119,242,0.08);
+}
+
+/* Cancel button */
+.cancel-button {
+  background: #fd5949;
+  color: #fff;
+  font-weight: 600;
+  border: 1.5px solid #fd5949;
+  border-radius: 8px;
+  padding: 10px 28px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+
+/* Responsive */
+@media (max-width: 600px) {
+  .profile-container {
+    padding: 18px 6vw 18px 6vw;
+    max-width: 98vw;
+  }
+  .profile-title {
+    font-size: 1.5rem;
+  }
 }

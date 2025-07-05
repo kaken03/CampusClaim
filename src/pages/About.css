@@ -22,7 +22,7 @@
 .about-title {
   font-size: 2rem;
   font-weight: 700;
-  color: #1877F2;
+  color: #1d3557;
   margin-bottom: 20px;
 }
 
@@ -85,7 +85,6 @@
 
 .team-photo {
   width: 100%;
-  border-radius: 50%;
   margin-bottom: 15px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }

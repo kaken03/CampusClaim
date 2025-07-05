@@ -19,7 +19,7 @@
 .contact-title {
   font-size: 2.5rem;
   font-weight: 700;
-  color: #1877F2;
+  color: #1d3557;
   margin-bottom: 10px;
 }
 
@@ -78,7 +78,7 @@
 }
 
 .submit-button {
-  background-color: #1877F2;
+  background-color: #1d3557;
   color: #fff;
   font-size: 1rem;
   padding: 10px 15px;
@@ -88,9 +88,6 @@
   transition: background-color 0.3s ease;
 }
 
-.submit-button:hover {
-  background-color: #145db2;
-}
 
 .company-info-section {
   text-align: center;

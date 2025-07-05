@@ -13,6 +13,14 @@ const NavbarHome = () => {
   const auth = getAuth();
   const user = auth.currentUser;
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (!storedUser) {
+      navigate('/login'); // Redirect to login if user is not authenticated
+    }
+  }, [navigate]);
+
   // Fetch notifications count based on comments
   useEffect(() => {
     if (!user) return;
@@ -77,8 +85,19 @@ const NavbarHome = () => {
   };
 
   const handleLogout = () => {
-    alert('Logged out successfully!');
-    navigate('/');
+    auth.signOut()
+      .then(() => {
+        // Clear session data
+        localStorage.removeItem('user');
+        localStorage.removeItem('lastSeen'); // Reset last seen notifications
+        setNotificationCount(0); // Reset notification count
+        alert('Logged out successfully!');
+        navigate('/login'); // Navigate to the login page
+      })
+      .catch((error) => {
+        console.error('Error logging out:', error.message);
+        alert('Failed to log out. Please try again.');
+      });
   };
 
   const styles = {
@@ -144,9 +163,8 @@ const NavbarHome = () => {
       <div style={styles.navLinks}>
         <Link to="/profile" style={styles.navLink}>Profile</Link>
         <Link to="/timeline" style={styles.navLink}>Timeline</Link>
-        <div style={styles.navLink} onClick={handleNotificationsClick}>
+        <div title="Unread Notifications" style={styles.navLink} onClick={handleNotificationsClick}>
           Notifications
-          {/* Only show the badge if not viewed and count > 0 */}
           {!hasViewed && notificationCount > 0 && (
             <span style={styles.badge}>{notificationCount}</span>
           )}
