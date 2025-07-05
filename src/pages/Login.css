@@ -58,7 +58,7 @@
 
 .login-button {
   padding: 12px;
-  background-color: #007BFF;
+  background-color: #1d3557;
   color: white;
   font-size: 1rem;
   border: none;
@@ -67,9 +67,6 @@
   transition: background-color 0.3s;
 }
 
-.login-button:hover {
-  background-color: #0056b3;
-}
 
 .signup-prompt {
   margin-top: 20px;

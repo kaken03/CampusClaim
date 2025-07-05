@@ -1,10 +1,10 @@
 import React from 'react';
-import NavbarHome from '../components/NavbarHome'; // Adjust path as needed
-import './About.css';
-import kakenImage from '../assets/images/kaken.jpg'; // Import the image
-import post from '../assets/icons/post.png'; // Import the post icon
-import report from '../assets/icons/report.png'; // Import the report icon
-import claim from '../assets/icons/claim.png'; // Import the claim icon
+import NavbarHome from '../components/NavbarHome'; // Adjust path as needed 
+import './About.css'; 
+import kakenImage from '../assets/images/Kaken1.jpg'; // Import the image 
+import post from '../assets/icons/post.png'; // Import the post icon 
+import report from '../assets/icons/report.png'; // Import the report icon 
+import claim from '../assets/icons/claim.png'; // Import the claim icon 
 
 function About() {
   return (

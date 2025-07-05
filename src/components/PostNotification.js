@@ -157,7 +157,7 @@ const styles = {
   header: {
     fontSize: '1.8rem',
     fontWeight: 'bold',
-    color: '#1877F2',
+    color: '#1d3557',
     textAlign: 'center',
     marginBottom: '20px',
   },
