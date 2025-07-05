@@ -72,7 +72,6 @@ function Profile() {
     <div className="profile-page">
       <NavbarHome />
       <div className="profile-container">
-        <h1 className="profile-title">My Profile</h1>
         <div className="profile-box">
           <div className="form-group">
             <label>Full Name</label>
