@@ -24,13 +24,6 @@ function App() {
                   </a>
                 </div>
               </div>
-              <div style={styles.heroIllustration}>
-                <img
-                  src="https://via.placeholder.com/400x300"
-                  alt="CampusClaim Illustration"
-                  style={styles.illustrationImage}
-                />
-              </div>
             </div>
           }
         />
@@ -47,7 +40,7 @@ const styles = {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    height: '100vh',
+    height: '80vh',
     backgroundColor: '#f9f9f9',
     padding: '20px',
     fontFamily: 'Arial, sans-serif',
@@ -75,7 +68,7 @@ const styles = {
     padding: '10px 20px',
     fontSize: '1rem',
     color: '#fff',
-    backgroundColor: '#007BFF',
+    backgroundColor: '#1d3557',
     textDecoration: 'none',
     borderRadius: '5px',
     transition: 'background-color 0.3s',
