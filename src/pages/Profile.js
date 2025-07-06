@@ -12,7 +12,7 @@ function Profile() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [role, setRole] = useState('student'); // Default role
+  const [role, setRole] = useState(''); // Default role
   const [course, setCourse] = useState('');
   const [year, setYear] = useState('');
   const [department, setDepartment] = useState('');
@@ -27,7 +27,7 @@ function Profile() {
       setFullName(data.fullName || user.displayName || '');
       setEmail(data.email || user.email || '');
       setPhone(data.phone || '');
-      setRole(data.role || 'student');
+      setRole(data.role || '');
       setCourse(data.course || '');
       setYear(data.year || '');
       setDepartment(data.department || '');

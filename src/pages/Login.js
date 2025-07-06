@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import Navbar from '../components/Navbar'; // Import Navbar
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebase'; // Import Firebase auth instance
+import Navbar from '../components/Navbar';
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { auth, db } from '../firebase'; // db is Firestore instance
+import { doc, getDoc } from 'firebase/firestore';
 import './Login.css';
 
 function Login() {
@@ -11,25 +12,47 @@ function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  // Check if the user is already logged in
   React.useEffect(() => {
     const user = localStorage.getItem('user');
     if (user) {
-      navigate('/home'); // Redirect to home if already logged in
+      // Optionally parse and check role here too
+      navigate('/home');
     }
   }, [navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError('');
     try {
-      // Firebase login
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-      // Save user information to localStorage
-      localStorage.setItem('user', JSON.stringify(userCredential.user));
+      // Fetch user role and block status from Firestore
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
 
-      alert('Login successful!');
-      navigate('/home'); // Redirect to Home.js in the screens folder
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+
+        // Blocked user check
+        if (userData.isBlocked) {
+          setError('Your account has been blocked by the admin.');
+          await signOut(auth); // Force sign out
+          return;
+        }
+
+        localStorage.setItem('user', JSON.stringify({ ...user, role: userData.role }));
+
+        if (userData.role === 'admin') {
+          alert('Login successful! Redirecting to Admin Dashboard.');
+          navigate('/admin-dashboard'); // Adjust route as needed
+        } else {
+          alert('Login successful!');
+          navigate('/home');
+        }
+      } else {
+        setError('No user profile found.');
+      }
     } catch (err) {
       setError(err.message);
     }
@@ -37,7 +60,7 @@ function Login() {
 
   return (
     <div className="login-page">
-      <Navbar /> {/* Include Navbar */}
+      <Navbar />
       <div className="login-container">
         <div className="login-card">
           <h2 className="login-title">Welcome Back</h2>
