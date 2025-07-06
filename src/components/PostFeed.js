@@ -3,7 +3,7 @@ import { db } from '../firebase';
 import { collection, query, orderBy, onSnapshot, doc, deleteDoc, updateDoc, Timestamp, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { useLocation } from 'react-router-dom';
-import ChatBox from './ChatBox'; // Import your ChatBox component
+import ChatBox from './ChatBox'; 
 
 function PostFeed() {
   const [posts, setPosts] = useState([]);
@@ -60,6 +60,7 @@ function PostFeed() {
           id: doc.id,
           ...doc.data(),
           _type: 'lost',
+          _collection: 'LostItems',
         }));
         setPosts((prev) => {
           const foundPosts = prev.filter((p) => p._type === 'found');
@@ -71,6 +72,7 @@ function PostFeed() {
           id: doc.id,
           ...doc.data(),
           _type: 'found',
+          _collection: 'FoundItems',
         }));
         setPosts((prev) => {
           const lostPosts = prev.filter((p) => p._type === 'lost');
@@ -85,6 +87,7 @@ function PostFeed() {
           id: doc.id,
           ...doc.data(),
           _type: category,
+          _collection: collectionName,
         }));
         setPosts(postsData);
       });
@@ -107,15 +110,18 @@ function PostFeed() {
   }, [posts]);
 
   const handleDelete = async (postId) => {
+    const colName = category === 'lost' ? 'LostItems' : category === 'found' ? 'FoundItems' : null;
+    if (!colName) return;
     if (window.confirm('Are you sure you want to delete this post?')) {
-      await deleteDoc(doc(db, category === 'lost' ? 'LostItems' : 'FoundItems', postId));
+      await deleteDoc(doc(db, colName, postId));
       alert('Post deleted successfully!');
     }
   };
 
   const handleEdit = async (postId) => {
-    if (!editText.trim()) return;
-    await updateDoc(doc(db, category === 'lost' ? 'LostItems' : 'FoundItems', postId), { text: editText });
+    const colName = category === 'lost' ? 'LostItems' : category === 'found' ? 'FoundItems' : null;
+    if (!colName || !editText.trim()) return;
+    await updateDoc(doc(db, colName, postId), { text: editText });
     setEditingPostId(null);
     setEditText('');
     alert('Post updated successfully!');
@@ -129,9 +135,10 @@ function PostFeed() {
   };
 
   const handleAddComment = async (postId) => {
-    if (!commentTexts[postId]?.trim()) return;
-    const postRef = doc(db, category === 'lost' ? 'LostItems' : 'FoundItems', postId);
     const post = posts.find((p) => p.id === postId);
+    const colName = post?._collection;
+    if (!colName || !commentTexts[postId]?.trim()) return;
+    const postRef = doc(db, colName, postId);
     const userName = user?.displayName || 'Anonymous';
     const newComment = {
       text: commentTexts[postId],
@@ -148,18 +155,29 @@ function PostFeed() {
   };
 
   const handleMarkAsClaimed = async (postId) => {
-    const postRef = doc(db, category === 'lost' ? 'LostItems' : 'FoundItems', postId);
+    const post = posts.find((p) => p.id === postId);
+    const colName = post?._collection;
+    if (!colName) return;
+    const postRef = doc(db, colName, postId);
     await updateDoc(postRef, { claimed: true });
     alert('Post marked as claimed!');
   };
 
   const handleUnmarkAsClaimed = async (postId) => {
-    const postRef = doc(db, category === 'lost' ? 'LostItems' : 'FoundItems', postId);
+    const post = posts.find((p) => p.id === postId);
+    const colName = post?._collection;
+    if (!colName) return;
+    const postRef = doc(db, colName, postId);
     await updateDoc(postRef, { claimed: false });
   };
 
-  // Filtered posts based on the selected filter (all, claimed, unclaimed)
+  // Filtered posts based on the selected filter (all, claimed, unclaimed),
+  // and the blocked logic
   const filteredPosts = posts.filter((post) => {
+    // Blocked post logic:
+    // - If isBlocked and not author, hide post
+    // - If isBlocked and author, show special message
+    if (post.isBlocked && post.authorId !== user?.uid) return false;
     if (filter === 'claimed') return post.claimed;
     if (filter === 'unclaimed') return !post.claimed;
     return true;
@@ -179,8 +197,6 @@ function PostFeed() {
         lastMessage: '',
       });
     }
-    // Redirect to chat UI (e.g., open modal or navigate to /chat/:chatId)
-    // Example: navigate(`/chat/${chatId}`);
     setActiveChatId(chatId); // If using a modal or drawer
   };
 
@@ -192,10 +208,10 @@ function PostFeed() {
       setTimeout(() => {
         const el = document.getElementById(postId);
         if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'start' }); // 'auto' is instant
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
           setHighlightedPostId(postId);
         }
-      }, 100); // Lower delay for faster scroll
+      }, 100);
     }
   }, [location.search, posts]);
 
@@ -233,12 +249,11 @@ function PostFeed() {
         >
           Lost Items
         </button>
-        
       </div>
       <div style={styles.filterSelector}>
         <span style={{ alignSelf: 'center', marginRight: 10, fontWeight: 'bold', color: '#333' }}>
-    Filter:
-  </span>
+          Filter:
+        </span>
         <button
           onClick={() => setFilter('all')}
           style={
@@ -286,50 +301,67 @@ function PostFeed() {
             }}
           >
             <p style={styles.author}>
-  <strong>{post.authorName}</strong> posted:
-  {category === 'all' && (
-    <span
-      style={{
-        marginLeft: 10,
-        padding: '2px 10px',
-        borderRadius: '12px',
-        fontSize: '0.95em',
-        fontWeight: 600,
-        backgroundColor: post._type === 'lost' ? '#FF4D4D' : '#007BFF',
-        color: '#fff',
-        verticalAlign: 'middle',
-      }}
-    >
-      {post._type === 'lost' ? 'Lost Item' : 'Found Item'}
-    </span>
-  )}
-</p>
-            {post.imageUrl && <img src={post.imageUrl} alt="Post" style={styles.image} />}
-            {editingPostId === post.id ? (
-              <div>
-                <textarea
-                  value={editText}
-                  onChange={(e) => setEditText(e.target.value)}
-                  style={styles.textarea}
-                />
-                <button onClick={() => handleEdit(post.id)} style={styles.button}>
-                  Save
-                </button>
-                <button
-                  onClick={() => {
-                    setEditingPostId(null);
-                    setEditText('');
+              <strong>{post.authorName}</strong> posted:
+              {category === 'all' && (
+                <span
+                  style={{
+                    marginLeft: 10,
+                    padding: '2px 10px',
+                    borderRadius: '12px',
+                    fontSize: '0.95em',
+                    fontWeight: 600,
+                    backgroundColor: post._type === 'lost' ? '#FF4D4D' : '#007BFF',
+                    color: '#fff',
+                    verticalAlign: 'middle',
                   }}
-                  style={styles.cancelButton}
                 >
-                  Cancel
-                </button>
+                  {post._type === 'lost' ? 'Lost Item' : 'Found Item'}
+                </span>
+              )}
+            </p>
+            {post.imageUrl && <img src={post.imageUrl} alt="Post" style={styles.image} />}
+            {/* Blocked post message for author */}
+            {post.isBlocked && post.authorId === user?.uid ? (
+              <div style={{
+                background: '#ffeaea',
+                color: '#e63946',
+                padding: '16px',
+                borderRadius: '8px',
+                margin: '12px 0',
+                fontWeight: 600,
+                fontSize: '1.1rem',
+                textAlign: 'center',
+              }}>
+                This post is blocked by the admin. 
+                Only you can see this post.
               </div>
             ) : (
-              <p style={styles.text}>{post.text}</p>
+              editingPostId === post.id ? (
+                <div>
+                  <textarea
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    style={styles.textarea}
+                  />
+                  <button onClick={() => handleEdit(post.id)} style={styles.button}>
+                    Save
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingPostId(null);
+                      setEditText('');
+                    }}
+                    style={styles.cancelButton}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <p style={styles.text}>{post.text}</p>
+              )
             )}
             <p style={styles.date}>{post.createdAt?.toDate().toLocaleString()}</p>
-            {post.authorId === user?.uid && (
+            {post.authorId === user?.uid && !post.isBlocked && (
               <div style={styles.actions}>
                 <button
                   onClick={() => {
@@ -348,7 +380,7 @@ function PostFeed() {
             {post.claimed && (
               <div style={styles.claimedBadge}>Claimed</div>
             )}
-            {post.claimed && post.authorId === user?.uid && (
+            {post.claimed && post.authorId === user?.uid && !post.isBlocked && (
               <button
                 onClick={() => handleUnmarkAsClaimed(post.id)}
                 style={{ ...styles.claimButton, backgroundColor: '#ffc107', color: '#333', marginLeft: 8 }}
@@ -356,7 +388,7 @@ function PostFeed() {
                 Unmark as Claimed
               </button>
             )}
-            {!post.claimed && post.authorId === user?.uid && (
+            {!post.claimed && post.authorId === user?.uid && !post.isBlocked && (
               <button
                 onClick={() => handleMarkAsClaimed(post.id)}
                 style={styles.claimButton}
@@ -364,50 +396,52 @@ function PostFeed() {
                 Mark as Claimed
               </button>
             )}
-            <div style={styles.commentsSection}>
-              <h4>Comments:</h4>
-              <div
-                ref={(el) => (commentsRef.current[post.id] = el)}
-                style={{
-                  ...styles.commentsContainer,
-                  overflowY: 'auto',
-                  maxHeight: '200px',
-                }}
-              >
-                {post.comments?.length > 0 ? (
-                  post.comments.map((comment, index) => (
-                    <div key={index} style={styles.comment}>
-                      <p>
-                        <strong>{comment.author}</strong>: {comment.text}
-                      </p>
-                      <p style={styles.commentTime}>
-                        {comment.timestamp ? timeAgo(comment.timestamp.toDate()) : 'Just now'}
-                      </p>
-                    </div>
-                  ))
-                ) : (
-                  <p style={styles.noComments}>No comments yet.</p>
+            {/* Only show comments and chat if not blocked or owner */}
+            {(!post.isBlocked || post.authorId === user?.uid) && (
+              <div style={styles.commentsSection}>
+                <h4>Comments:</h4>
+                <div
+                  ref={(el) => (commentsRef.current[post.id] = el)}
+                  style={{
+                    ...styles.commentsContainer,
+                    overflowY: 'auto',
+                    maxHeight: '200px',
+                  }}
+                >
+                  {post.comments?.length > 0 ? (
+                    post.comments.map((comment, index) => (
+                      <div key={index} style={styles.comment}>
+                        <p>
+                          <strong>{comment.author}</strong>: {comment.text}
+                        </p>
+                        <p style={styles.commentTime}>
+                          {comment.timestamp ? timeAgo(comment.timestamp.toDate()) : 'Just now'}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <p style={styles.noComments}>No comments yet.</p>
+                  )}
+                </div>
+                <textarea
+                  placeholder="Add a comment..."
+                  value={commentTexts[post.id] || ''}
+                  onChange={(e) => handleCommentChange(post.id, e.target.value)}
+                  style={styles.textarea}
+                />
+                <button onClick={() => handleAddComment(post.id)} style={styles.button}>
+                  Add Comment
+                </button>
+                {post.authorId !== user?.uid && (
+                  <button
+                    style={{ ...styles.button, backgroundColor: '#1d3557', marginLeft: 8 }}
+                    onClick={() => openChatWith(post.authorId)}
+                  >
+                    Private Message
+                  </button>
                 )}
               </div>
-              <textarea
-                placeholder="Add a comment..."
-                value={commentTexts[post.id] || ''}
-                onChange={(e) => handleCommentChange(post.id, e.target.value)}
-                style={styles.textarea}
-              />
-              <button onClick={() => handleAddComment(post.id)} style={styles.button}>
-                Add Comment
-              </button>
-              {post.authorId !== user?.uid && (
-                <button
-                  style={{ ...styles.button, backgroundColor: '#1d3557', marginLeft: 8 }}
-                  onClick={() => openChatWith(post.authorId)}
-                >
-                  Private Message
-                </button>
-              )}
-            </div>
-            
+            )}
           </div>
         ))
       )}
