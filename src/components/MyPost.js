@@ -192,9 +192,11 @@ function MyPost() {
     const postRef = doc(db, category === 'lost' ? 'LostItems' : 'FoundItems', postId);
     await updateDoc(postRef, { claimed: false });
   };
-
+  // Filtered posts based on the selected filter (all, claimed, unclaimed),
+  // and the blocked logic
   // Filtered posts based on the selected filter (all, claimed, unclaimed)
   const filteredPosts = posts.filter((post) => {
+    if (post.isBlocked && post.authorId !== user?.uid) return false;
     if (filter === 'claimed') return post.claimed;
     if (filter === 'unclaimed') return !post.claimed;
     return true;
@@ -340,31 +342,48 @@ function MyPost() {
   )}
 </p>
             {post.imageUrl && <img src={post.imageUrl} alt="Post" style={styles.image} />}
-            {editingPostId === post.id ? (
-              <div>
-                <textarea
-                  value={editText}
-                  onChange={(e) => setEditText(e.target.value)}
-                  style={styles.textarea}
-                />
-                <button onClick={() => handleEdit(post.id)} style={styles.button}>
-                  Save
-                </button>
-                <button
-                  onClick={() => {
-                    setEditingPostId(null);
-                    setEditText('');
-                  }}
-                  style={styles.cancelButton}
-                >
-                  Cancel
-                </button>
+            {/* Blocked post message for author */}
+            {post.isBlocked && post.authorId === user?.uid ? (
+              <div style={{
+                background: '#ffeaea',
+                color: '#e63946',
+                padding: '16px',
+                borderRadius: '8px',
+                margin: '12px 0',
+                fontWeight: 600,
+                fontSize: '1.1rem',
+                textAlign: 'center',
+              }}>
+                This post is blocked by the admin. 
+                Only you can see this post.
               </div>
             ) : (
-              <p style={styles.text}>{post.text}</p>
+              editingPostId === post.id ? (
+                <div>
+                  <textarea
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    style={styles.textarea}
+                  />
+                  <button onClick={() => handleEdit(post.id)} style={styles.button}>
+                    Save
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingPostId(null);
+                      setEditText('');
+                    }}
+                    style={styles.cancelButton}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <p style={styles.text}>{post.text}</p>
+              )
             )}
             <p style={styles.date}>{post.createdAt?.toDate().toLocaleString()}</p>
-            {post.authorId === user?.uid && (
+            {post.authorId === user?.uid && !post.isBlocked && (
               <div style={styles.actions}>
                 <button
                   onClick={() => {
@@ -383,7 +402,7 @@ function MyPost() {
             {post.claimed && (
               <div style={styles.claimedBadge}>Claimed</div>
             )}
-            {post.claimed && post.authorId === user?.uid && (
+            {post.claimed && post.authorId === user?.uid && !post.isBlocked && (
               <button
                 onClick={() => handleUnmarkAsClaimed(post.id)}
                 style={{ ...styles.claimButton, backgroundColor: '#ffc107', color: '#333', marginLeft: 8 }}

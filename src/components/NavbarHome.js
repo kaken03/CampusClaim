@@ -106,11 +106,7 @@ const NavbarHome = () => {
       justifyContent: 'space-between',
       alignItems: 'center',
       padding: '10px 20px',
-      background: '#1d3557',
-      color: '#fff',
-      position: 'sticky',
-      top: 0,
-      zIndex: 1000,
+      backgroundColor: '#1d3557',
     },
     logo: {
       fontSize: '1.5rem',
