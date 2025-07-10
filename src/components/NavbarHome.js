@@ -107,10 +107,6 @@ const NavbarHome = () => {
       alignItems: 'center',
       padding: '10px 20px',
       backgroundColor: '#1d3557',
-      color: '#fff',
-      position: 'sticky',
-      top: 0,
-      zIndex: 1000,
     },
     logo: {
       fontSize: '1.5rem',
