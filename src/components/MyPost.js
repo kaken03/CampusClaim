@@ -194,8 +194,11 @@ function MyPost() {
   };
   // Filtered posts based on the selected filter (all, claimed, unclaimed),
   // and the blocked logic
+  // Filtered posts based on the selected filter (all, claimed, unclaimed),
+  // and the blocked logic
   // Filtered posts based on the selected filter (all, claimed, unclaimed)
   const filteredPosts = posts.filter((post) => {
+    if (post.isBlocked && post.authorId !== user?.uid) return false;
     if (post.isBlocked && post.authorId !== user?.uid) return false;
     if (filter === 'claimed') return post.claimed;
     if (filter === 'unclaimed') return !post.claimed;
