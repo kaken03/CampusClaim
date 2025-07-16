@@ -50,6 +50,17 @@ export default function AdminPosts() {
     }
   };
 
+  // --- COUNTING LOGIC ---
+  // Counts for each category and filter:
+  const totalAll = posts.length;
+  const totalLost = posts.filter(p => p.collection === 'LostItems').length;
+  const totalFound = posts.filter(p => p.collection === 'FoundItems').length;
+
+  const totalLostClaimed = posts.filter(p => p.collection === 'LostItems' && p.claimed === true).length;
+  const totalLostUnclaimed = posts.filter(p => p.collection === 'LostItems' && !p.claimed).length;
+  const totalFoundClaimed = posts.filter(p => p.collection === 'FoundItems' && p.claimed === true).length;
+  const totalFoundUnclaimed = posts.filter(p => p.collection === 'FoundItems' && !p.claimed).length;
+
   // Search filter
   const filteredPosts = posts.filter(
     post =>
@@ -139,21 +150,79 @@ export default function AdminPosts() {
         onClick={() => setSubTab('all')}
       >
         All
+        {mainTab === 'lost' && (
+          <span className="tab-count">({totalLost})</span>
+        )}
+        {mainTab === 'found' && (
+          <span className="tab-count">({totalFound})</span>
+        )}
       </button>
       <button
         className={subTab === 'claimed' ? 'tab-btn active' : 'tab-btn'}
         onClick={() => setSubTab('claimed')}
       >
         Claimed
+        {mainTab === 'lost' && (
+          <span className="tab-count">({totalLostClaimed})</span>
+        )}
+        {mainTab === 'found' && (
+          <span className="tab-count">({totalFoundClaimed})</span>
+        )}
       </button>
       <button
         className={subTab === 'unclaimed' ? 'tab-btn active' : 'tab-btn'}
         onClick={() => setSubTab('unclaimed')}
       >
         Unclaimed
+        {mainTab === 'lost' && (
+          <span className="tab-count">({totalLostUnclaimed})</span>
+        )}
+        {mainTab === 'found' && (
+          <span className="tab-count">({totalFoundUnclaimed})</span>
+        )}
       </button>
     </div>
   )
+
+  // Show counts on main tabs as well
+  const renderMainTabs = () => (
+    <div className="admin-posts-tabs">
+      <button
+        className={mainTab === 'all' ? 'tab-btn active' : 'tab-btn'}
+        onClick={() => { setMainTab('all'); setSubTab('all'); }}
+      >
+        All <span className="tab-count">({totalAll})</span>
+      </button>
+      <button
+        className={mainTab === 'lost' ? 'tab-btn active' : 'tab-btn'}
+        onClick={() => { setMainTab('lost'); setSubTab('all'); }}
+      >
+        Lost Items <span className="tab-count">({totalLost})</span>
+      </button>
+      <button
+        className={mainTab === 'found' ? 'tab-btn active' : 'tab-btn'}
+        onClick={() => { setMainTab('found'); setSubTab('all'); }}
+      >
+        Found Items <span className="tab-count">({totalFound})</span>
+      </button>
+    </div>
+  );
+
+  // Title with count for current view
+  function getCurrentTabCount() {
+    if (mainTab === 'all') return totalAll;
+    if (mainTab === 'lost') {
+      if (subTab === 'all') return totalLost;
+      if (subTab === 'claimed') return totalLostClaimed;
+      if (subTab === 'unclaimed') return totalLostUnclaimed;
+    }
+    if (mainTab === 'found') {
+      if (subTab === 'all') return totalFound;
+      if (subTab === 'claimed') return totalFoundClaimed;
+      if (subTab === 'unclaimed') return totalFoundUnclaimed;
+    }
+    return 0;
+  }
 
   return (
     <div>
@@ -168,29 +237,10 @@ export default function AdminPosts() {
           onChange={e => setSearch(e.target.value)}
         />
 
-        {/* Main Tabs */}
-        <div className="admin-posts-tabs">
-          <button
-            className={mainTab === 'all' ? 'tab-btn active' : 'tab-btn'}
-            onClick={() => { setMainTab('all'); setSubTab('all'); }}
-          >
-            All
-          </button>
-          <button
-            className={mainTab === 'lost' ? 'tab-btn active' : 'tab-btn'}
-            onClick={() => { setMainTab('lost'); setSubTab('all'); }}
-          >
-            Lost Items
-          </button>
-          <button
-            className={mainTab === 'found' ? 'tab-btn active' : 'tab-btn'}
-            onClick={() => { setMainTab('found'); setSubTab('all'); }}
-          >
-            Found Items
-          </button>
-        </div>
+        {/* Main Tabs with counts */}
+        {renderMainTabs()}
 
-        {/* Sub-tabs for Lost/Found */}
+        {/* Sub-tabs for Lost/Found with counts */}
         {(mainTab === 'lost' || mainTab === 'found') && renderSubTabs()}
 
         {loading ? (
@@ -199,19 +249,22 @@ export default function AdminPosts() {
           <>
             <h3 style={{ marginTop: '24px' }}>
               {mainTab === 'all'
-                ? 'All Posts'
+                ? `All Posts (${totalAll})`
                 : mainTab === 'lost'
                   ? (subTab === 'all'
-                    ? 'All Lost Items'
+                    ? `All Lost Items (${totalLost})`
                     : subTab === 'claimed'
-                      ? 'Claimed Lost Items'
-                      : 'Unclaimed Lost Items')
+                      ? `Claimed Lost Items (${totalLostClaimed})`
+                      : `Unclaimed Lost Items (${totalLostUnclaimed})`)
                   : (subTab === 'all'
-                    ? 'All Found Items'
+                    ? `All Found Items (${totalFound})`
                     : subTab === 'claimed'
-                      ? 'Claimed Found Items'
-                      : 'Unclaimed Found Items')}
+                      ? `Claimed Found Items (${totalFoundClaimed})`
+                      : `Unclaimed Found Items (${totalFoundUnclaimed})`)}
             </h3>
+            <div className="admin-posts-total-in-view">
+              <b>Total in view:</b> {getCurrentTabCount()}
+            </div>
             {renderTable(displayedPosts)}
           </>
         )}

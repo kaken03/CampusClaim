@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { db } from '../firebase';
-import { collection, query, orderBy, onSnapshot, doc, deleteDoc, updateDoc, Timestamp, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, deleteDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { useLocation } from 'react-router-dom';
-import ChatBox from './ChatBox'; 
+import { useLocation, useNavigate } from 'react-router-dom';
 
 function PostFeed() {
   const [posts, setPosts] = useState([]);
@@ -13,10 +12,10 @@ function PostFeed() {
   const [editText, setEditText] = useState('');
   const [commentTexts, setCommentTexts] = useState({});
   const [filter, setFilter] = useState('all');
-  const [activeChatId, setActiveChatId] = useState(null);
   const auth = getAuth();
   const user = auth.currentUser;
   const location = useLocation();
+  const navigate = useNavigate();
   const commentsRef = useRef({});
 
   // Utility function to calculate "time ago"
@@ -110,10 +109,8 @@ function PostFeed() {
   }, [posts]);
 
   const handleDelete = async (postId) => {
-    const colName = category === 'lost' ? 'LostItems' : category === 'found' ? 'FoundItems' : null;
-    if (!colName) return;
     if (window.confirm('Are you sure you want to delete this post?')) {
-      await deleteDoc(doc(db, colName, postId));
+      await deleteDoc(doc(db, category === 'lost' ? 'LostItems' : 'FoundItems', postId));
       alert('Post deleted successfully!');
     }
   };
@@ -154,6 +151,7 @@ function PostFeed() {
     }));
   };
 
+
   const handleMarkAsClaimed = async (postId) => {
     const post = posts.find((p) => p.id === postId);
     const colName = post?._collection;
@@ -183,21 +181,12 @@ function PostFeed() {
     return true;
   });
 
-  const openChatWith = async (otherUserId) => {
-    const currentUserId = user.uid;
-    // Create a unique chatId for the two users (sorted to avoid duplicates)
-    const chatId = [currentUserId, otherUserId].sort().join('_');
-    const chatRef = doc(db, 'chats', chatId);
-    const chatSnap = await getDoc(chatRef);
-
-    if (!chatSnap.exists()) {
-      await setDoc(chatRef, {
-        participants: [currentUserId, otherUserId],
-        lastUpdated: serverTimestamp(),
-        lastMessage: '',
-      });
-    }
-    setActiveChatId(chatId); // If using a modal or drawer
+  // --- Handle Private Message navigation ---
+  const handlePrivateMessage = async (authorId, authorName) => {
+    // Only create chat if it doesn't exist (else let Messages.js handle display)
+    // The chatlist in Messages.js should only show chats with messages, so we don't create a chat here if none exists.
+    // Instead, we navigate to /messages?userId=xxx&userName=xxx and let Messages.js handle chat creation when a message is sent.
+    navigate(`/messages?userId=${authorId}&userName=${encodeURIComponent(authorName)}`);
   };
 
   useEffect(() => {
@@ -334,6 +323,18 @@ function PostFeed() {
               }}>
                 This post is blocked by the admin. 
                 Only you can see this post.
+                <div style={{ marginTop: 12 }}>
+                  <button
+                    onClick={() => handleDelete(post.id)}
+                    style={{
+                      ...styles.deleteButton,
+                      background: '#e63946',
+                      marginRight: 0,
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             ) : (
               editingPostId === post.id ? (
@@ -435,7 +436,7 @@ function PostFeed() {
                 {post.authorId !== user?.uid && (
                   <button
                     style={{ ...styles.button, backgroundColor: '#1d3557', marginLeft: 8 }}
-                    onClick={() => openChatWith(post.authorId)}
+                    onClick={() => handlePrivateMessage(post.authorId, post.authorName)}
                   >
                     Private Message
                   </button>
@@ -444,15 +445,6 @@ function PostFeed() {
             )}
           </div>
         ))
-      )}
-      {activeChatId && (
-        <div style={{ position: 'fixed', right: 20, bottom: 20, zIndex: 1000 }}>
-          <ChatBox
-            chatId={activeChatId}
-            currentUserId={user.uid}
-            onClose={() => setActiveChatId(null)}
-          />
-        </div>
       )}
     </div>
   );
@@ -595,7 +587,7 @@ const styles = {
     padding: '8px 18px',
     fontSize: '1rem',
     color: '#fff',
-    background: 'linear-gradient(90deg, #adb5bd 0%, #6c757d 100%)',
+    background: '#1d3557',
     border: 'none',
     borderRadius: '6px',
     cursor: 'pointer',

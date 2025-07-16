@@ -179,4 +179,18 @@
     display: block;
     margin-bottom: 4px;
   }
+  .tab-count {
+  font-weight: 600;
+  margin-left: 4px;
+  color: #1976d2;
+}
+.admin-posts-total-in-view {
+  margin: 4px 0 10px 0;
+  color: #333;
+  font-size: 1.08rem;
+}
+  .admin-posts-total-in-view span {
+    font-weight: 700;
+    color: #2563eb;
+  }
 }

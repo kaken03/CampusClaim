@@ -9,16 +9,18 @@ import Home from './pages/Home';
 import Profile from './pages/Profile';
 import Timeline from './pages/Timeline';
 import Notification from './pages/Notification';
-import About from './pages/About';
 import ContactUs from './pages/ContactUs';
+import Messages from './pages/Messages';
 import reportWebVitals from './reportWebVitals';
 import PostDetails from './components/PostDetails';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminUser from './pages/AdminUser';
 import AdminPosts from './pages/AdminPosts'
 import AdminAnalytics from './pages/AdminAnalytics';
+import AdminInbox from './pages/AdminInbox'; // New admin inbox page
 import RequireUser from './components/RequireUser';
 import RequireAdmin from './components/RequireAdmin';
+import ForgotPassword from './pages/ForgotPassword';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -28,6 +30,7 @@ root.render(
         <Route path="/" element={<App />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
         {/* User Protected Routes */}
         <Route path="/home" element={
@@ -57,7 +60,7 @@ root.render(
         } />
 
         {/* Public Info Pages */}
-        <Route path="/about" element={<About />} />
+        <Route path="/messages" element={<Messages />} />
         <Route path="/contact" element={<ContactUs />} />
 
         {/* Admin Protected Routes */}
@@ -79,6 +82,11 @@ root.render(
         <Route path="/admin-users" element={
           <RequireAdmin>
             <AdminUser />
+          </RequireAdmin>
+        } />
+        <Route path="/admin-inbox" element={
+          <RequireAdmin>
+            <AdminInbox />
           </RequireAdmin>
         } />
         {/* Add more admin-protected routes below as needed */}

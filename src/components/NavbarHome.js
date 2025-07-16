@@ -1,98 +1,32 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { db } from '../firebase';
+import { Link, useNavigate } from 'react-router-dom';
 import { getAuth } from 'firebase/auth';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 const NavbarHome = () => {
   const navigate = useNavigate();
-  const location = useLocation(); // Use the location hook to track path
-  const [notificationCount, setNotificationCount] = useState(0);
-  const [hasViewed, setHasViewed] = useState(false);
-
   const auth = getAuth();
-  const user = auth.currentUser;
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (!storedUser) {
-      navigate('/login'); // Redirect to login if user is not authenticated
+      navigate('/login');
     }
   }, [navigate]);
 
-  // Fetch notifications count based on comments
-  useEffect(() => {
-    if (!user) return;
-
-    const lostRef = { current: 0 };
-    const foundRef = { current: 0 };
-
-    const lastSeen = new Date(localStorage.getItem('lastSeen') || 0);
-
-    const watchCollection = (collectionName) => {
-      const postsRef = collection(db, collectionName);
-      const q = query(postsRef, where('authorId', '==', user.uid));
-
-      return onSnapshot(q, (snapshot) => {
-        let count = 0;
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          if (Array.isArray(data.comments)) {
-            data.comments.forEach((comment) => {
-              const commentDate = comment.timestamp?.toDate?.() || new Date();
-              if (commentDate > lastSeen) {
-                count += 1;
-              }
-            });
-          }
-        });
-
-        if (collectionName === 'LostItems') {
-          lostRef.current = count;
-        } else {
-          foundRef.current = count;
-        }
-
-        setNotificationCount(lostRef.current + foundRef.current);
-      });
-    };
-
-    const unsubLost = watchCollection('LostItems');
-    const unsubFound = watchCollection('FoundItems');
-
-    return () => {
-      unsubLost();
-      unsubFound();
-    };
-  }, [user]);
-
-  // Reset the badge count when navigating to the notifications page
-  useEffect(() => {
-    if (location.pathname === '/notifications') {
-      // Store the timestamp when notifications are viewed
-      const now = new Date().toISOString();
-      localStorage.setItem('lastSeen', now); // Store the view timestamp
-      setHasViewed(true);
-      setNotificationCount(0); // Reset badge count to 0 when on notifications page
-    } else {
-      setHasViewed(false); // Reset hasViewed state when not on notifications page
-    }
-  }, [location]); // Dependency on location to reset the count when the location changes
-
+  // Handle notifications navigation
   const handleNotificationsClick = () => {
-    navigate('/notifications'); // Navigate to notifications
+    navigate('/notifications');
   };
 
+  // Handle logout
   const handleLogout = () => {
     auth.signOut()
       .then(() => {
-        // Clear session data
         localStorage.removeItem('user');
-        localStorage.removeItem('lastSeen'); // Reset last seen notifications
-        setNotificationCount(0); // Reset notification count
-        alert('Logged out successfully!');
-        navigate('/login'); // Navigate to the login page
+        localStorage.removeItem('lastSeen');
+        navigate('/');
       })
       .catch((error) => {
         console.error('Error logging out:', error.message);
@@ -106,7 +40,7 @@ const NavbarHome = () => {
       justifyContent: 'space-between',
       alignItems: 'center',
       padding: '10px 20px',
-      background: '#1d3557',
+      backgroundColor: '#1d3557',
       color: '#fff',
       position: 'sticky',
       top: 0,
@@ -134,16 +68,6 @@ const NavbarHome = () => {
       position: 'relative',
       cursor: 'pointer',
     },
-    badge: {
-      position: 'absolute',
-      top: '-5px',
-      right: '-5px',
-      background: 'red',
-      color: '#fff',
-      borderRadius: '50%',
-      padding: '3px 6px',
-      fontSize: '0.75rem',
-    },
     logoutButton: {
       color: '#fff',
       backgroundColor: '#ff4d4d',
@@ -153,27 +77,105 @@ const NavbarHome = () => {
       cursor: 'pointer',
       transition: 'background-color 0.3s',
     },
+    dialogOverlay: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0,0,0,0.16)',
+      zIndex: 2000,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    dialogBox: {
+      background: '#fff',
+      borderRadius: '10px',
+      padding: '28px 28px 20px 28px',
+      boxShadow: '0 6px 32px rgba(0,0,0,0.13)',
+      maxWidth: 350,
+      width: '90%',
+      textAlign: 'center',
+    },
+    dialogTitle: {
+      fontSize: '1.15rem',
+      color: '#1d3557',
+      fontWeight: 600,
+      marginBottom: 18,
+    },
+    dialogActions: {
+      display: 'flex',
+      justifyContent: 'center',
+      gap: '18px',
+      marginTop: 10,
+    },
+    dialogButton: {
+      padding: '6px 18px',
+      borderRadius: '4px',
+      border: 'none',
+      fontWeight: 600,
+      fontSize: '1rem',
+      cursor: 'pointer',
+      transition: 'background 0.2s',
+    },
+    cancelBtn: {
+      backgroundColor: '#e0e0e0',
+      color: '#1d3557',
+    },
+    continueBtn: {
+      backgroundColor: '#ff4d4d',
+      color: '#fff',
+    },
   };
 
   return (
-    <nav style={styles.navbar}>
-      <div style={styles.logo}>
-        <Link to="/home" style={styles.logoText}>CampusClaim</Link>
-      </div>
-      <div style={styles.navLinks}>
-        <Link to="/profile" style={styles.navLink}>Profile</Link>
-        <Link to="/timeline" style={styles.navLink}>Timeline</Link>
-        <div title="Unread Notifications" style={styles.navLink} onClick={handleNotificationsClick}>
-          Notifications
-          {!hasViewed && notificationCount > 0 && (
-            <span style={styles.badge}>{notificationCount}</span>
-          )}
+    <>
+      <nav style={styles.navbar}>
+        <div style={styles.logo}>
+          <Link to="/home" style={styles.logoText}>CampusClaim</Link>
         </div>
-        <Link to="/about" style={styles.navLink}>About</Link>
-        <Link to="/contact" style={styles.navLink}>Contact Us</Link>
-        <button onClick={handleLogout} style={styles.logoutButton}>Logout</button>
-      </div>
-    </nav>
+        <div style={styles.navLinks}>
+          <Link to="/timeline" style={styles.navLink}>Timeline</Link>
+          <div title="Unread Notifications" style={styles.navLink} onClick={handleNotificationsClick}>
+            Notifications
+          </div>
+          <Link to="/messages" style={styles.navLink}>Messages</Link>
+          <Link to="/profile" style={styles.navLink}>Profile</Link>
+          <Link to="/contact" style={styles.navLink}>Contact Us</Link>
+          <button
+            onClick={() => setShowLogoutDialog(true)}
+            style={styles.logoutButton}
+          >
+            Logout
+          </button>
+        </div>
+      </nav>
+      {showLogoutDialog && (
+        <div style={styles.dialogOverlay}>
+          <div style={styles.dialogBox}>
+            <div style={styles.dialogTitle}>Are you sure you want to log out?</div>
+            <div style={styles.dialogActions}>
+              <button
+                style={{ ...styles.dialogButton, ...styles.cancelBtn }}
+                onClick={() => setShowLogoutDialog(false)}
+              >
+                Cancel
+              </button>
+              <button
+                style={{ ...styles.dialogButton, ...styles.continueBtn }}
+                onClick={() => {
+                  setShowLogoutDialog(false);
+                  handleLogout();
+                }}
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

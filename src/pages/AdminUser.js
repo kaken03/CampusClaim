@@ -57,6 +57,34 @@ export default function AdminUser() {
   const admins = filteredUsers.filter(user => user.role?.toLowerCase() === 'admin');
   const regularUsers = filteredUsers.filter(user => !user.role || user.role?.toLowerCase() !== 'admin');
 
+  // ---- Active status logic ----
+  const now = Date.now();
+  // Consider users active if lastActive is within 5 minutes (300000 ms)
+  const ACTIVE_THRESHOLD_MS = 5 * 60 * 1000;
+
+  function getUserStatus(user) {
+    const lastActiveTime =
+      typeof user.lastActive === 'object' && user.lastActive.seconds
+        ? user.lastActive.seconds * 1000
+        : typeof user.lastActive === 'number'
+          ? user.lastActive
+          : null;
+    // Optionally, you may want to ignore blocked users for "active" count
+    if (user.isBlocked) return 'Blocked';
+    if (lastActiveTime && now - lastActiveTime < ACTIVE_THRESHOLD_MS) return 'Active';
+    return 'Inactive';
+  }
+
+  // Stats
+  const totalUsers = users.length;
+  const activeUsers = users.filter(
+    user => !user.isBlocked && (
+      (typeof user.lastActive === 'object' && user.lastActive.seconds && (now - user.lastActive.seconds * 1000 < ACTIVE_THRESHOLD_MS))
+      ||
+      (typeof user.lastActive === 'number' && (now - user.lastActive < ACTIVE_THRESHOLD_MS))
+    )
+  ).length;
+
   // Table rendering helper
   function renderTable(group, isAdminTable = false) {
     return (
@@ -79,8 +107,12 @@ export default function AdminUser() {
               <td>{user.name || '-'}</td>
               <td>{user.email || '-'}</td>
               <td>
-                <span className={user.isBlocked ? 'status-blocked' : 'status-active'}>
-                  {user.isBlocked ? 'Blocked' : 'Active'}
+                <span className={
+                  getUserStatus(user) === 'Blocked' ? 'status-blocked' :
+                  getUserStatus(user) === 'Active' ? 'status-active' :
+                  'status-inactive'
+                }>
+                  {getUserStatus(user)}
                 </span>
               </td>
               <td>{user.role || 'User'}</td>
@@ -124,6 +156,9 @@ export default function AdminUser() {
       <Navbar />
       <div className="admin-users-container">
         <h2>User & Admin Management</h2>
+        <div style={{ marginBottom: 18, fontWeight: 600, color: '#263238' }}>
+          Total Users: {totalUsers} | Active Users: {activeUsers}
+        </div>
         <input
           className="admin-user-search"
           type="text"

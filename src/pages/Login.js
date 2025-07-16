@@ -10,12 +10,12 @@ function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
   React.useEffect(() => {
     const user = localStorage.getItem('user');
     if (user) {
-      // Optionally parse and check role here too
       navigate('/home');
     }
   }, [navigate]);
@@ -23,6 +23,7 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
@@ -43,18 +44,28 @@ function Login() {
 
         localStorage.setItem('user', JSON.stringify({ ...user, role: userData.role }));
 
-        if (userData.role === 'admin') {
-          alert('Login successful! Redirecting to Admin Dashboard.');
-          navigate('/admin-dashboard'); // Adjust route as needed
-        } else {
-          alert('Login successful!');
-          navigate('/home');
-        }
+        setSuccess('Login successful!');
+        setTimeout(() => {
+          setSuccess('');
+          if (userData.role === 'admin') {
+            navigate('/admin-dashboard');
+          } else {
+            navigate('/home');
+          }
+        }, 1000); // Show message for 1s, then redirect
       } else {
         setError('No user profile found.');
       }
     } catch (err) {
-      setError(err.message);
+      if (
+        err.code === "auth/invalid-credential" ||
+        err.code === "auth/user-not-found" ||
+        err.code === "auth/wrong-password"
+      ) {
+        setError("Invalid user or password");
+      } else {
+        setError(err.message);
+      }
     }
   };
 
@@ -63,10 +74,15 @@ function Login() {
       <Navbar />
       <div className="login-container">
         <div className="login-card">
-          <h2 className="login-title">Welcome Back</h2>
+          <h2 className="login-title">Welcome</h2>
           <p className="login-subtitle">Log in to CampusClaim</p>
 
           {error && <p className="error-message">{error}</p>}
+          {success && (
+            <div className="success-popup">
+              {success}
+            </div>
+          )}
 
           <form className="login-form" onSubmit={handleLogin}>
             <label>Email</label>
@@ -88,6 +104,12 @@ function Login() {
             />
 
             <button type="submit" className="login-button">Login</button>
+            
+            <div style={{ marginTop: 16, textAlign: "center" }}>
+              <Link to="/forgot-password" style={{ color: "#1976d2", textDecoration: "underline" }}>
+                Forgot password?
+              </Link>
+            </div>
 
             <p className="signup-prompt">
               Don't have an account? <Link to="/signup">Sign Up</Link>

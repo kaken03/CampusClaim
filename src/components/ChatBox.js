@@ -1,115 +1,136 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { db } from '../firebase';
-import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, getDocs, where, getDoc } from 'firebase/firestore';
+import React, { useEffect, useState, useRef } from "react";
+import { db } from "../firebase";
+import {
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  onSnapshot,
+  serverTimestamp,
+  doc,
+  updateDoc,
+  getDoc,
+  setDoc,
+} from "firebase/firestore";
+import "./ChatBox.css";
 
-function ChatBox({ chatId, currentUserId, onClose }) {
+export default function ChatBox({ chatId, currentUserId, otherUserId: propOtherUserId, otherUserName: propOtherUserName, onClose }) {
   const [messages, setMessages] = useState([]);
-  const [text, setText] = useState('');
-  const [otherUserName, setOtherUserName] = useState('');
+  const [text, setText] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const messagesEndRef = useRef(null);
 
-  // Fetch the other user's name
-  useEffect(() => {
-    const fetchOtherUserName = async () => {
-      const chatDoc = await getDoc(doc(db, 'chats', chatId));
-      if (chatDoc.exists()) {
-        const participants = chatDoc.data().participants;
-        const otherUserId = participants.find(uid => uid !== currentUserId);
-        if (otherUserId) {
-          const userDoc = await getDoc(doc(db, 'users', otherUserId));
-          if (userDoc.exists()) {
-            setOtherUserName(userDoc.data().fullName || 'Unknown User');
-          } else {
-            setOtherUserName('Unknown User');
-          }
-        }
-      }
-    };
-    if (chatId && currentUserId) {
-      fetchOtherUserName();
-    }
-  }, [chatId, currentUserId]);
+  // Correctly resolve "otherUserId" for both chatlist and private message scenarios
+  let resolvedOtherUserId = propOtherUserId;
+  let resolvedChatId = chatId;
+  if (chatId && !propOtherUserId) {
+    // If coming from chatlist, parse user IDs from chatId
+    const ids = chatId.split("_");
+    resolvedOtherUserId = ids.find((id) => id !== currentUserId);
+    resolvedChatId = chatId;
+  } else if (!chatId && propOtherUserId) {
+    // New private message
+    resolvedChatId = [currentUserId, propOtherUserId].sort().join("_");
+  }
 
+  // Always fetch display name on chat switch or new chat
   useEffect(() => {
-    const q = query(
-      collection(db, 'chats', chatId, 'messages'),
-      orderBy('timestamp')
-    );
+    let isMounted = true;
+    async function fetchName() {
+      if (propOtherUserName) {
+        setDisplayName(propOtherUserName);
+      } else if (resolvedOtherUserId) {
+        const userDoc = await getDoc(doc(db, "users", resolvedOtherUserId));
+        if (isMounted) setDisplayName(userDoc.exists() ? userDoc.data().fullName || "Unknown" : "Unknown");
+      }
+    }
+    fetchName();
+    return () => { isMounted = false; };
+  }, [resolvedOtherUserId, propOtherUserName]); // <-- update on userId or name change
+
+  // Load messages for the resolved chat
+  useEffect(() => {
+    if (!resolvedChatId) return;
+    const q = query(collection(db, "chats", resolvedChatId, "messages"), orderBy("timestamp"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setMessages(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
     });
     return () => unsubscribe();
-  }, [chatId]);
+  }, [resolvedChatId]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const sendMessage = async () => {
     if (!text.trim()) return;
-    await addDoc(collection(db, 'chats', chatId, 'messages'), {
+    const chatRef = doc(db, "chats", resolvedChatId);
+    const chatSnap = await getDoc(chatRef);
+    let firstMessage = false;
+    if (!chatSnap.exists()) {
+      await setDoc(chatRef, {
+        participants: [currentUserId, resolvedOtherUserId],
+        lastUpdated: serverTimestamp(),
+        lastMessage: text,
+      });
+      firstMessage = true;
+    } else {
+      await updateDoc(chatRef, {
+        lastMessage: text,
+        lastUpdated: serverTimestamp(),
+      });
+    }
+    await addDoc(collection(db, "chats", resolvedChatId, "messages"), {
       senderId: currentUserId,
       text,
       timestamp: serverTimestamp(),
     });
-    await updateDoc(doc(db, 'chats', chatId), {
-      lastMessage: text,
-      lastUpdated: serverTimestamp(),
-    });
-    setText('');
+    setText("");
+
+    // Remove userId/userName from URL after first message (if needed)
+    if (firstMessage && window.location.search.includes('userId')) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('userId');
+      url.searchParams.delete('userName');
+      window.history.replaceState({}, '', url.pathname + url.search);
+    }
   };
 
-  useEffect(() => {
-    const markMessagesAsRead = async () => {
-      const messagesRef = collection(db, 'chats', chatId, 'messages');
-      const q = query(messagesRef, where('readBy', 'not-in', [currentUserId]));
-      const snapshot = await getDocs(q);
-      snapshot.forEach(async (msgDoc) => {
-        const data = msgDoc.data();
-        if (!data.readBy?.includes(currentUserId)) {
-          await updateDoc(msgDoc.ref, {
-            readBy: [...(data.readBy || []), currentUserId],
-          });
-        }
-      });
-    };
-    if (chatId && currentUserId) {
-      markMessagesAsRead();
-    }
-  }, [chatId, currentUserId]);
-
   return (
-    <div style={{ background: '#fff', border: '1px solid #ddd', borderRadius: 8, padding: 16, width: 350, height: 400, display: 'flex', flexDirection: 'column' }}>
-      {/* Display the other user's name at the top */}
-      <div style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 8, textAlign: 'center' }}>
-        {otherUserName}
+    <div className="chatbox-root">
+      <div className="chatbox-header">
+        <span className="chatbox-title">{displayName}</span>
+        <button className="chatbox-close-btn" onClick={onClose}>
+          ×
+        </button>
       </div>
-      <div style={{ flex: 1, overflowY: 'auto', marginBottom: 8 }}>
-        {messages.map(msg => (
-          <div key={msg.id} style={{ textAlign: msg.senderId === currentUserId ? 'right' : 'left', margin: '4px 0' }}>
-            <span style={{ background: msg.senderId === currentUserId ? '#007BFF' : '#eee', color: msg.senderId === currentUserId ? '#fff' : '#333', borderRadius: 12, padding: '6px 12px', display: 'inline-block' }}>
-              {msg.text}
-            </span>
+      <div className="chatbox-messages">
+        {messages.map((msg) => (
+          <div
+            key={msg.id}
+            className={`chatbox-message-row ${
+              msg.senderId === currentUserId ? "right" : "left"
+            }`}
+          >
+            <span className="chatbox-bubble">{msg.text}</span>
           </div>
         ))}
         <div ref={messagesEndRef} />
       </div>
-      <div style={{ display: 'flex' }}>
+      <div className="chatbox-input-row">
         <input
           value={text}
-          onChange={e => setText(e.target.value)}
-          style={{ flex: 1, borderRadius: 4, border: '1px solid #ccc', padding: 8 }}
+          onChange={(e) => setText(e.target.value)}
+          className="chatbox-input"
           placeholder="Type a message..."
+          onKeyDown={(e) => {
+            if (e.key === "Enter") sendMessage();
+          }}
         />
-        <button onClick={sendMessage} style={{ marginLeft: 8, padding: '8px 16px', background: '#007BFF', color: '#fff', border: 'none', borderRadius: 4 }}>
+        <button onClick={sendMessage} className="chatbox-send-btn">
           Send
-        </button>
-        <button onClick={onClose} style={{ marginLeft: 8, padding: '8px 16px', background: '#888', color: '#fff', border: 'none', borderRadius: 4 }}>
-          Close
         </button>
       </div>
     </div>
   );
 }
-
-export default ChatBox;

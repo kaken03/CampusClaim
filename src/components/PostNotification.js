@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDocs, doc, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { db } from '../firebase'; // Adjust the path if the firebase.js file is in a different directory
-import { useNavigate } from 'react-router-dom'; // For navigation
-import empty from '../assets/icons/empty.png'; // Adjust the path to your empty state icon
+import { db } from '../firebase';
+import { useNavigate } from 'react-router-dom';
+import empty from '../assets/icons/empty.png';
 
 function PostNotification() {
   const [notifications, setNotifications] = useState([]);
+  const [readIds, setReadIds] = useState({});
   const auth = getAuth();
   const user = auth.currentUser;
   const navigate = useNavigate();
@@ -28,6 +29,22 @@ function PostNotification() {
     return `${weeks}w ago`;
   };
 
+  // Fetch read notification IDs for this user
+  useEffect(() => {
+    if (!user) return;
+    const fetchReadIds = async () => {
+      const readNotificationsRef = collection(db, 'users', user.uid, 'readNotifications');
+      const querySnapshot = await getDocs(readNotificationsRef);
+      const ids = {};
+      querySnapshot.forEach(docSnap => {
+        ids[docSnap.id] = docSnap.data().readAt;
+      });
+      setReadIds(ids);
+    };
+    fetchReadIds();
+  }, [user]);
+
+  // Fetch notifications for user's posts
   useEffect(() => {
     if (!user) return;
 
@@ -44,31 +61,46 @@ function PostNotification() {
         const newNotifications = [];
         userPosts.forEach((post) => {
           if (post.comments && post.comments.length > 0) {
-            const latestComment = post.comments[post.comments.length - 1]; // Get the latest comment
+            const latestComment = post.comments[post.comments.length - 1];
+            const notificationId = `${post.id}-${collectionName}`;
+
             newNotifications.push({
-              notificationId: `${post.id}-${collectionName}`, // Unique notification ID per post
+              notificationId,
               postId: post.id,
               postText: post.text,
               latestCommentText: latestComment.text,
               latestCommentAuthor: latestComment.author,
               latestTimestamp: latestComment.timestamp,
-              commentCount: post.comments.length, // Total number of comments
+              commentCount: post.comments.length,
               collectionName,
+              isRead: !!readIds[notificationId],
             });
           }
         });
 
         setNotifications((prevNotifications) => {
+          // Remove previous notifications for this collection
+          const filteredPrev = prevNotifications.filter(
+            (n) => n.collectionName !== collectionName
+          );
+          // Merge and sort by latest timestamp
           const mergedNotifications = [
-            ...prevNotifications.filter((n) => n.collectionName !== collectionName),
+            ...filteredPrev,
             ...newNotifications,
-          ];
-
-          return mergedNotifications.sort((a, b) => {
-            const timeA = new Date(a.latestTimestamp.toDate());
-            const timeB = new Date(b.latestTimestamp.toDate());
+          ].sort((a, b) => {
+            const timeA = new Date(
+              a.latestTimestamp?.toDate
+                ? a.latestTimestamp.toDate()
+                : a.latestTimestamp
+            );
+            const timeB = new Date(
+              b.latestTimestamp?.toDate
+                ? b.latestTimestamp.toDate()
+                : b.latestTimestamp
+            );
             return timeB - timeA;
           });
+          return mergedNotifications;
         });
       });
     };
@@ -80,10 +112,21 @@ function PostNotification() {
       unsubscribeLostItems();
       unsubscribeFoundItems();
     };
-  }, [user]);
+  }, [user, readIds]);
 
-  const handleNotificationClick = (postId, collectionName) => {
-    // Navigate to Home.js with query parameters for postId and collectionName
+  // Mark notification as read in Firestore and navigate
+  const handleNotificationClick = async (postId, collectionName, notificationId, isRead) => {
+    if (!user) return;
+    if (!isRead) {
+      await setDoc(
+        doc(db, 'users', user.uid, 'readNotifications', notificationId),
+        { readAt: new Date() }
+      );
+      setReadIds((prev) => ({
+        ...prev,
+        [notificationId]: new Date(),
+      }));
+    }
     navigate(`/home?postId=${postId}&collection=${collectionName}`);
   };
 
@@ -94,29 +137,41 @@ function PostNotification() {
         <ul style={styles.notificationList}>
           {notifications.map((notification, index) => (
             <li
-              key={index}
-              style={styles.notificationItem}
+              key={notification.notificationId}
+              style={styles.notificationItem(notification.isRead)}
               onClick={() =>
-                handleNotificationClick(notification.postId, notification.collectionName)
+                handleNotificationClick(
+                  notification.postId,
+                  notification.collectionName,
+                  notification.notificationId,
+                  notification.isRead
+                )
               }
               role="button"
               tabIndex={0}
             >
               <div style={styles.notificationContent}>
                 <p style={styles.notificationText}>
+                  {/* Badge (unreadDot) removed as requested */}
                   <strong>New activity on your post:</strong> "{notification.postText}"{' '}
                   <span
                     style={{
                       ...styles.tag,
                       backgroundColor:
-                        notification.collectionName === 'LostItems' ? '#FF4D4D' : '#1877F2',
+                        notification.collectionName === 'LostItems'
+                          ? '#FF4D4D'
+                          : '#1877F2',
                     }}
                   >
-                    {notification.collectionName === 'LostItems' ? 'Lost Item' : 'Found Item'}
+                    {notification.collectionName === 'LostItems'
+                      ? 'Lost Item'
+                      : 'Found Item'}
                   </span>
                 </p>
                 <p style={styles.commentText}>
-                  <strong>Latest comment by {notification.latestCommentAuthor}:</strong>{' '}
+                  <strong>
+                    Latest comment by {notification.latestCommentAuthor}:
+                  </strong>{' '}
                   {notification.latestCommentText}
                 </p>
                 <p style={styles.metaText}>
@@ -124,7 +179,11 @@ function PostNotification() {
                 </p>
                 <p style={styles.timeText}>
                   {notification.latestTimestamp
-                    ? timeAgo(notification.latestTimestamp.toDate())
+                    ? timeAgo(
+                        notification.latestTimestamp.toDate
+                          ? notification.latestTimestamp.toDate()
+                          : notification.latestTimestamp
+                      )
                     : 'Just now'}
                 </p>
               </div>
@@ -133,11 +192,7 @@ function PostNotification() {
         </ul>
       ) : (
         <div style={styles.emptyState}>
-          <img
-            src= {empty}
-            alt="No notifications"
-            style={styles.emptyStateIcon}
-          />
+          <img src={empty} alt="No notifications" style={styles.emptyStateIcon} />
           <p style={styles.noNotifications}>No new activity on your posts.</p>
         </div>
       )}
@@ -166,8 +221,8 @@ const styles = {
     padding: 0,
     margin: 0,
   },
-  notificationItem: {
-    backgroundColor: '#fff',
+  notificationItem: (isRead) => ({
+    backgroundColor: isRead ? '#fff' : '#e3f0ff',
     border: '1px solid #ddd',
     borderRadius: '8px',
     padding: '15px',
@@ -175,7 +230,7 @@ const styles = {
     boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
     cursor: 'pointer',
     transition: 'transform 0.2s, box-shadow 0.2s',
-  },
+  }),
   notificationContent: {
     display: 'flex',
     flexDirection: 'column',
@@ -184,7 +239,11 @@ const styles = {
     fontSize: '1rem',
     color: '#333',
     marginBottom: '10px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
   },
+  // unreadDot style removed
   tag: {
     display: 'inline-block',
     padding: '3px 8px',
