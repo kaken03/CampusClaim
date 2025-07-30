@@ -6,16 +6,17 @@ import App from './App';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Home from './pages/Home';
+import SchoolHome from './pages/SchoolHome';
 import Profile from './pages/Profile';
 import Timeline from './pages/Timeline';
 import Notification from './pages/Notification';
 import ContactUs from './pages/ContactUs';
-import Messages from './pages/Messages';
 import reportWebVitals from './reportWebVitals';
 import PostDetails from './components/PostDetails';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminUser from './pages/AdminUser';
 import AdminPosts from './pages/AdminPosts'
+import AdminApproval from './pages/AdminApproval';
 import AdminAnalytics from './pages/AdminAnalytics';
 import AdminInbox from './pages/AdminInbox'; // New admin inbox page
 import RequireUser from './components/RequireUser';
@@ -36,6 +37,11 @@ root.render(
         <Route path="/home" element={
           <RequireUser>
             <Home />
+          </RequireUser>
+        } />
+        <Route path="/school/:schoolName/home" element={
+          <RequireUser>
+            <SchoolHome />
           </RequireUser>
         } />
         <Route path="/profile" element={
@@ -60,7 +66,6 @@ root.render(
         } />
 
         {/* Public Info Pages */}
-        <Route path="/messages" element={<Messages />} />
         <Route path="/contact" element={<ContactUs />} />
 
         {/* Admin Protected Routes */}
@@ -77,6 +82,11 @@ root.render(
         <Route path="/admin-posts" element={
           <RequireAdmin>
             <AdminPosts />
+          </RequireAdmin>
+        } />
+        <Route path="/admin-approval" element={
+          <RequireAdmin>
+            <AdminApproval />
           </RequireAdmin>
         } />
         <Route path="/admin-users" element={

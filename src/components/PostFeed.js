@@ -1,128 +1,138 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { db } from '../firebase';
-import { collection, query, orderBy, onSnapshot, doc, deleteDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, arrayUnion, Timestamp } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+import './PostFeed.css'; // Ensure this path is correct
 
-function PostFeed() {
+function PostFeed({ schoolName }) {
   const [posts, setPosts] = useState([]);
-  const [category, setCategory] = useState('all');
   const [highlightedPostId, setHighlightedPostId] = useState(null);
-  const [editingPostId, setEditingPostId] = useState(null);
-  const [editText, setEditText] = useState('');
+  const [openCommentPostId, setOpenCommentPostId] = useState(null);
   const [commentTexts, setCommentTexts] = useState({});
+  const [isSubmittingComment, setIsSubmittingComment] = useState({});
+  const [isAnonymousComment, setIsAnonymousComment] = useState(false);
+  // Removed: showReportModalId, reportMessage states
+  const [blockingPostId, setBlockingPostId] = useState(null); // Keep blocking state
   const [filter, setFilter] = useState('all');
+  const [openMenuPostId, setOpenMenuPostId] = useState(null);
+
   const auth = getAuth();
   const user = auth.currentUser;
   const location = useLocation();
-  const navigate = useNavigate();
   const commentsRef = useRef({});
+  const submittingCommentRef = useRef({});
+  const menuRefs = useRef({}); // Ref to hold dropdown menu DOM elements
 
-  // Utility function to calculate "time ago"
   const timeAgo = (timestamp) => {
+    if (!timestamp) return '';
+    const date = timestamp instanceof Timestamp ? timestamp.toDate() : new Date(timestamp);
     const now = new Date();
-    const timeDiff = now - new Date(timestamp);
-    const seconds = Math.floor(timeDiff / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-    const weeks = Math.floor(days / 7);
+    const seconds = Math.floor((now - date) / 1000);
 
     if (seconds < 60) return `${seconds}s ago`;
+    const minutes = Math.floor(seconds / 60);
     if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
     if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
     if (days < 7) return `${days}d ago`;
+    const weeks = Math.floor(days / 7);
     return `${weeks}w ago`;
   };
 
   useEffect(() => {
-    // Parse query parameters
     const params = new URLSearchParams(location.search);
     const postId = params.get('postId');
-    const collectionParam = params.get('collection');
-    if (postId && collectionParam) {
-      setCategory(collectionParam === 'LostItems' ? 'lost' : 'found');
+    if (postId) {
       setHighlightedPostId(postId);
+      setOpenCommentPostId(postId);
     }
   }, [location]);
 
   useEffect(() => {
-    let unsubLost = () => {};
-    let unsubFound = () => {};
+    if (!schoolName) return;
 
-    if (category === 'all') {
-      const qLost = query(collection(db, 'LostItems'), orderBy('createdAt', 'desc'));
-      const qFound = query(collection(db, 'FoundItems'), orderBy('createdAt', 'desc'));
+    const q = query(
+      collection(db, 'schools', schoolName, 'LostItems'),
+      orderBy('createdAt', 'desc')
+    );
 
-      unsubLost = onSnapshot(qLost, (snapshot) => {
-        const lostPosts = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          _type: 'lost',
-          _collection: 'LostItems',
-        }));
-        setPosts((prev) => {
-          const foundPosts = prev.filter((p) => p._type === 'found');
-          return [...lostPosts, ...foundPosts].sort((a, b) => b.createdAt?.toDate() - a.createdAt?.toDate());
-        });
-      });
-      unsubFound = onSnapshot(qFound, (snapshot) => {
-        const foundPosts = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          _type: 'found',
-          _collection: 'FoundItems',
-        }));
-        setPosts((prev) => {
-          const lostPosts = prev.filter((p) => p._type === 'lost');
-          return [...lostPosts, ...foundPosts].sort((a, b) => b.createdAt?.toDate() - a.createdAt?.toDate());
-        });
-      });
-    } else {
-      const collectionName = category === 'lost' ? 'LostItems' : 'FoundItems';
-      const q = query(collection(db, collectionName), orderBy('createdAt', 'desc'));
-      const unsub = onSnapshot(q, (snapshot) => {
-        const postsData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          _type: category,
-          _collection: collectionName,
-        }));
-        setPosts(postsData);
-      });
-      if (category === 'lost') unsubLost = unsub;
-      else unsubFound = unsub;
-    }
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedPosts = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setPosts(fetchedPosts);
+    }, (error) => {
+      console.error("Error fetching posts: ", error);
+    });
 
-    return () => {
-      unsubLost();
-      unsubFound();
-    };
-  }, [category, highlightedPostId]);
+    return () => unsubscribe();
+  }, [schoolName]);
 
   useEffect(() => {
-    Object.values(commentsRef.current).forEach((ref) => {
-      if (ref) {
-        ref.scrollTop = ref.scrollHeight;
-      }
-    });
-  }, [posts]);
-
-  const handleDelete = async (postId) => {
-    if (window.confirm('Are you sure you want to delete this post?')) {
-      await deleteDoc(doc(db, category === 'lost' ? 'LostItems' : 'FoundItems', postId));
-      alert('Post deleted successfully!');
+    if (highlightedPostId && posts.length > 0) {
+      setTimeout(() => {
+        const el = document.getElementById(highlightedPostId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300);
     }
+  }, [highlightedPostId, posts]);
+
+  useEffect(() => {
+    if (openCommentPostId && commentsRef.current[openCommentPostId]) {
+      const ref = commentsRef.current[openCommentPostId];
+      ref.scrollTop = ref.scrollHeight;
+    }
+  }, [posts, openCommentPostId]);
+
+  // Updated useEffect for handling body scroll: only depends on blockingPostId now
+  useEffect(() => {
+    if (blockingPostId) { // Check if the block modal is open
+      document.body.style.overflow = 'hidden'; // Prevent scrolling
+      // Add padding-right to compensate for scrollbar disappearance, preventing layout shift
+      document.body.style.paddingRight = getScrollbarWidth() + 'px';
+    } else {
+      document.body.style.overflow = 'unset'; // Allow scrolling
+      document.body.style.paddingRight = '0px';
+    }
+    // Cleanup function to ensure scrolling is re-enabled if component unmounts
+    return () => {
+      document.body.style.overflow = 'unset';
+      document.body.style.paddingRight = '0px';
+    };
+  }, [blockingPostId]); // Only re-run when blockingPostId changes
+
+  // Helper function to calculate scrollbar width dynamically (kept for blocking modal)
+  const getScrollbarWidth = () => {
+    const outer = document.createElement('div');
+    outer.style.visibility = 'hidden';
+    outer.style.overflow = 'scroll'; // Force scrollbars
+    document.body.appendChild(outer);
+    const inner = document.createElement('div');
+    outer.appendChild(inner);
+    const scrollbarWidth = (outer.offsetWidth - inner.offsetWidth);
+    outer.parentNode.removeChild(outer);
+    return scrollbarWidth;
   };
 
-  const handleEdit = async (postId) => {
-    const colName = category === 'lost' ? 'LostItems' : category === 'found' ? 'FoundItems' : null;
-    if (!colName || !editText.trim()) return;
-    await updateDoc(doc(db, colName, postId), { text: editText });
-    setEditingPostId(null);
-    setEditText('');
-    alert('Post updated successfully!');
-  };
+  // Effect to close dropdown menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openMenuPostId && menuRefs.current[openMenuPostId] && !menuRefs.current[openMenuPostId].contains(event.target)) {
+        setOpenMenuPostId(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openMenuPostId]);
+
 
   const handleCommentChange = (postId, text) => {
     setCommentTexts((prev) => ({
@@ -132,314 +142,276 @@ function PostFeed() {
   };
 
   const handleAddComment = async (postId) => {
-    const post = posts.find((p) => p.id === postId);
-    const colName = post?._collection;
-    if (!colName || !commentTexts[postId]?.trim()) return;
-    const postRef = doc(db, colName, postId);
-    const userName = user?.displayName || 'Anonymous';
+    if (submittingCommentRef.current[postId]) {
+      console.log(`[Local Guard] Comment for post ${postId} is already being submitted. Ignoring duplicate click.`);
+      return;
+    }
+    submittingCommentRef.current[postId] = true;
+
+    const commentText = commentTexts[postId]?.trim();
+
+    if (!commentText) {
+      alert('Comment cannot be empty.');
+      submittingCommentRef.current[postId] = false;
+      return;
+    }
+    if (!user) {
+      alert('You must be logged in to comment.');
+      submittingCommentRef.current[postId] = false;
+      return;
+    }
+
+    setIsSubmittingComment(prev => ({ ...prev, [postId]: true }));
+
+    const postRef = doc(db, 'schools', schoolName, 'LostItems', postId);
+
+    const commentAuthorName = isAnonymousComment ? 'Anonymous User' : (user?.displayName || 'Anonymous User');
+
     const newComment = {
-      text: commentTexts[postId],
-      author: userName,
+      text: commentText,
+      author: commentAuthorName,
+      authorId: user.uid,
+      isAnonymous: isAnonymousComment,
       timestamp: Timestamp.now(),
     };
-    const updatedComments = [...(post.comments || []), newComment];
 
-    await updateDoc(postRef, { comments: updatedComments });
-    setCommentTexts((prev) => ({
-      ...prev,
-      [postId]: '',
-    }));
+    try {
+      await updateDoc(postRef, {
+        comments: arrayUnion(newComment),
+      });
+      setCommentTexts((prev) => ({
+        ...prev,
+        [postId]: '',
+      }));
+      setIsAnonymousComment(false);
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      alert('Failed to add comment. Please try again.');
+    } finally {
+      setIsSubmittingComment(prev => ({ ...prev, [postId]: false }));
+      submittingCommentRef.current[postId] = false;
+    }
   };
 
-
-  const handleMarkAsClaimed = async (postId) => {
-    const post = posts.find((p) => p.id === postId);
-    const colName = post?._collection;
-    if (!colName) return;
-    const postRef = doc(db, colName, postId);
-    await updateDoc(postRef, { claimed: true });
-    alert('Post marked as claimed!');
+  const toggleComments = (postId) => {
+    setOpenCommentPostId(prevId => prevId === postId ? null : postId);
   };
 
-  const handleUnmarkAsClaimed = async (postId) => {
-    const post = posts.find((p) => p.id === postId);
-    const colName = post?._collection;
-    if (!colName) return;
-    const postRef = doc(db, colName, postId);
-    await updateDoc(postRef, { claimed: false });
+  // Removed: handleReportPost function
+  // Removed: confirmReport function
+  // Removed: cancelReport function
+
+  const handleBlockPost = (postId) => {
+    if (!user || !user.email.endsWith('@admin.com')) {
+      alert('You do not have permission to block posts.');
+      return;
+    }
+    setBlockingPostId(postId);
+    setOpenMenuPostId(null); // Close menu after action
   };
 
-  // Filtered posts based on the selected filter (all, claimed, unclaimed),
-  // and the blocked logic
+  const confirmBlockPost = async (postId) => {
+    try {
+      const postRef = doc(db, 'schools', schoolName, 'LostItems', postId);
+      await updateDoc(postRef, { isBlocked: true });
+      alert('Post blocked successfully!');
+    } catch (error) {
+      console.error('Error blocking post:', error);
+      alert('Failed to block post.');
+    } finally {
+      setBlockingPostId(null);
+    }
+  };
+
+  const cancelBlockPost = () => {
+    setBlockingPostId(null);
+  };
+
   const filteredPosts = posts.filter((post) => {
-    // Blocked post logic:
-    // - If isBlocked and not author, hide post
-    // - If isBlocked and author, show special message
-    if (post.isBlocked && post.authorId !== user?.uid) return false;
     if (filter === 'claimed') return post.claimed;
     if (filter === 'unclaimed') return !post.claimed;
     return true;
   });
 
-  // --- Handle Private Message navigation ---
-  const handlePrivateMessage = async (authorId, authorName) => {
-    // Only create chat if it doesn't exist (else let Messages.js handle display)
-    // The chatlist in Messages.js should only show chats with messages, so we don't create a chat here if none exists.
-    // Instead, we navigate to /messages?userId=xxx&userName=xxx and let Messages.js handle chat creation when a message is sent.
-    navigate(`/messages?userId=${authorId}&userName=${encodeURIComponent(authorName)}`);
+  // Function to toggle the ellipsis menu for a post
+  const handleEllipsisClick = (postId, event) => {
+    event.stopPropagation(); // Prevent click from bubbling up and closing other menus
+    setOpenMenuPostId(prevId => prevId === postId ? null : postId);
   };
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const postId = params.get('postId');
-    if (postId) {
-      // Wait for posts to render, then scroll
-      setTimeout(() => {
-        const el = document.getElementById(postId);
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          setHighlightedPostId(postId);
-        }
-      }, 100);
-    }
-  }, [location.search, posts]);
-
   return (
-    <div style={styles.feed}>
-      <h2 style={styles.title}>Posts</h2>
-      <div style={styles.categorySelector}>
-        <button
-          onClick={() => setCategory('all')}
-          style={
-            category === 'all'
-              ? { ...styles.activeCategoryButton, backgroundColor: '#1d3557', color: '#fff' }
-              : styles.categoryButton
-          }
-        >
-          All
-        </button>
-        <button
-          onClick={() => setCategory('found')}
-          style={
-            category === 'found'
-              ? { ...styles.activeCategoryButton, backgroundColor: '#007BFF', color: '#fff' }
-              : styles.categoryButton
-          }
-        >
-          Found Items
-        </button>
-        <button
-          onClick={() => setCategory('lost')}
-          style={
-            category === 'lost'
-              ? { ...styles.activeCategoryButton, backgroundColor: '#FF4D4D', color: '#fff' }
-              : styles.categoryButton
-          }
-        >
-          Lost Items
-        </button>
-      </div>
-      <div style={styles.filterSelector}>
-        <span style={{ alignSelf: 'center', marginRight: 10, fontWeight: 'bold', color: '#333' }}>
-          Filter:
-        </span>
+    <div className="post-feed-container">
+      <h2 className="post-feed-title">Lost Items</h2>
+
+      <div className="mp-filter-selector">
+        <span className="mp-filter-label">Filter:</span>
         <button
           onClick={() => setFilter('all')}
-          style={
-            filter === 'all'
-              ? { ...styles.activeFilterButton, backgroundColor: '#1d3557', color: '#fff' }
-              : styles.filterButton
-          }
+          className={filter === 'all' ? 'mp-filter-btn mp-filter-btn-active mp-bg-default' : 'mp-filter-btn'}
         >
           All
         </button>
         <button
           onClick={() => setFilter('claimed')}
-          style={
-            filter === 'claimed'
-              ? { ...styles.activeFilterButton, backgroundColor: '#28a745', color: '#fff' }
-              : styles.filterButton
-          }
+          className={filter === 'claimed' ? 'mp-filter-btn mp-filter-btn-active mp-bg-green' : 'mp-filter-btn'}
         >
           Claimed
         </button>
         <button
           onClick={() => setFilter('unclaimed')}
-          style={
-            filter === 'unclaimed'
-              ? { ...styles.activeFilterButton, backgroundColor: '#FF4D4D', color: '#fff' }
-              : styles.filterButton
-          }
+          className={filter === 'unclaimed' ? 'mp-filter-btn mp-filter-btn-active mp-bg-red' : 'mp-filter-btn'}
         >
           Unclaimed
         </button>
       </div>
+
       {filteredPosts.length === 0 ? (
-        <p style={{ textAlign: 'center' }}>No posts found.</p>
+        <p className="no-posts-message">No lost items to display yet. Be the first to post!</p>
       ) : (
         filteredPosts.map((post) => (
           <div
             key={post.id}
             id={post.id}
-            style={{
-              ...styles.postCard,
-              borderColor: category === 'lost' ? '#FF4D4D' : '#007BFF',
-              borderWidth: '2px',
-              borderStyle: 'solid',
-              backgroundColor: post.id === highlightedPostId ? '#FFFFE0' : '#fff',
-            }}
+            className={`post-card ${post.id === highlightedPostId ? 'highlighted-post' : ''} ${post.claimed ? 'claimed-post' : ''}`}
           >
-            <p style={styles.author}>
-              <strong>{post.authorName}</strong> posted:
-              {category === 'all' && (
-                <span
-                  style={{
-                    marginLeft: 10,
-                    padding: '2px 10px',
-                    borderRadius: '12px',
-                    fontSize: '0.95em',
-                    fontWeight: 600,
-                    backgroundColor: post._type === 'lost' ? '#FF4D4D' : '#007BFF',
-                    color: '#fff',
-                    verticalAlign: 'middle',
-                  }}
-                >
-                  {post._type === 'lost' ? 'Lost Item' : 'Found Item'}
-                </span>
-              )}
-            </p>
-            {post.imageUrl && <img src={post.imageUrl} alt="Post" style={styles.image} />}
-            {/* Blocked post message for author */}
-            {post.isBlocked && post.authorId === user?.uid ? (
-              <div style={{
-                background: '#ffeaea',
-                color: '#e63946',
-                padding: '16px',
-                borderRadius: '8px',
-                margin: '12px 0',
-                fontWeight: 600,
-                fontSize: '1.1rem',
-                textAlign: 'center',
-              }}>
-                This post is blocked by the admin. 
-                Only you can see this post.
-                <div style={{ marginTop: 12 }}>
-                  <button
-                    onClick={() => handleDelete(post.id)}
-                    style={{
-                      ...styles.deleteButton,
-                      background: '#e63946',
-                      marginRight: 0,
-                    }}
-                  >
-                    Delete
+            <div className="card-header">
+              <p className="post-author">
+                {post.isAnonymous ? (
+                  <>
+                    <strong>Anonymous User</strong>
+                    <span className="anon-badge">
+                        <span role="img" aria-label="anonymous">🕵️</span> Anonymous
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <strong>{post.authorName}</strong>
+                    {post.authorId === user?.uid && (
+                      <span className="your-post-badge">Your Post</span>
+                    )}
+                  </>
+                )}
+                {post.claimed && (
+                    <span className="claimed-indicator">
+                        <span role="img" aria-label="claimed">✅</span> Claimed
+                    </span>
+                )}
+              </p>
+              <p className="post-date">{post.createdAt ? timeAgo(post.createdAt) : '...'}</p>
+
+              {/* Ellipsis Menu Button - Report Post option removed */}
+              {user?.email.endsWith('@admin.com') ? ( // Only show ellipsis if admin to allow blocking
+                <div className="ellipsis-menu-container" ref={(el) => (menuRefs.current[post.id] = el)}>
+                  <button className="ellipsis-button" onClick={(e) => handleEllipsisClick(post.id, e)}>
+                    ...
                   </button>
+                  {openMenuPostId === post.id && (
+                    <div className="ellipsis-dropdown">
+                      {user?.email.endsWith('@admin.com') && (
+                        <button onClick={() => handleBlockPost(post.id)} className="dropdown-item block-btn">Block Post</button>
+                      )}
+                    </div>
+                  )}
                 </div>
+              ) : null}
+
+            </div>
+
+            {post.imageUrl && (
+              <div className="image-container">
+                <img src={post.imageUrl} alt="Post" className="post-image" />
               </div>
-            ) : (
-              editingPostId === post.id ? (
-                <div>
-                  <textarea
-                    value={editText}
-                    onChange={(e) => setEditText(e.target.value)}
-                    style={styles.textarea}
-                  />
-                  <button onClick={() => handleEdit(post.id)} style={styles.button}>
-                    Save
-                  </button>
-                  <button
-                    onClick={() => {
-                      setEditingPostId(null);
-                      setEditText('');
-                    }}
-                    style={styles.cancelButton}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              ) : (
-                <p style={styles.text}>{post.text}</p>
-              )
             )}
-            <p style={styles.date}>{post.createdAt?.toDate().toLocaleString()}</p>
-            {post.authorId === user?.uid && !post.isBlocked && (
-              <div style={styles.actions}>
+
+            <p className="post-text">{post.text}</p>
+
+            {/* Removed: Report Confirmation Modal */}
+
+            {/* Block Confirmation Modal (Now directly in JSX) */}
+            {blockingPostId === post.id && (
+                <div className="report-modal-overlay"> {/* Reusing overlay styles */}
+                    <div className="report-modal-content">
+                        <h4 className="modal-title">Confirm Block</h4>
+                        <p className="modal-message">Are you sure you want to **block** this post? This action cannot be undone.</p>
+                        <div className="modal-actions">
+                            <button onClick={() => confirmBlockPost(post.id)} className="modal-confirm-btn modal-block-confirm-btn">Yes, Block</button>
+                            <button onClick={cancelBlockPost} className="modal-cancel-btn">No, Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="comment-toggle-area">
                 <button
-                  onClick={() => {
-                    setEditingPostId(post.id);
-                    setEditText(post.text);
-                  }}
-                  style={styles.button}
+                    onClick={() => toggleComments(post.id)}
+                    className="toggle-comments-btn"
                 >
-                  Edit
+                    {openCommentPostId === post.id ? 'Hide Comments' : `Comments (${post.comments?.length || 0})`}
                 </button>
-                <button onClick={() => handleDelete(post.id)} style={styles.deleteButton}>
-                  Delete
-                </button>
-              </div>
-            )}
-            {post.claimed && (
-              <div style={styles.claimedBadge}>Claimed</div>
-            )}
-            {post.claimed && post.authorId === user?.uid && !post.isBlocked && (
-              <button
-                onClick={() => handleUnmarkAsClaimed(post.id)}
-                style={{ ...styles.claimButton, backgroundColor: '#ffc107', color: '#333', marginLeft: 8 }}
-              >
-                Unmark as Claimed
-              </button>
-            )}
-            {!post.claimed && post.authorId === user?.uid && !post.isBlocked && (
-              <button
-                onClick={() => handleMarkAsClaimed(post.id)}
-                style={styles.claimButton}
-              >
-                Mark as Claimed
-              </button>
-            )}
-            {/* Only show comments and chat if not blocked or owner */}
-            {(!post.isBlocked || post.authorId === user?.uid) && (
-              <div style={styles.commentsSection}>
-                <h4>Comments:</h4>
+            </div>
+
+            {openCommentPostId === post.id && (
+              <div className="comments-section">
+                <h4 className="comments-title">Comments:</h4>
                 <div
                   ref={(el) => (commentsRef.current[post.id] = el)}
-                  style={{
-                    ...styles.commentsContainer,
-                    overflowY: 'auto',
-                    maxHeight: '200px',
-                  }}
+                  className="comments-container"
                 >
                   {post.comments?.length > 0 ? (
                     post.comments.map((comment, index) => (
-                      <div key={index} style={styles.comment}>
-                        <p>
-                          <strong>{comment.author}</strong>: {comment.text}
+                      <div key={index} className="comment">
+                        <p className="comment-text">
+                          <strong>{comment.author}</strong>
+                          {comment.isAnonymous && (
+                            <span className="anon-comment-badge">
+                                <span role="img" aria-label="anonymous">🕵️</span>
+                            </span>
+                          )}
+                          : {comment.text}
                         </p>
-                        <p style={styles.commentTime}>
-                          {comment.timestamp ? timeAgo(comment.timestamp.toDate()) : 'Just now'}
+                        <p className="comment-time">
+                          {comment.timestamp ? timeAgo(comment.timestamp) : 'Just now'}
                         </p>
                       </div>
                     ))
                   ) : (
-                    <p style={styles.noComments}>No comments yet.</p>
+                    <p className="no-comments">No comments yet. Be the first to comment!</p>
                   )}
                 </div>
-                <textarea
-                  placeholder="Add a comment..."
-                  value={commentTexts[post.id] || ''}
-                  onChange={(e) => handleCommentChange(post.id, e.target.value)}
-                  style={styles.textarea}
-                />
-                <button onClick={() => handleAddComment(post.id)} style={styles.button}>
-                  Add Comment
-                </button>
-                {post.authorId !== user?.uid && (
-                  <button
-                    style={{ ...styles.button, backgroundColor: '#1d3557', marginLeft: 8 }}
-                    onClick={() => handlePrivateMessage(post.authorId, post.authorName)}
-                  >
-                    Private Message
-                  </button>
+
+                {user ? (
+                    <div className="add-comment-area-wrapper">
+                        <h5 className="add-comment-heading">Add Your Comment</h5>
+                        <textarea
+                            placeholder={isSubmittingComment[post.id] ? "Sending comment..." : "Type your comment here..."}
+                            value={commentTexts[post.id] || ''}
+                            onChange={(e) => handleCommentChange(post.id, e.target.value)}
+                            className="comment-textarea"
+                            rows="3"
+                            disabled={isSubmittingComment[post.id]}
+                        />
+                        <div className="comment-options">
+                            <label htmlFor={`anonymous-comment-${post.id}`} className="anonymous-label">
+                                <input
+                                    type="checkbox"
+                                    id={`anonymous-comment-${post.id}`}
+                                    checked={isAnonymousComment}
+                                    onChange={(e) => setIsAnonymousComment(e.target.checked)}
+                                    disabled={isSubmittingComment[post.id]}
+                                />
+                                Comment as Anonymous
+                            </label>
+                            <button
+                                onClick={() => handleAddComment(post.id)}
+                                className="add-comment-btn"
+                                disabled={isSubmittingComment[post.id]}
+                            >
+                                {isSubmittingComment[post.id] ? 'Sending...' : 'Post Comment'}
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <p className="login-to-comment-message">Log in to add a comment.</p>
                 )}
               </div>
             )}
@@ -449,216 +421,5 @@ function PostFeed() {
     </div>
   );
 }
-
-const styles = {
-  feed: {
-    maxWidth: '700px',
-    margin: '40px auto',
-    padding: '32px',
-    background: 'linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%)',
-    borderRadius: '24px',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
-  },
-  title: {
-    fontSize: '2.2rem',
-    color: '#1d3557',
-    textAlign: 'center',
-    marginBottom: '32px',
-    fontWeight: 700,
-    letterSpacing: '1px',
-  },
-  categorySelector: {
-    display: 'flex',
-    justifyContent: 'center',
-    marginBottom: '24px',
-    gap: '12px',
-  },
-  categoryButton: {
-    padding: '12px 28px',
-    fontSize: '1.1rem',
-    color: '#457b9d',
-    backgroundColor: '#fff',
-    border: '1px solid #1d3557',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontWeight: 600,
-    transition: 'all 0.2s',
-  },
-  activeCategoryButton: {
-    padding: '12px 28px',
-    fontSize: '1.1rem',
-    border: '1px solid #1d3557',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontWeight: 700,
-    background: '#1d3557',
-    color: '#fff',
-    boxShadow: '0 2px 8px rgba(69,123,157,0.08)',
-  },
-  filterSelector: {
-    display: 'flex',
-    justifyContent: 'center',
-    marginBottom: '24px',
-    gap: '10px',
-  },
-  filterButton: {
-    padding: '8px 18px',
-    fontSize: '1rem',
-    color: '#457b9d',
-    backgroundColor: '#fff',
-    border: '1.5px solid #457b9d',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontWeight: 500,
-    transition: 'all 0.2s',
-  },
-  activeFilterButton: {
-    padding: '8px 18px',
-    fontSize: '1rem',
-    border: '1.5px solid #457b9d',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontWeight: 600,
-    background: '#1d3557',
-    color: '#fff',
-    boxShadow: '0 2px 8px rgba(69,123,157,0.08)',
-  },
-  postCard: {
-    background: '#fff',
-    borderRadius: '16px',
-    padding: '24px',
-    marginBottom: '24px',
-    boxShadow: '0 4px 16px rgba(69,123,157,0.10)',
-    border: '2px solid #e0e7ff',
-    transition: 'box-shadow 0.2s, border 0.2s',
-  },
-  author: {
-    fontSize: '1rem',
-    color: '#457b9d',
-    marginBottom: '8px',
-    fontWeight: 600,
-  },
-  image: {
-    width: '100%',
-    borderRadius: '12px',
-    marginBottom: '16px',
-    boxShadow: '0 2px 8px rgba(69,123,157,0.08)',
-  },
-  text: {
-    fontSize: '1.1rem',
-    margin: '12px 0',
-    color: '#22223b',
-    fontWeight: 500,
-  },
-  date: {
-    fontSize: '0.9rem',
-    color: '#adb5bd',
-    marginBottom: '8px',
-  },
-  actions: {
-    display: 'flex',
-    gap: '10px',
-    marginTop: '10px',
-  },
-  button: {
-    padding: '8px 18px',
-    fontSize: '1rem',
-    color: '#fff',
-    background: '#1d3557',
-    border: 'none',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontWeight: 600,
-    transition: 'background 0.2s',
-    marginRight: '5px',
-  },
-  deleteButton: {
-    padding: '8px 18px',
-    fontSize: '1rem',
-    color: '#fff',
-    background: '#e63946',
-    border: 'none',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontWeight: 600,
-    transition: 'background 0.2s',
-  },
-  cancelButton: {
-    padding: '8px 18px',
-    fontSize: '1rem',
-    color: '#fff',
-    background: '#1d3557',
-    border: 'none',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontWeight: 600,
-    transition: 'background 0.2s',
-  },
-  claimedBadge: {
-    display: 'inline-block',
-    padding: '6px 16px',
-    fontSize: '1rem',
-    color: '#fff',
-    background: '#70e000',
-    borderRadius: '16px',
-    marginTop: '10px',
-    fontWeight: 'bold',
-    boxShadow: '0 1px 4px rgba(56,176,0,0.10)',
-  },
-  claimButton: {
-    display: 'inline-block',
-    padding: '8px 18px',
-    fontSize: '1rem',
-    color: '#fff',
-    background: '#70e000',
-    border: 'none',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontWeight: 'bold',
-    marginTop: '10px',
-    boxShadow: '0 1px 4px rgba(56,176,0,0.10)',
-  },
-  commentsSection: {
-    marginTop: '18px',
-    backgroundColor: '#f1f3f8',
-    padding: '16px',
-    borderRadius: '10px',
-    boxShadow: '0 1px 4px rgba(69,123,157,0.04)',
-  },
-  commentsContainer: {
-    maxHeight: '150px',
-    overflowY: 'auto',
-    marginBottom: '10px',
-  },
-  comment: {
-    fontSize: '1rem',
-    color: '#495057',
-    marginBottom: '7px',
-    background: '#e9ecef',
-    borderRadius: '6px',
-    padding: '8px 12px',
-  },
-  commentTime: {
-    fontSize: '0.85rem',
-    color: '#adb5bd',
-    marginTop: '-5px',
-    marginLeft: '8px',
-  },
-  noComments: {
-    fontSize: '1rem',
-    color: '#adb5bd',
-  },
-  textarea: {
-    width: '100%',
-    height: '60px',
-    padding: '12px',
-    marginBottom: '10px',
-    fontSize: '1rem',
-    border: '1.5px solid #ced4da',
-    borderRadius: '6px',
-    outline: 'none',
-    transition: 'border-color 0.2s',
-  },
-};
 
 export default PostFeed;

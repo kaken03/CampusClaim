@@ -7,38 +7,39 @@ import './AdminDashboard.css';
 function AdminDashboard() {
   const [totalUsers, setTotalUsers] = useState(0);
   const [activeUsers, setActiveUsers] = useState(0);
-
-  // Post stats
   const [totalLost, setTotalLost] = useState(0);
   const [totalFound, setTotalFound] = useState(0);
   const [totalLostClaimed, setTotalLostClaimed] = useState(0);
   const [totalLostUnclaimed, setTotalLostUnclaimed] = useState(0);
   const [totalFoundClaimed, setTotalFoundClaimed] = useState(0);
   const [totalFoundUnclaimed, setTotalFoundUnclaimed] = useState(0);
-
   const [loading, setLoading] = useState(true);
+
+  // Get admin's school from localStorage
+  const user = JSON.parse(localStorage.getItem('user'));
+  const schoolName = user?.school;
 
   useEffect(() => {
     const fetchStats = async () => {
       setLoading(true);
       try {
-        // Users
-        const usersSnapshot = await getDocs(collection(db, 'users'));
+        // Users for this school
+        const usersSnapshot = await getDocs(collection(db, 'schools', schoolName, 'users'));
         setTotalUsers(usersSnapshot.size);
 
-        const activeQuery = query(collection(db, 'users'), where('active', '==', true));
+        const activeQuery = query(collection(db, 'schools', schoolName, 'users'), where('active', '==', true));
         const activeSnapshot = await getDocs(activeQuery);
         setActiveUsers(activeSnapshot.size);
 
-        // Lost Items
-        const lostSnapshot = await getDocs(collection(db, 'LostItems'));
+        // Lost Items for this school
+        const lostSnapshot = await getDocs(collection(db, 'schools', schoolName, 'LostItems'));
         const lostDocs = lostSnapshot.docs;
         setTotalLost(lostDocs.length);
         setTotalLostClaimed(lostDocs.filter(doc => doc.data().claimed === true).length);
         setTotalLostUnclaimed(lostDocs.filter(doc => !doc.data().claimed).length);
 
-        // Found Items
-        const foundSnapshot = await getDocs(collection(db, 'FoundItems'));
+        // Found Items for this school
+        const foundSnapshot = await getDocs(collection(db, 'schools', schoolName, 'FoundItems'));
         const foundDocs = foundSnapshot.docs;
         setTotalFound(foundDocs.length);
         setTotalFoundClaimed(foundDocs.filter(doc => doc.data().claimed === true).length);
@@ -50,8 +51,10 @@ function AdminDashboard() {
       setLoading(false);
     };
 
-    fetchStats();
-  }, []);
+    if (schoolName) {
+      fetchStats();
+    }
+  }, [schoolName]);
 
   return (
     <div>

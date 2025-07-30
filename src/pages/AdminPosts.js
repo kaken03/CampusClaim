@@ -239,7 +239,7 @@ export default function AdminPosts() {
 
         {/* Main Tabs with counts */}
         {renderMainTabs()}
-
+        
         {/* Sub-tabs for Lost/Found with counts */}
         {(mainTab === 'lost' || mainTab === 'found') && renderSubTabs()}
 

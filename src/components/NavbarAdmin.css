@@ -157,3 +157,54 @@
   color: #222;
   text-decoration: underline;
 }
+/* Hamburger Menu */
+.admin-menu-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.admin-menu-toggle div {
+  width: 25px;
+  height: 3px;
+  background: #fff;
+  transition: 0.3s;
+  border-radius: 3px;
+}
+
+/* Show on mobile */
+@media (max-width: 800px) {
+  .admin-menu-toggle {
+    display: flex;
+    margin-top: 10px;
+  }
+
+  .navbar-admin-links {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    margin-top: 1rem;
+  }
+
+  .navbar-admin-links.open {
+    display: flex;
+  }
+
+  .navbar-admin-links li {
+    margin: 0.5rem 0;
+    width: 100%;
+  }
+
+  .navbar-admin-links a {
+    width: 100%;
+    padding: 10px 0;
+    font-size: 1.1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .logout-btn {
+    width: 100%;
+    margin: 1rem 0 0;
+  }
+}

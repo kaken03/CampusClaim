@@ -1,85 +1,187 @@
-/* signup.css */
+/* signup.css - Improved Professional Design */
+
+body {
+    margin: 0;
+    /* A very subtle background for the entire page, slightly off-white */
+    background-color: #f8f9fa; 
+    font-family: 'Arial', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
 
 .signup-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background-color: #ffffff;
-  font-family: 'Arial', sans-serif;
-  padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%; /* Ensure it takes full width of its parent */
+    height: 100%; /* Full viewport height for centering */
+    /* Remove height: 100vh here as it's handled by .signup-page */
+    /* background-color is now handled by body for full page effect */
+    /* font-family is now handled by body */
 }
 
 .signup-card {
-  width: 100%;
-  max-width: 400px;
-  background-color: #fff;
-  border-radius: 12px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
-  padding: 40px;
-  text-align: center;
+    width: 100%;
+    max-width: 420px; /* Slightly increased max-width for better form layout */
+    background-color: #fff;
+    border-radius: 16px; /* Slightly more rounded corners */
+    /* Enhanced box-shadow for more depth and professionalism */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #eee; /* Subtle border for definition */
+    padding: 40px;
+    text-align: center;
+    box-sizing: border-box;
 }
 
 .signup-title {
-  font-size: 2rem;
-  color: #333;
-  margin-bottom: 10px;
+    font-size: 2.2rem; /* Slightly larger for impact */
+    color: #333;
+    margin-bottom: 10px;
+    font-weight: 700; /* Ensure bold */
+    letter-spacing: -0.03em; /* Tighter letter-spacing for a modern look */
 }
 
 .signup-subtitle {
-  font-size: 1rem;
-  color: #777;
-  margin-bottom: 30px;
+    font-size: 1.05rem; /* Slightly larger for better readability */
+    color: #777;
+    margin-bottom: 35px; /* More space below subtitle */
+    line-height: 1.5; /* Improved line height for readability */
 }
 
 .signup-form {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px; /* Increased gap for better visual separation */
 }
 
 .signup-form label {
-  text-align: left;
-  font-weight: 500;
-  color: #333;
+    text-align: left;
+    font-weight: 600; /* Slightly bolder labels */
+    color: #333;
+    margin-bottom: 4px; /* Small gap between label and input */
+    display: block; /* Ensure label takes its own line */
+    font-size: 0.95rem; /* Slightly larger label font */
 }
 
-.signup-form input {
-  padding: 10px 12px;
-  font-size: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  outline: none;
-  transition: border-color 0.3s;
+.signup-form input,
+.signup-form select { /* Added select to apply consistent styling */
+    padding: 14px 16px; /* Increased padding for larger touch targets and better aesthetics */
+    font-size: 1.05rem; /* Slightly larger text inside inputs */
+    border: 1px solid #ddd;
+    border-radius: 10px; /* More rounded input fields */
+    outline: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease; /* Smooth transitions for focus */
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05); /* Subtle inner shadow */
+    width: 100%; /* Ensure inputs take full width */
+    box-sizing: border-box; /* Include padding in input's total width */
+    -webkit-appearance: none; /* Remove default browser styling for select */
+    -moz-appearance: none;
+    appearance: none;
+    background-color: #fff; /* Ensure white background for select */
+    cursor: pointer; /* Indicate select is interactive */
 }
 
-.signup-form input:focus {
-  border-color: #007BFF;
+.signup-form input:focus,
+.signup-form select:focus {
+    border-color: #007BFF;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); /* Focus ring effect */
 }
+
+/* Custom arrow for select element (optional, but enhances consistency) */
+.signup-form select {
+    background-image: url('data:image/svg+xml;utf8,<svg fill="%23333" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 20px;
+    padding-right: 40px; /* Make space for the custom arrow */
+}
+
 
 .signup-button {
-  padding: 12px;
-  background-color: #1d3557;
-  color: white;
-  font-size: 1rem;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s;
+    padding: 15px; /* Increased padding */
+    background-color: #1d3557;
+    color: white;
+    font-size: 1.1rem; /* Slightly larger font */
+    font-weight: 700; /* Bolder text */
+    border: none;
+    border-radius: 10px; /* Consistent border-radius with inputs */
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease; /* Smooth transitions */
+    box-shadow: 0 5px 15px rgba(29, 53, 87, 0.3); /* Deeper shadow */
+    letter-spacing: 0.03em; /* Slightly spaced out text */
 }
 
+.signup-button:hover {
+    background-color: #1a2d4b; /* Slightly darker on hover */
+    transform: translateY(-2px); /* Subtle lift effect */
+    box-shadow: 0 8px 20px rgba(29, 53, 87, 0.4); /* Stronger shadow on hover */
+}
+
+.signup-button:active {
+    transform: translateY(0); /* Press down effect */
+    box-shadow: 0 3px 10px rgba(29, 53, 87, 0.2);
+}
 
 .login-prompt {
-  margin-top: 20px;
-  font-size: 0.9rem;
-  color: #555;
+    margin-top: 25px; /* More space above prompt */
+    font-size: 0.95rem; /* Slightly larger font */
+    color: #555;
+    line-height: 1.5;
 }
 
 .login-prompt a {
-  color: #007BFF;
-  text-decoration: none;
+    color: #007BFF;
+    text-decoration: none;
+    font-weight: 600; /* Bolder link text */
+    transition: color 0.3s ease, text-decoration 0.3s ease;
 }
 
 .login-prompt a:hover {
-  text-decoration: underline;
+    color: #0056b3; /* Slightly darker blue on hover */
+    text-decoration: underline;
+}
+
+.error-message {
+    color: #dc3545; /* A standard red for error messages */
+    background-color: #f8d7da; /* Light red background */
+    border: 1px solid #f5c6cb; /* Red border */
+    border-radius: 8px;
+    padding: 12px 15px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .signup-card {
+        padding: 30px 20px; /* Adjust padding for smaller screens */
+        border-radius: 12px;
+    }
+
+    .signup-title {
+        font-size: 1.8rem;
+    }
+
+    .signup-subtitle {
+        font-size: 0.95rem;
+        margin-bottom: 25px;
+    }
+
+    .signup-form {
+        gap: 15px;
+    }
+
+    .signup-form input,
+    .signup-form select {
+        padding: 12px 14px;
+        font-size: 0.95rem;
+    }
+
+    .signup-button {
+        padding: 14px;
+        font-size: 1rem;
+    }
 }

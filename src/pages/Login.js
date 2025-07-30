@@ -16,7 +16,14 @@ function Login() {
   React.useEffect(() => {
     const user = localStorage.getItem('user');
     if (user) {
-      navigate('/home');
+      const userData = JSON.parse(user);
+      if (userData.school) {
+        // Redirect to school-specific homepage
+        navigate(`/school/${userData.school}/home`);
+      } else {
+        // Fallback for users without school data
+        navigate('/home');
+      }
     }
   }, [navigate]);
 
@@ -28,13 +35,24 @@ function Login() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Fetch user role and block status from Firestore
-      const userDocRef = doc(db, 'users', user.uid);
-      const userDoc = await getDoc(userDocRef);
+      // First, try to find which school the user belongs to
+      // We'll check both CCTC and UV (add more schools as needed)
+      const schools = ['Consolatrix College of Toledo City', 'UV', 'CTU'];
+      let userData = null;
+      let userSchool = null;
 
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
+      for (const school of schools) {
+        const userDocRef = doc(db, 'schools', school, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+        
+        if (userDoc.exists()) {
+          userData = userDoc.data();
+          userSchool = school;
+          break;
+        }
+      }
 
+      if (userData && userSchool) {
         // Blocked user check
         if (userData.isBlocked) {
           setError('Your account has been blocked by the admin.');
@@ -42,7 +60,12 @@ function Login() {
           return;
         }
 
-        localStorage.setItem('user', JSON.stringify({ ...user, role: userData.role }));
+        // Store user data including school
+        localStorage.setItem('user', JSON.stringify({ 
+          ...user, 
+          role: userData.role,
+          school: userSchool 
+        }));
 
         setSuccess('Login successful!');
         setTimeout(() => {
@@ -50,11 +73,12 @@ function Login() {
           if (userData.role === 'admin') {
             navigate('/admin-dashboard');
           } else {
-            navigate('/home');
+            // Redirect to school-specific homepage
+            navigate(`/school/${userSchool}/home`);
           }
         }, 1000); // Show message for 1s, then redirect
       } else {
-        setError('No user profile found.');
+        setError('No user profile found. Please contact support.');
       }
     } catch (err) {
       if (

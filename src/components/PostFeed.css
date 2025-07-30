@@ -1,0 +1,712 @@
+/* PostFeed.css */
+
+.post-feed-container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #f0f2f5;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.post-feed-title {
+    text-align: center;
+    color: #333;
+    margin-bottom: 25px;
+    font-size: clamp(1.8em, 5vw, 2.2em);
+    font-weight: 600;
+}
+
+/* --- FILTER SELECTOR --- */
+.mp-filter-selector {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 25px;
+    padding: 10px;
+    background-color: #e9ecef;
+    border-radius: 8px;
+    flex-wrap: wrap;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.mp-filter-label {
+    align-self: center;
+    margin-right: 5px;
+    font-weight: bold;
+    color: #333;
+    white-space: nowrap;
+}
+
+.mp-filter-btn {
+    background-color: #f0f2f5;
+    color: #555;
+    padding: 8px 15px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.mp-filter-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.mp-filter-btn-active {
+    color: white;
+    font-weight: bold;
+    border-color: transparent;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.mp-filter-btn-active.mp-bg-default { background-color: #7f8c8d; }
+.mp-filter-btn-active.mp-bg-default:hover { background-color: #6c7a89; }
+.mp-filter-btn-active.mp-bg-green { background-color: #28a745; }
+.mp-filter-btn-active.mp-bg-green:hover { background-color: #218838; }
+.mp-filter-btn-active.mp-bg-red { background-color: #e74c3c; }
+
+/* --- END FILTER SELECTOR --- */
+
+.no-posts-message {
+    text-align: center;
+    color: #666;
+    padding: 30px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    margin-top: 20px;
+    font-size: 1.1em;
+}
+
+/* Individual Post Card */
+.post-card {
+    background-color: #ffffff;
+    border-left: 5px solid #e74c3c;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    padding: 20px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    position: relative;
+}
+
+.post-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.highlighted-post {
+    animation: highlightFade 3s ease-out forwards;
+    border: 2px solid #f1c40f;
+    box-shadow: 0 0 15px rgba(241, 196, 15, 0.6);
+}
+
+@keyframes highlightFade {
+    0% { background-color: #fffacd; border-color: #f1c40f; }
+    50% { background-color: #fffacd; border-color: #f1c40f; }
+    100% { background-color: #ffffff; border-color: #e74c3c; box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1); }
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+    gap: 10px;
+    position: relative;
+}
+
+.post-author {
+    font-size: 1.1em;
+    color: #333;
+    margin: 0;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.your-post-badge {
+    background-color: #5d7fa3;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.anon-badge, .claimed-indicator {
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.85em;
+    font-weight: 600;
+    color: white;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.anon-badge {
+    background-color: #7f8c8d;
+}
+
+.claimed-indicator {
+    background-color: #27ae60;
+}
+
+.post-date {
+    font-size: 0.9em;
+    color: #888;
+    margin: 0;
+    margin-left: auto;
+}
+
+/* --- Ellipsis Menu Styles --- */
+.ellipsis-menu-container {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 10;
+}
+
+.ellipsis-button {
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #555;
+    cursor: pointer;
+    padding: 0 5px;
+    line-height: 1;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.ellipsis-button:hover {
+    background-color: #e0e0e0;
+    color: #333;
+}
+
+.ellipsis-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 150px;
+    display: flex;
+    flex-direction: column;
+    padding: 5px 0;
+    transform-origin: top right;
+    animation: fadeIn 0.15s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95) translateY(-5px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.dropdown-item {
+    background: none;
+    border: none;
+    text-align: left;
+    padding: 10px 15px;
+    width: 100%;
+    color: #333;
+    font-size: 0.95em;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    white-space: nowrap;
+}
+
+.dropdown-item:hover {
+    background-color: #f0f0f0;
+}
+
+.dropdown-item.report-btn {
+    color: #e74c3c;
+}
+
+.dropdown-item.report-btn:hover {
+    background-color: #ffe0e0;
+}
+
+.dropdown-item.block-btn {
+    color: #c0392b;
+}
+
+.dropdown-item.block-btn:hover {
+    background-color: #ffd0d0;
+}
+/* --- END Ellipsis Menu Styles --- */
+
+
+/* Image section within post card */
+.image-container {
+    margin-bottom: 15px;
+    text-align: center;
+    overflow: hidden;
+    border-radius: 8px;
+    background-color: #f5f5f5;
+    min-height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.post-image {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 8답;
+    object-fit: contain;
+    max-height: 500px;
+}
+
+/* Post text content */
+.post-text {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #333;
+    margin-bottom: 20px;
+    white-space: pre-wrap;
+}
+
+/* --- Modal Styles for Report/Block Confirmation --- */
+.report-modal-overlay {
+    position: fixed; /* Use fixed to cover the whole viewport */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Ensure it's on top of everything */
+    animation: fadeInOverlay 0.2s ease-out;
+}
+
+@keyframes fadeInOverlay {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.report-modal-content {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    max-width: 450px; /* Limit modal width */
+    width: 90%; /* Responsive width */
+    text-align: center;
+    animation: scaleIn 0.2s ease-out;
+    position: relative; /* For consistency with existing design, remove if full screen modal is desired */
+}
+
+@keyframes scaleIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+
+.modal-title {
+    font-size: 1.6em;
+    color: #333;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.modal-message {
+    font-size: 1em;
+    color: #555;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.modal-textarea {
+    width: calc(100% - 20px); /* Adjust for padding */
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 0.95em;
+    font-family: inherit;
+    resize: vertical; /* Allow vertical resizing */
+    min-height: 80px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.modal-textarea:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    outline: none;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.modal-confirm-btn, .modal-cancel-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.modal-confirm-btn {
+    background-color: #28a745; /* Green for confirm */
+    color: white;
+}
+
+.modal-confirm-btn:hover {
+    background-color: #218838;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.modal-block-confirm-btn { /* Specific style for block confirm */
+    background-color: #e74c3c; /* Red for block */
+}
+
+.modal-block-confirm-btn:hover {
+    background-color: #c0392b;
+}
+
+.modal-cancel-btn {
+    background-color: #95a5a6; /* Grey for cancel */
+    color: white;
+}
+
+.modal-cancel-btn:hover {
+    background-color: #7f8c8d;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+/* --- END Modal Styles --- */
+
+.comment-toggle-area {
+    margin-left: auto;
+    width: 100%;
+    text-align: center;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.toggle-comments-btn {
+    background-color: #555;
+    color: white;
+    padding: 8px 18px;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.95em;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.toggle-comments-btn:hover {
+    background-color: #333;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.toggle-comments-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+.comments-section {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.comments-title {
+    font-size: 1.3em;
+    color: #555;
+    margin-bottom: 15px;
+    padding-left: 5px;
+}
+
+.comments-container {
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    margin-bottom: 15px;
+}
+
+.comment {
+    background-color: #fff;
+    padding: 10px 15px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 8px;
+    border-radius: 5px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.comment:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.comment-text {
+    font-size: 0.95em;
+    color: #333;
+    margin: 0 0 5px 0;
+}
+
+.comment-text strong {
+    color: #2c3e50;
+}
+
+.comment-time {
+    font-size: 0.8em;
+    color: #999;
+    text-align: right;
+}
+
+.no-comments {
+    text-align: center;
+    color: #777;
+    padding: 15px;
+    font-style: italic;
+}
+
+.anon-comment-badge {
+    margin-left: 5px;
+    font-size: 0.8em;
+    color: #888;
+}
+
+.add-comment-area-wrapper {
+    background-color: #f0f8ff;
+    border: 1px solid #d0e8ff;
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.add-comment-heading {
+    font-size: 1.1em;
+    color: #444;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.comment-textarea {
+    width: calc(100% - 20px);
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1em;
+    line-height: 1.5;
+    resize: vertical;
+    min-height: 60px;
+    margin-bottom: 10px;
+    font-family: inherit;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.comment-textarea:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    outline: none;
+}
+
+.comment-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.anonymous-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9em;
+    color: #555;
+    cursor: pointer;
+}
+
+.anonymous-label input[type="checkbox"] {
+    transform: scale(1.1);
+}
+
+.add-comment-btn {
+    background-color: #3498db;
+    padding: 8px 18px;
+    font-size: 0.95em;
+}
+
+.add-comment-btn:hover {
+    background-color: #2980b9;
+}
+
+.login-to-comment-message {
+    text-align: center;
+    color: #777;
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #f2f2f2;
+    border-radius: 5px;
+    font-size: 0.95em;
+}
+
+/* --- Responsive Adjustments --- */
+
+@media (max-width: 768px) {
+    .post-feed-container {
+        padding: 15px;
+        margin: 10px auto;
+    }
+
+    .post-feed-title {
+        font-size: 1.6em;
+    }
+
+    .card-header {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .post-author {
+        flex-basis: 100%;
+        order: 1;
+        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .anon-badge, .claimed-indicator {
+        order: 2;
+        flex-shrink: 0;
+    }
+
+    .post-date {
+        order: 3;
+        margin-left: 0;
+        width: 100%;
+        text-align: left;
+        font-size: 0.85em;
+    }
+
+    /* Adjust ellipsis button position for smaller screens */
+    .ellipsis-menu-container {
+        position: static;
+        margin-left: auto;
+        top: auto;
+        right: auto;
+    }
+    .ellipsis-dropdown {
+        right: 0;
+        left: auto;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .modal-confirm-btn, .modal-cancel-btn {
+        width: 100%;
+    }
+
+    .mp-filter-selector {
+        flex-direction: column;
+        align-items: center;
+    }
+    .mp-filter-btn {
+        width: 100%;
+        max-width: 200px;
+    }
+    .mp-filter-label {
+        width: 100%;
+        text-align: center;
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+
+    .comment-toggle-area {
+        margin-left: 0;
+        width: 100%;
+        text-align: center;
+    }
+
+    .toggle-comments-btn {
+        width: 100%;
+    }
+
+    .comment-options {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .post-feed-container {
+        padding: 10px;
+    }
+
+    .post-feed-title {
+        font-size: 1.4em;
+        margin-bottom: 20px;
+    }
+
+    .post-card {
+        padding: 15px;
+    }
+
+    .card-header {
+        display: flex; /* Make it a flex container */
+        align-items: center; /* Vertically align items in the middle */
+        flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        margin-bottom: 15px;
+        gap: 10px; /* Space between flex items */
+        /* Remove position: relative here if it's not needed for other elements. */
+        /* If you only need it for the ellipsis menu, then we'll adjust the ellipsis position */
+        position: relative; /* Keep this if you want the ellipsis positioned absolutely *within* the header */
+    }
+    .anon-badge, .claimed-indicator {
+        font-size: 0.8em;
+        padding: 4px 8px;
+    }
+
+    .comment-textarea {
+        min-height: 50px;
+    }
+
+    .report-modal-content {
+        padding: 20px;
+    }
+    .modal-title {
+        font-size: 1.4em;
+    }
+}

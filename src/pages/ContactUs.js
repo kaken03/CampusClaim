@@ -123,10 +123,6 @@ function ContactUs() {
               <h3>Phone</h3>
               <p><a href="tel:+63 916 5644 986">+63 916 5644 986</a></p>
             </div>
-            <div className="info-item">
-              <h3>Business Hours</h3>
-              <p>Monday - Friday: 9:00 AM - 5:00 PM</p>
-            </div>
           </div>
         </section>
       </div>

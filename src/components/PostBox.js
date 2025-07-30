@@ -2,192 +2,145 @@ import React, { useState } from 'react';
 import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { uploadToCloudinary } from '../utils/uploadToCloudinary'; // ✅ Use the external one
+import { uploadToCloudinary } from '../utils/uploadToCloudinary';
+import './PostBox.css'; // Ensure this CSS file is used for PostBox
 
-function PostBox() {
+function PostBox({ schoolName }) {
   const [text, setText] = useState('');
   const [image, setImage] = useState(null);
-  const [postType, setPostType] = useState('lost');
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [isAnonymous, setIsAnonymous] = useState(false); // New state for anonymity
+  const [selectedFileName, setSelectedFileName] = useState(''); // State for displaying file name
 
   const auth = getAuth();
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setImage(file);
+    setSelectedFileName(file ? file.name : ''); // Update file name for display
+  };
+
   const handlePost = async () => {
-    if (!text.trim() && !image) return;
+    if (!text.trim() && !image) {
+      alert('Please provide a description or photo for your lost item.');
+      return;
+    }
 
     setLoading(true);
     setProgress(0);
 
     try {
       let imageUrl = '';
-
       if (image) {
-        const uploadStart = Date.now();
-        imageUrl = await uploadToCloudinary(image); // ✅ Using external utility
-
-        const uploadDuration = Date.now() - uploadStart;
+        // Assume uploadToCloudinary now accepts a progress callback if you want real-time updates
+        // For simplicity, we'll just set it to 100% after upload for this example
+        imageUrl = await uploadToCloudinary(image);
         setProgress(100);
-        console.log('Image uploaded in', uploadDuration, 'ms:', imageUrl);
       }
 
       const user = auth.currentUser;
-      const displayName = user?.displayName || 'Anonymous';
-      const collectionName = postType === 'lost' ? 'LostItems' : 'FoundItems';
+      const authorName = isAnonymous ? 'Anonymous' : (user?.displayName || 'Anonymous'); // Use displayName if not anonymous
+      const authorId = user?.uid || null;
 
-      await addDoc(collection(db, collectionName), {
+      await addDoc(collection(db, 'schools', schoolName, 'LostItems'), {
         text,
         imageUrl,
         createdAt: serverTimestamp(),
-        authorName: displayName,
-        authorId: user?.uid,
-        type: postType,
+        authorName: authorName, // Use the determined author name
+        authorId: authorId,
+        type: 'lost', // Explicitly setting type as 'lost'
+        school: schoolName,
+        isAnonymous: isAnonymous, // Save the anonymity preference
       });
 
+      // Reset form
       setText('');
       setImage(null);
-      setPostType('lost');
-      alert('Post submitted!');
+      setSelectedFileName(''); // Clear displayed file name
+      setIsAnonymous(false); // Reset anonymity checkbox
+      alert('Lost item posted! Good luck finding your item.');
     } catch (err) {
       console.error('Post error:', err);
-      alert('Failed to post. Try again.');
+      alert('Failed to post. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={styles.container}>
-      <h2 style={styles.title}>Create a Post</h2>
+    <div className="post-box-container">
+      <h2 className="post-box-title">Report a Lost Item</h2>
+
+      <p className="post-box-educate-message">
+        <span role="img" aria-label="info" className="info-icon">ℹ️</span>
+        <b>Did you find something?</b> Please bring all found items directly to the <b className="highlight-text">Lost &amp; Found Office</b>.<br />
+        <span className="post-box-office-line">
+          Only Lost &amp; Found staff are allowed to post found items for everyone's safety and security.
+        </span>
+      </p>
+
       <textarea
-        placeholder="Describe the lost or found item..."
+        className="post-box-textarea"
+        placeholder="Describe your lost item in detail (color, brand, model, where you lost it, etc.)..."
         value={text}
         onChange={(e) => setText(e.target.value)}
-        style={styles.textarea}
         disabled={loading}
       />
-      <input
-        type="file"
-        onChange={(e) => setImage(e.target.files[0])}
-        disabled={loading}
-        style={styles.fileInput}
-      />
+
+      {/* File Input */}
+      <div className="post-box-file-upload-section">
+        <label htmlFor="file-upload" className="custom-file-upload-btn">
+          Choose Image
+        </label>
+        <input
+          id="file-upload"
+          type="file"
+          accept="image/*" // Restrict to image files
+          onChange={handleFileChange}
+          disabled={loading}
+        />
+        <span className="file-name-display">{selectedFileName || 'No file chosen'}</span>
+        {image && (
+          <button className="clear-image-btn" onClick={() => {setImage(null); setSelectedFileName('');}}>X</button>
+        )}
+      </div>
+
+
       {loading && image && (
-        <div style={styles.progressContainer}>
-          <p style={styles.progressText}>Uploading: {Math.round(progress)}%</p>
-          <div style={styles.progressBar}>
-            <div style={{ ...styles.progressFill, width: `${progress}%` }}></div>
+        <div className="post-box-progress-container">
+          <p className="post-box-progress-text">Uploading: {Math.round(progress)}%</p>
+          <div className="post-box-progress-bar">
+            <div
+              className="post-box-progress-fill"
+              style={{ width: `${progress}%` }}
+            ></div>
           </div>
         </div>
       )}
-      <div style={styles.radioGroup}>
-        <label style={styles.radioLabel}>
-          <input
-            type="radio"
-            value="lost"
-            checked={postType === 'lost'}
-            onChange={(e) => setPostType(e.target.value)}
-            disabled={loading}
-            style={styles.radioInput}
-          />
-          Lost Item
-        </label>
-        <label style={styles.radioLabel}>
-          <input
-            type="radio"
-            value="found"
-            checked={postType === 'found'}
-            onChange={(e) => setPostType(e.target.value)}
-            disabled={loading}
-            style={styles.radioInput}
-          />
-          Found Item
-        </label>
+
+      {/* Anonymous Checkbox */}
+      <div className="post-box-anon-option">
+        <input
+          type="checkbox"
+          id="anonymous-post"
+          className="custom-checkbox"
+          checked={isAnonymous}
+          onChange={(e) => setIsAnonymous(e.target.checked)}
+          disabled={loading}
+        />
+        <label htmlFor="anonymous-post" className="checkbox-label-text">Post Anonymously</label>
       </div>
-      <button onClick={handlePost} style={styles.button} disabled={loading}>
-        {loading ? 'Posting...' : 'Post'}
+
+      <button
+        className="post-box-button"
+        onClick={handlePost}
+        disabled={loading}
+      >
+        {loading ? 'Posting...' : 'Post Lost Item'}
       </button>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    background: '#fff',
-    borderRadius: '12px',
-    padding: '20px',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-    marginBottom: '20px',
-    maxWidth: '600px',
-    margin: '0 auto',
-  },
-  title: {
-    fontSize: '1.5rem',
-    color: '#333',
-    marginBottom: '15px',
-    textAlign: 'center',
-  },
-  textarea: {
-    width: '95%',
-    height: '120px',
-    padding: '12px',
-    marginBottom: '15px',
-    fontSize: '1rem',
-    border: '1px solid #ddd',
-    borderRadius: '8px',
-    outline: 'none',
-    resize: 'none',
-    boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.05)',
-    transition: 'border-color 0.3s ease',
-  },
-  fileInput: {
-    display: 'block',
-    marginBottom: '15px',
-    fontSize: '1rem',
-    width: '95%',
-  },
-  progressContainer: {
-    marginBottom: '15px',
-  },
-  progressText: {
-    fontSize: '0.9rem',
-    marginBottom: '5px',
-  },
-  progressBar: {
-    height: '8px',
-    backgroundColor: '#eee',
-    borderRadius: '4px',
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#007BFF',
-    transition: 'width 0.4s ease',
-  },
-  radioGroup: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    marginBottom: '15px',
-  },
-  radioLabel: {
-    fontSize: '1rem',
-    color: '#333',
-  },
-  radioInput: {
-    marginRight: '8px',
-  },
-  button: {
-    display: 'block',
-    width: '100%',
-    padding: '12px',
-    fontSize: '1rem',
-    color: '#fff',
-    background: '#1d3557',
-    border: 'none',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    transition: 'background-color 0.3s ease',
-  },
-};
 
 export default PostBox;

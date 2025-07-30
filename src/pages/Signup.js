@@ -12,6 +12,7 @@ function Signup() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
+  const [school, setSchool] = useState('');
   const navigate = useNavigate();
   const auth = getAuth();
 
@@ -26,12 +27,13 @@ function Signup() {
         displayName: name,
       });
 
-      // Save user info to Firestore
-    await setDoc(doc(db, 'users', user.uid), {
-      fullName: name,
-      email: user.email,
-      createdAt: new Date()
-    });
+      // Save user info to Firestore under the school's users subcollection
+      await setDoc(doc(db, 'schools', school, 'users', user.uid), {
+        fullName: name,
+        email: user.email,
+        school: school,
+        createdAt: new Date()
+      });
 
       await auth.updateCurrentUser(user); // optional but safe
 
@@ -79,6 +81,19 @@ function Signup() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+
+            <label>School</label>
+            <select
+              value={school}
+              onChange={e => setSchool(e.target.value)}
+              required
+            >
+              <option value="">Select your school</option>
+              <option value="Consolatrix College of Toledo City">Consolatrix College of Toledo City</option>
+              <option value="UV">UV</option>
+              <option value="CTU">CTU</option>
+              {/* Add more schools as needed */}
+            </select>
 
             <button type="submit" className="signup-button">Sign Up</button>
 

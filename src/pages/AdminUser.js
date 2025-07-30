@@ -9,16 +9,13 @@ export default function AdminUser() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState('users'); // 'admins' or 'users'
+  const [activeTab, setActiveTab] = useState('users');
   const [currentUserId, setCurrentUserId] = useState(null);
 
   useEffect(() => {
-    // Get current logged in user's UID
     const auth = getAuth();
     const unsubscribe = auth.onAuthStateChanged(user => {
-      if (user) {
-        setCurrentUserId(user.uid);
-      }
+      if (user) setCurrentUserId(user.uid);
     });
     return () => unsubscribe();
   }, []);
@@ -45,7 +42,6 @@ export default function AdminUser() {
     }
   };
 
-  // Simple search filter
   const filteredUsers = users.filter(
     user =>
       user.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -53,60 +49,56 @@ export default function AdminUser() {
       user.id?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Separate admins and regular users
   const admins = filteredUsers.filter(user => user.role?.toLowerCase() === 'admin');
   const regularUsers = filteredUsers.filter(user => !user.role || user.role?.toLowerCase() !== 'admin');
 
-  // ---- Active status logic ----
   const now = Date.now();
-  // Consider users active if lastActive is within 5 minutes (300000 ms)
   const ACTIVE_THRESHOLD_MS = 5 * 60 * 1000;
 
   function getUserStatus(user) {
     const lastActiveTime =
-      typeof user.lastActive === 'object' && user.lastActive.seconds
+      typeof user.lastActive === 'object' && user.lastActive?.seconds
         ? user.lastActive.seconds * 1000
         : typeof user.lastActive === 'number'
           ? user.lastActive
           : null;
-    // Optionally, you may want to ignore blocked users for "active" count
     if (user.isBlocked) return 'Blocked';
     if (lastActiveTime && now - lastActiveTime < ACTIVE_THRESHOLD_MS) return 'Active';
     return 'Inactive';
   }
 
-  // Stats
   const totalUsers = users.length;
   const activeUsers = users.filter(
     user => !user.isBlocked && (
-      (typeof user.lastActive === 'object' && user.lastActive.seconds && (now - user.lastActive.seconds * 1000 < ACTIVE_THRESHOLD_MS))
+      (typeof user.lastActive === 'object' && user.lastActive?.seconds && (now - user.lastActive.seconds * 1000 < ACTIVE_THRESHOLD_MS))
       ||
       (typeof user.lastActive === 'number' && (now - user.lastActive < ACTIVE_THRESHOLD_MS))
     )
   ).length;
 
-  // Table rendering helper
-  function renderTable(group, isAdminTable = false) {
+  // RESPONSIVE: If mobile, show cards instead of table
+  function renderCards(group, isAdminTable = false) {
     return (
-      <table className="admin-users-table">
-        <thead>
-          <tr>
-            <th>User ID</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Status</th>
-            <th>Role</th>
-            <th>Registered</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {group.map(user => (
-            <tr key={user.id} className={user.isBlocked ? 'user-blocked-row' : ''}>
-              <td>{user.id}</td>
-              <td>{user.name || '-'}</td>
-              <td>{user.email || '-'}</td>
-              <td>
+      <div className="admin-users-cards">
+        {group.length === 0 ? (
+          <div className="admin-users-card-empty">No users found.</div>
+        ) : (
+          group.map(user => (
+            <div key={user.id} className={`admin-users-card ${user.isBlocked ? 'user-blocked-card' : ''}`}>
+              <div className="admin-users-card-row">
+                <span className="admin-users-card-label">User ID:</span>
+                <span className="admin-users-card-value">{user.id}</span>
+              </div>
+              <div className="admin-users-card-row">
+                <span className="admin-users-card-label">Name:</span>
+                <span className="admin-users-card-value">{user.name || '-'}</span>
+              </div>
+              <div className="admin-users-card-row">
+                <span className="admin-users-card-label">Email:</span>
+                <span className="admin-users-card-value">{user.email || '-'}</span>
+              </div>
+              <div className="admin-users-card-row">
+                <span className="admin-users-card-label">Status:</span>
                 <span className={
                   getUserStatus(user) === 'Blocked' ? 'status-blocked' :
                   getUserStatus(user) === 'Active' ? 'status-active' :
@@ -114,10 +106,16 @@ export default function AdminUser() {
                 }>
                   {getUserStatus(user)}
                 </span>
-              </td>
-              <td>{user.role || 'User'}</td>
-              <td>{user.createdAt?.seconds ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : '-'}</td>
-              <td>
+              </div>
+              <div className="admin-users-card-row">
+                <span className="admin-users-card-label">Role:</span>
+                <span className="admin-users-card-value">{user.role || 'User'}</span>
+              </div>
+              <div className="admin-users-card-row">
+                <span className="admin-users-card-label">Registered:</span>
+                <span className="admin-users-card-value">{user.createdAt?.seconds ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : '-'}</span>
+              </div>
+              <div className="admin-users-card-actions">
                 {isAdminTable && user.id === currentUserId ? (
                   <span style={{ color: "#888" }}>It's You</span>
                 ) : (
@@ -136,18 +134,85 @@ export default function AdminUser() {
                     </button>
                   </>
                 )}
-              </td>
-            </tr>
-          ))}
-          {group.length === 0 && (
-            <tr>
-              <td colSpan={7} style={{ textAlign: 'center', color: '#777' }}>
-                No users found.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    );
+  }
+
+  // Table or card depending on screen width
+  function renderTableOrCards(group, isAdminTable = false) {
+    // Use CSS to show/hide table/cards, always render both for simplicity
+    return (
+      <>
+        <div className="admin-users-table-wrapper">
+          <table className="admin-users-table">
+            <thead>
+              <tr>
+                <th>User ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Role</th>
+                <th>Registered</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {group.map(user => (
+                <tr key={user.id} className={user.isBlocked ? 'user-blocked-row' : ''}>
+                  <td>{user.id}</td>
+                  <td>{user.name || '-'}</td>
+                  <td>{user.email || '-'}</td>
+                  <td>
+                    <span className={
+                      getUserStatus(user) === 'Blocked' ? 'status-blocked' :
+                      getUserStatus(user) === 'Active' ? 'status-active' :
+                      'status-inactive'
+                    }>
+                      {getUserStatus(user)}
+                    </span>
+                  </td>
+                  <td>{user.role || 'User'}</td>
+                  <td>{user.createdAt?.seconds ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : '-'}</td>
+                  <td>
+                    {isAdminTable && user.id === currentUserId ? (
+                      <span style={{ color: "#888" }}>It's You</span>
+                    ) : (
+                      <>
+                        <button
+                          className={user.isBlocked ? 'unblock-btn' : 'block-btn'}
+                          onClick={() => handleBlock(user.id, user.isBlocked)}
+                        >
+                          {user.isBlocked ? 'Unblock' : 'Block'}
+                        </button>
+                        <button
+                          className="delete-btn"
+                          onClick={() => handleDelete(user.id)}
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))}
+              {group.length === 0 && (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: 'center', color: '#777' }}>
+                    No users found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="admin-users-cards-wrapper">
+          {renderCards(group, isAdminTable)}
+        </div>
+      </>
     );
   }
 
@@ -156,8 +221,9 @@ export default function AdminUser() {
       <Navbar />
       <div className="admin-users-container">
         <h2>User & Admin Management</h2>
-        <div style={{ marginBottom: 18, fontWeight: 600, color: '#263238' }}>
-          Total Users: {totalUsers} | Active Users: {activeUsers}
+        <div className="admin-users-stats">
+          <span>Total Users: <b>{totalUsers}</b></span>
+          <span>Active Users: <b>{activeUsers}</b></span>
         </div>
         <input
           className="admin-user-search"
@@ -166,8 +232,6 @@ export default function AdminUser() {
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
-
-        {/* Tabs */}
         <div className="admin-user-tabs">
           <button
             className={activeTab === 'users' ? 'tab-btn active' : 'tab-btn'}
@@ -182,21 +246,20 @@ export default function AdminUser() {
             Admins
           </button>
         </div>
-
         {loading ? (
           <div className="admin-user-loading">Loading users...</div>
         ) : (
           <>
             {activeTab === 'admins' && (
               <>
-                <h3 style={{ marginTop: '24px' }}>Admins</h3>
-                {renderTable(admins, true)}
+                <h3 className="admin-users-group-title">Admins</h3>
+                {renderTableOrCards(admins, true)}
               </>
             )}
             {activeTab === 'users' && (
               <>
-                <h3 style={{ marginTop: '24px' }}>Users</h3>
-                {renderTable(regularUsers, false)}
+                <h3 className="admin-users-group-title">Users</h3>
+                {renderTableOrCards(regularUsers, false)}
               </>
             )}
           </>
