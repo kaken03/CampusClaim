@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, where, getDocs, updateDoc, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import NavbarAdmin from '../components/NavbarAdmin';
+import './AdminApproval.css';
 
 function AdminApproval() {
-  const [pendingFound, setPendingFound] = useState([]);
+  const [pendingUsers, setPendingUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionMessage, setActionMessage] = useState('');
   const user = JSON.parse(localStorage.getItem('user'));
@@ -15,36 +16,36 @@ function AdminApproval() {
       setLoading(true);
       try {
         const q = query(
-          collection(db, 'schools', schoolName, 'FoundItems'),
-          where('status', '==', 'pending')
+          collection(db, 'schools', schoolName, 'users'),
+          where('verificationStatus', '==', 'pending')
         );
         const snapshot = await getDocs(q);
-        setPendingFound(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        setPendingUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       } catch (err) {
-        setActionMessage('Error loading pending items.');
+        setActionMessage('Error loading pending verifications.');
       }
       setLoading(false);
     };
     if (schoolName) fetchPending();
   }, [schoolName]);
 
-  const approveItem = async (itemId) => {
+  const approveUser = async (userId) => {
     try {
-      await updateDoc(doc(db, 'schools', schoolName, 'FoundItems', itemId), { status: 'approved' });
-      setPendingFound(pendingFound.filter(item => item.id !== itemId));
-      setActionMessage('Item approved.');
+      await updateDoc(doc(db, 'schools', schoolName, 'users', userId), { verificationStatus: 'verified' });
+      setPendingUsers(pendingUsers.filter(u => u.id !== userId));
+      setActionMessage('User approved.');
     } catch (err) {
-      setActionMessage('Error approving item.');
+      setActionMessage('Error approving user.');
     }
   };
 
-  const rejectItem = async (itemId) => {
+  const rejectUser = async (userId) => {
     try {
-      await deleteDoc(doc(db, 'schools', schoolName, 'FoundItems', itemId));
-      setPendingFound(pendingFound.filter(item => item.id !== itemId));
-      setActionMessage('Item rejected and removed.');
+      await updateDoc(doc(db, 'schools', schoolName, 'users', userId), { verificationStatus: 'rejected' });
+      setPendingUsers(pendingUsers.filter(u => u.id !== userId));
+      setActionMessage('User rejected.');
     } catch (err) {
-      setActionMessage('Error rejecting item.');
+      setActionMessage('Error rejecting user.');
     }
   };
 
@@ -52,24 +53,29 @@ function AdminApproval() {
     <>
       <NavbarAdmin />
       <div className="admin-approval-container">
-        <h2>Pending Found Items</h2>
+        <h2>Pending User Verifications</h2>
         {actionMessage && <div className="admin-approval-message">{actionMessage}</div>}
         {loading ? (
           <div>Loading...</div>
-        ) : pendingFound.length === 0 ? (
-          <p>No items pending approval.</p>
+        ) : pendingUsers.length === 0 ? (
+          <p>No users pending verification.</p>
         ) : (
           <div className="approval-list">
-            {pendingFound.map(item => (
-              <div className="approval-card" key={item.id}>
-                <p><strong>Title:</strong> {item.title}</p>
-                <p><strong>Description:</strong> {item.description}</p>
-                {item.imageUrl && (
-                  <img src={item.imageUrl} alt="Found item" style={{ maxWidth: 200, marginBottom: 8 }} />
+            {pendingUsers.map(user => (
+              <div className="approval-card" key={user.id}>
+                <p><strong>Name:</strong> {user.fullName}</p>
+                <p><strong>Email:</strong> {user.email}</p>
+                {user.verificationRequest && (
+                  <div style={{ marginBottom: 8 }}>
+                    <strong>Request Details:</strong>
+                    <pre style={{ background: "#f4f4f4", padding: 8, borderRadius: 4 }}>
+                      {JSON.stringify(user.verificationRequest, null, 2)}
+                    </pre>
+                  </div>
                 )}
                 <div className="approval-actions">
-                  <button onClick={() => approveItem(item.id)} className="approve-btn">Approve</button>
-                  <button onClick={() => rejectItem(item.id)} className="reject-btn">Reject</button>
+                  <button onClick={() => approveUser(user.id)} className="approve-btn">Approve</button>
+                  <button onClick={() => rejectUser(user.id)} className="reject-btn">Reject</button>
                 </div>
               </div>
             ))}

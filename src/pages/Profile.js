@@ -3,6 +3,7 @@ import { getAuth, updateProfile, updateEmail } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import NavbarHome from '../components/NavbarHome';
+import VerificationForm from '../components/VerificationForm';
 import './Profile.css';
 
 function Profile() {
@@ -11,191 +12,223 @@ function Profile() {
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [role, setRole] = useState(''); // No default role!
-  const [course, setCourse] = useState('');
-  const [year, setYear] = useState('');
-  const [department, setDepartment] = useState('');
-  const [location, setLocation] = useState('');
+  const [verificationStatus, setVerificationStatus] = useState('');
+  const [showVerifyForm, setShowVerifyForm] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [schoolName, setSchoolName] = useState('');
+  const [loadingSchool, setLoadingSchool] = useState(true);
 
-  const fetchUserData = useCallback(async () => {
-    if (user) {
-      const userRef = doc(db, 'users', user.uid);
-      const docSnap = await getDoc(userRef);
-      const data = docSnap.data() || {};
-      setFullName(data.fullName || user.displayName || '');
-      setEmail(data.email || user.email || '');
-      setPhone(data.phone || '');
-      setRole(data.role || ''); // No default student!
-      setCourse(data.course || '');
-      setYear(data.year || '');
-      setDepartment(data.department || '');
-      setLocation(data.location || '');
+  // 1. Read school from localStorage on mount
+  useEffect(() => {
+    const localUser = localStorage.getItem('user');
+    if (localUser) {
+      const userData = JSON.parse(localUser);
+      if (userData.school) {
+        setSchoolName(userData.school);
+      }
     }
-  }, [user]);
+  }, []);
+
+  // 2. Fetch user profile from the school's users subcollection
+  const fetchUserData = useCallback(async () => {
+    if (user && schoolName) {
+      setLoadingSchool(true);
+      const schoolUserRef = doc(db, 'schools', schoolName, 'users', user.uid);
+      const schoolUserSnap = await getDoc(schoolUserRef);
+      const schoolUserData = schoolUserSnap.exists() ? schoolUserSnap.data() : {};
+
+      setFullName(
+        schoolUserData.fullName !== undefined && schoolUserData.fullName !== ''
+          ? schoolUserData.fullName
+          : user.displayName || ''
+      );
+      setEmail(
+        schoolUserData.email !== undefined && schoolUserData.email !== ''
+          ? schoolUserData.email
+          : user.email || ''
+      );
+      setVerificationStatus(schoolUserData.verificationStatus || '');
+      setLoadingSchool(false);
+    }
+  }, [user, schoolName]);
 
   useEffect(() => {
     fetchUserData();
   }, [fetchUserData]);
 
   const handleUpdate = async () => {
-    if (!user) return;
-
+    if (!user || !schoolName) {
+      alert('Missing user or school name!');
+      return;
+    }
     try {
       await updateProfile(user, { displayName: fullName });
       if (email !== user.email) {
         await updateEmail(user, email);
       }
-
-      const userRef = doc(db, 'users', user.uid);
-      await setDoc(userRef, {
-        fullName,
-        email,
-        phone,
-        role,
-        course: role === 'student' ? course : '',
-        year: role === 'student' ? year : '',
-        department: role === 'teacher' ? department : '',
-        location,
-      }, { merge: true });
+      // Update school subcollection
+      const schoolUserRef = doc(db, 'schools', schoolName, 'users', user.uid);
+      await setDoc(schoolUserRef, { fullName, email }, { merge: true });
+      // Update top-level users collection (optional, keeps things in sync)
+      const topUserRef = doc(db, 'users', user.uid);
+      await setDoc(topUserRef, { fullName, email, school: schoolName }, { merge: true });
 
       alert('Profile updated successfully!');
-      setIsEditing(false);
-      fetchUserData(); // Refresh data
+      fetchUserData();
     } catch (error) {
       alert('Error updating profile: ' + error.message);
     }
   };
 
   return (
-    <div className="profile-page">
+    <div className="profile-page-fb">
       <NavbarHome />
-      <div className="profile-container">
-        <div className="profile-box">
-          <div className="form-group">
-            <label>Full Name</label>
-            <input
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              disabled={!isEditing}
-            />
-          </div>
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={!isEditing}
-            />
-          </div>
-          <div className="form-group">
-            <label>Phone Number</label>
-            <input
-              type="text"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              disabled={!isEditing}
-            />
-          </div>
-          <div className="form-group">
-            <label>Role</label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              disabled={!isEditing}
+      <div className="profile-main-fb" style={{ maxWidth: 400, margin: '40px auto' }}>
+        <div className="profile-card-fb" style={{ position: 'relative' }}>
+          {/* Get Verified Button at top right */}
+          {verificationStatus !== 'verified' && (
+            <button
+              className="verify-btn-fb"
+              style={{
+                position: 'absolute',
+                top: 24,
+                right: 24,
+                padding: '8px 18px',
+                fontSize: '0.98rem',
+                fontWeight: 600,
+                background: '#1877f2',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 6,
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(24,119,242,0.08)'
+              }}
+              onClick={() => setShowVerifyForm(true)}
+              disabled={loadingSchool || !schoolName}
             >
-              <option value="" disabled>Select Role</option>
-              <option value="student">Student</option>
-              <option value="teacher">Teacher</option>
-              <option value="facilitator">Facilitator</option>
-            </select>
-          </div>
-
-          {role === 'student' && (
-            <>
-              <div className="form-group">
-                <label>Course</label>
-                <select
-                  value={course}
-                  onChange={(e) => setCourse(e.target.value)}
-                  disabled={!isEditing}
-                >
-                  <option value="">Select Course</option>
-                  <option value="BSHM">BSHM</option>
-                  <option value="BSIT">BSIT</option>
-                  <option value="BSENTREP">BSENTREP</option>
-                  <option value="BSED">BSED</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Year</label>
-                <select
-                  value={year}
-                  onChange={(e) => setYear(e.target.value)}
-                  disabled={!isEditing}
-                >
-                  <option value="">Select Year</option>
-                  <option value="1st">1st</option>
-                  <option value="2nd">2nd</option>
-                  <option value="3rd">3rd</option>
-                  <option value="4th">4th</option>
-                </select>
-              </div>
-            </>
-          )}
-
-          {role === 'teacher' && (
-            <div className="form-group">
-              <label>Department</label>
-              <select
-                value={department}
-                onChange={(e) => setDepartment(e.target.value)}
-                disabled={!isEditing}
-              >
-                <option value="">Select Department</option>
-                <option value="BSHM">BSHM</option>
-                <option value="BSIT">BSIT</option>
-                <option value="BSENTREP">BSENTREP</option>
-                <option value="BSED">BSED</option>
-              </select>
-            </div>
-          )}
-
-          <div className="form-group">
-            <label>Current Location</label>
-            <input
-              type="text"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              disabled={!isEditing}
-            />
-          </div>
-
-          {!isEditing ? (
-            <button className="edit-button" onClick={() => setIsEditing(true)}>
-              Edit Profile
+              Get Verified
             </button>
-          ) : (
-            <div className="action-buttons">
-              <button className="save-button" onClick={handleUpdate}>
-                Save Changes
-              </button>
-              <button
-                className="cancel-button"
-                onClick={() => {
-                  setIsEditing(false);
-                  fetchUserData(); // Cancel edits and restore previous values
-                }}
-              >
-                Cancel
-              </button>
+          )}
+
+          <h3 className="section-title-fb" style={{marginBottom: 28}}>Profile</h3>
+          <div className="profile-fields-fb">
+            <div className="profile-field-fb">
+              <label>Full Name</label>
+              <input
+                type="text"
+                value={fullName}
+                onChange={e => setFullName(e.target.value)}
+                disabled={!isEditing || verificationStatus === 'verified' || loadingSchool || !schoolName}
+              />
             </div>
+            <div className="profile-field-fb">
+              <label>Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                disabled={!isEditing || verificationStatus === 'verified' || loadingSchool || !schoolName}
+              />
+            </div>
+          </div>
+          {/* Status Badge */}
+          {verificationStatus === 'verified' ? (
+            <div className="verified-badge-fb" style={{marginTop: 24, textAlign: 'center'}}>✅ Verified</div>
+          ) : verificationStatus === 'pending' ? (
+            <div className="pending-badge-fb" style={{marginTop: 24, textAlign: 'center'}}>⏳ Waiting for admin approval...</div>
+          ) : null}
+          {/* Save Button for unverified users */}
+          {verificationStatus !== 'verified' && (
+            <>
+              {!isEditing && (
+                <button
+                  className="edit-btn-fb"
+                  style={{marginTop: 24, width: '100%'}}
+                  onClick={() => setIsEditing(true)}
+                  disabled={loadingSchool || !schoolName}
+                >
+                  Edit Profile
+                </button>
+              )}
+              {isEditing && (
+                <div style={{display: 'flex', gap: 12, marginTop: 24}}>
+                  <button
+                    className="save-btn-fb"
+                    style={{flex: 1}}
+                    onClick={() => {
+                      handleUpdate();
+                      setIsEditing(false);
+                    }}
+                    disabled={loadingSchool || !schoolName}
+                  >
+                    Save Changes
+                  </button>
+                  <button
+                    className="cancel-btn-fb"
+                    style={{flex: 1}}
+                    onClick={() => {
+                      setIsEditing(false);
+                      fetchUserData();
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
+
+      {/* Verification Modal */}
+      {showVerifyForm && (
+        <div className="verify-modal-overlay">
+          <div className="verify-modal-content">
+            <button
+              style={{
+                position: 'absolute',
+                top: 12,
+                right: 12,
+                background: 'none',
+                border: 'none',
+                fontSize: 22,
+                color: '#888',
+                cursor: 'pointer'
+              }}
+              onClick={() => setShowVerifyForm(false)}
+              aria-label="Close"
+            >
+              &times;
+            </button>
+            <VerificationForm
+            onSubmit={async (form) => {
+              setIsVerifying(true);
+              try {
+                const { proofFile, ...restForm } = form; // Exclude proofFile
+                await setDoc(
+                  doc(db, 'schools', schoolName, 'users', user.uid),
+                  {
+                    verificationStatus: 'pending',
+                    verificationRequest: restForm
+                  },
+                  { merge: true }
+                );
+                setVerificationStatus('pending');
+                setShowVerifyForm(false);
+                alert('Verification request sent! Please wait for admin approval.');
+              } catch (err) {
+                alert('Failed to send verification request: ' + err.message);
+                console.error(err);
+              }
+              setIsVerifying(false);
+            }}
+              onCancel={() => setShowVerifyForm(false)}
+              loading={isVerifying}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

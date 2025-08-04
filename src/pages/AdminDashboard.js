@@ -60,6 +60,10 @@ function AdminDashboard() {
     <div>
       <Navbar />
       <div className="admin-dashboard-container">
+        {/* Display the school name */}
+        <h2 className="dashboard-school-name">
+          {schoolName ? `${schoolName}` : 'Not set'}
+        </h2>
         <h1 className="dashboard-title">Admin Dashboard</h1>
         {loading ? (
           <p className="dashboard-loading">Loading statistics...</p>

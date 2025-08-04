@@ -1,9 +1,65 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { db } from '../firebase';
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, arrayUnion, Timestamp } from 'firebase/firestore';
+import { collection, query, onSnapshot, doc, updateDoc, arrayUnion, Timestamp, addDoc, deleteDoc, getDoc, orderBy } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { useLocation } from 'react-router-dom';
-import './PostFeed.css'; // Ensure this path is correct
+import './PostFeed.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faComment, faEllipsisH, faCheckCircle, faExclamationTriangle, faBan, faEdit, faTrash, faTimes, faUser } from '@fortawesome/free-solid-svg-icons';
+
+// A reusable modal component
+const CustomModal = ({ title, message, onConfirm, onCancel, confirmText, cancelText }) => {
+  return (
+    <div className="ui-modal-overlay">
+      <div className="ui-modal-content">
+        <div className="ui-modal-header">
+          <h4 className="ui-modal-title">{title}</h4>
+          {onCancel && <button onClick={onCancel} className="ui-modal-close-btn"><FontAwesomeIcon icon={faTimes} /></button>}
+        </div>
+        <p className="ui-modal-message">{message}</p>
+        <div className="ui-modal-actions">
+          {onConfirm && <button onClick={onConfirm} className="ui-btn ui-btn-primary">{confirmText || 'Confirm'}</button>}
+          {onCancel && <button onClick={onCancel} className="ui-btn ui-btn-secondary">{cancelText || 'Cancel'}</button>}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Edit Post Modal Component
+const EditPostModal = ({ post, onSave, onCancel }) => {
+  const [editedText, setEditedText] = useState(post.text);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    await onSave(post.id, { text: editedText });
+    setIsSaving(false);
+  };
+
+  return (
+    <div className="ui-modal-overlay">
+      <div className="ui-modal-content">
+        <h4 className="ui-modal-title">Edit Post</h4>
+        <div className="ui-edit-form">
+          <textarea
+            className="ui-edit-textarea"
+            value={editedText}
+            onChange={(e) => setEditedText(e.target.value)}
+            rows="5"
+            disabled={isSaving}
+          />
+        </div>
+        <div className="ui-modal-actions">
+          <button onClick={onCancel} className="ui-btn ui-btn-secondary" disabled={isSaving}>Cancel</button>
+          <button onClick={handleSave} className="ui-btn ui-btn-primary" disabled={isSaving}>
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 function PostFeed({ schoolName }) {
   const [posts, setPosts] = useState([]);
@@ -12,17 +68,30 @@ function PostFeed({ schoolName }) {
   const [commentTexts, setCommentTexts] = useState({});
   const [isSubmittingComment, setIsSubmittingComment] = useState({});
   const [isAnonymousComment, setIsAnonymousComment] = useState(false);
-  // Removed: showReportModalId, reportMessage states
-  const [blockingPostId, setBlockingPostId] = useState(null); // Keep blocking state
+  const [blockingPostId, setBlockingPostId] = useState(null);
   const [filter, setFilter] = useState('all');
   const [openMenuPostId, setOpenMenuPostId] = useState(null);
+  const [showReportModalId, setShowReportModalId] = useState(null);
+  const [reportMessage, setReportMessage] = useState('');
+  const [showErrorModal, setShowErrorModal] = useState({ show: false, title: '', message: '' });
+  const [deletingPostId, setDeletingPostId] = useState(null);
+  const [editingPost, setEditingPost] = useState(null);
+  const [verificationStatus, setVerificationStatus] = useState('');
 
   const auth = getAuth();
   const user = auth.currentUser;
   const location = useLocation();
   const commentsRef = useRef({});
   const submittingCommentRef = useRef({});
-  const menuRefs = useRef({}); // Ref to hold dropdown menu DOM elements
+  const menuRefs = useRef({});
+
+  const displayErrorModal = (title, message) => {
+    setShowErrorModal({ show: true, title, message });
+  };
+
+  const closeErrorModal = () => {
+    setShowErrorModal({ show: false, title: '', message: '' });
+  };
 
   const timeAgo = (timestamp) => {
     if (!timestamp) return '';
@@ -52,12 +121,7 @@ function PostFeed({ schoolName }) {
 
   useEffect(() => {
     if (!schoolName) return;
-
-    const q = query(
-      collection(db, 'schools', schoolName, 'LostItems'),
-      orderBy('createdAt', 'desc')
-    );
-
+    const q = query(collection(db, 'schools', schoolName, 'LostItems'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedPosts = snapshot.docs.map((doc) => ({
         id: doc.id,
@@ -66,8 +130,8 @@ function PostFeed({ schoolName }) {
       setPosts(fetchedPosts);
     }, (error) => {
       console.error("Error fetching posts: ", error);
+      displayErrorModal("Error", "Failed to fetch posts. Please try again later.");
     });
-
     return () => unsubscribe();
   }, [schoolName]);
 
@@ -89,28 +153,25 @@ function PostFeed({ schoolName }) {
     }
   }, [posts, openCommentPostId]);
 
-  // Updated useEffect for handling body scroll: only depends on blockingPostId now
   useEffect(() => {
-    if (blockingPostId) { // Check if the block modal is open
-      document.body.style.overflow = 'hidden'; // Prevent scrolling
-      // Add padding-right to compensate for scrollbar disappearance, preventing layout shift
-      document.body.style.paddingRight = getScrollbarWidth() + 'px';
+    const isModalOpen = blockingPostId || showErrorModal.show || showReportModalId || deletingPostId || editingPost;
+    if (isModalOpen) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = `${getScrollbarWidth()}px`;
     } else {
-      document.body.style.overflow = 'unset'; // Allow scrolling
+      document.body.style.overflow = 'unset';
       document.body.style.paddingRight = '0px';
     }
-    // Cleanup function to ensure scrolling is re-enabled if component unmounts
     return () => {
       document.body.style.overflow = 'unset';
       document.body.style.paddingRight = '0px';
     };
-  }, [blockingPostId]); // Only re-run when blockingPostId changes
+  }, [blockingPostId, showErrorModal.show, showReportModalId, deletingPostId, editingPost]);
 
-  // Helper function to calculate scrollbar width dynamically (kept for blocking modal)
   const getScrollbarWidth = () => {
     const outer = document.createElement('div');
     outer.style.visibility = 'hidden';
-    outer.style.overflow = 'scroll'; // Force scrollbars
+    outer.style.overflow = 'scroll';
     document.body.appendChild(outer);
     const inner = document.createElement('div');
     outer.appendChild(inner);
@@ -119,26 +180,48 @@ function PostFeed({ schoolName }) {
     return scrollbarWidth;
   };
 
-  // Effect to close dropdown menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (openMenuPostId && menuRefs.current[openMenuPostId] && !menuRefs.current[openMenuPostId].contains(event.target)) {
         setOpenMenuPostId(null);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [openMenuPostId]);
 
+  // THIS IS THE CORRECTED PART OF THE CODE
+  // The original code was looking for the user document in the wrong place.
+  // It was trying to access `db, 'users', user.uid` instead of the correct
+  // path `db, 'schools', schoolName, 'users', user.uid`.
+  useEffect(() => {
+    if (!user || !schoolName) {
+      setVerificationStatus('');
+      return;
+    }
+    const fetchVerificationStatus = async () => {
+      try {
+        const userDocRef = doc(db, 'schools', schoolName, 'users', user.uid);
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists()) {
+          setVerificationStatus(docSnap.data()?.verificationStatus || '');
+        } else {
+          setVerificationStatus('');
+          console.log("User document not found at the nested path.");
+        }
+      } catch (error) {
+        console.error("Error fetching verification status from nested collection:", error);
+        setVerificationStatus('');
+      }
+    };
+    fetchVerificationStatus();
+  }, [user, schoolName]);
+  // END OF CORRECTED CODE
 
   const handleCommentChange = (postId, text) => {
-    setCommentTexts((prev) => ({
-      ...prev,
-      [postId]: text,
-    }));
+    setCommentTexts((prev) => ({ ...prev, [postId]: text }));
   };
 
   const handleAddComment = async (postId) => {
@@ -151,20 +234,18 @@ function PostFeed({ schoolName }) {
     const commentText = commentTexts[postId]?.trim();
 
     if (!commentText) {
-      alert('Comment cannot be empty.');
+      displayErrorModal("Error", "Comment cannot be empty.");
       submittingCommentRef.current[postId] = false;
       return;
     }
     if (!user) {
-      alert('You must be logged in to comment.');
+      displayErrorModal("Error", "You must be logged in to comment.");
       submittingCommentRef.current[postId] = false;
       return;
     }
 
     setIsSubmittingComment(prev => ({ ...prev, [postId]: true }));
-
     const postRef = doc(db, 'schools', schoolName, 'LostItems', postId);
-
     const commentAuthorName = isAnonymousComment ? 'Anonymous User' : (user?.displayName || 'Anonymous User');
 
     const newComment = {
@@ -176,17 +257,12 @@ function PostFeed({ schoolName }) {
     };
 
     try {
-      await updateDoc(postRef, {
-        comments: arrayUnion(newComment),
-      });
-      setCommentTexts((prev) => ({
-        ...prev,
-        [postId]: '',
-      }));
+      await updateDoc(postRef, { comments: arrayUnion(newComment) });
+      setCommentTexts((prev) => ({ ...prev, [postId]: '' }));
       setIsAnonymousComment(false);
     } catch (error) {
       console.error('Error adding comment:', error);
-      alert('Failed to add comment. Please try again.');
+      displayErrorModal("Error", "Failed to add comment. Please try again.");
     } finally {
       setIsSubmittingComment(prev => ({ ...prev, [postId]: false }));
       submittingCommentRef.current[postId] = false;
@@ -197,27 +273,23 @@ function PostFeed({ schoolName }) {
     setOpenCommentPostId(prevId => prevId === postId ? null : postId);
   };
 
-  // Removed: handleReportPost function
-  // Removed: confirmReport function
-  // Removed: cancelReport function
-
   const handleBlockPost = (postId) => {
     if (!user || !user.email.endsWith('@admin.com')) {
-      alert('You do not have permission to block posts.');
+      displayErrorModal("Permission Denied", "You do not have permission to block posts.");
       return;
     }
     setBlockingPostId(postId);
-    setOpenMenuPostId(null); // Close menu after action
+    setOpenMenuPostId(null);
   };
 
   const confirmBlockPost = async (postId) => {
     try {
       const postRef = doc(db, 'schools', schoolName, 'LostItems', postId);
       await updateDoc(postRef, { isBlocked: true });
-      alert('Post blocked successfully!');
+      displayErrorModal("Success", "Post blocked successfully!");
     } catch (error) {
       console.error('Error blocking post:', error);
-      alert('Failed to block post.');
+      displayErrorModal("Error", "Failed to block post.");
     } finally {
       setBlockingPostId(null);
     }
@@ -227,196 +299,339 @@ function PostFeed({ schoolName }) {
     setBlockingPostId(null);
   };
 
+  const handleReportPost = (postId) => {
+    setShowReportModalId(postId);
+    setOpenMenuPostId(null);
+  };
+
+  const confirmReport = async (postId) => {
+    if (!user) {
+      displayErrorModal("Permission Denied", "You must be logged in to report a post.");
+      return;
+    }
+    if (!reportMessage.trim()) {
+      displayErrorModal("Error", "Please provide a reason for the report.");
+      return;
+    }
+    try {
+      const reportRef = collection(db, 'reports');
+      await addDoc(reportRef, {
+        postId: postId,
+        reporterId: user.uid,
+        reason: reportMessage,
+        createdAt: Timestamp.now(),
+      });
+      displayErrorModal("Success", "Post reported successfully. An admin will review it shortly.");
+      setShowReportModalId(null);
+      setReportMessage('');
+    } catch (error) {
+      console.error("Error reporting post:", error);
+      displayErrorModal("Error", "Failed to report post. Please try again.");
+    }
+  };
+
+  const cancelReport = () => {
+    setShowReportModalId(null);
+    setReportMessage('');
+  };
+
+  const handleEditPost = (post) => {
+    setEditingPost(post);
+    setOpenMenuPostId(null);
+  };
+
+  const saveEditedPost = async (postId, updatedData) => {
+    try {
+      const postRef = doc(db, 'schools', schoolName, 'LostItems', postId);
+      await updateDoc(postRef, updatedData);
+      displayErrorModal("Success", "Post updated successfully!");
+    } catch (error) {
+      console.error("Error updating post:", error);
+      displayErrorModal("Error", "Failed to update post.");
+    } finally {
+      setEditingPost(null);
+    }
+  };
+
+  const handleDeletePost = (postId) => {
+    setDeletingPostId(postId);
+    setOpenMenuPostId(null);
+  };
+
+  const confirmDeletePost = async (postId) => {
+    const originalPosts = posts;
+    setPosts(posts.filter(post => post.id !== postId));
+    setDeletingPostId(null);
+
+    try {
+      const postRef = doc(db, 'schools', schoolName, 'LostItems', postId);
+      await deleteDoc(postRef);
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      setPosts(originalPosts);
+      displayErrorModal("Error", "Failed to delete post. Please try again.");
+    }
+  };
+
+  const cancelDelete = () => {
+    setDeletingPostId(null);
+  };
+
+  const updateClaimStatus = async (postId, newClaimedStatus) => {
+    const originalPosts = posts;
+    setPosts(posts.map(p => p.id === postId ? { ...p, claimed: newClaimedStatus } : p));
+
+    try {
+      const postRef = doc(db, 'schools', schoolName, 'LostItems', postId);
+      await updateDoc(postRef, { claimed: newClaimedStatus });
+    } catch (error) {
+      console.error("Error updating claim status:", error);
+      setPosts(originalPosts);
+      displayErrorModal("Error", `Failed to mark post as ${newClaimedStatus ? 'claimed' : 'unclaimed'}. Please try again.`);
+    }
+  };
+
+  const handleClaimPost = (postId) => updateClaimStatus(postId, true);
+  const handleUnclaimPost = (postId) => updateClaimStatus(postId, false);
+
   const filteredPosts = posts.filter((post) => {
     if (filter === 'claimed') return post.claimed;
     if (filter === 'unclaimed') return !post.claimed;
     return true;
   });
 
-  // Function to toggle the ellipsis menu for a post
   const handleEllipsisClick = (postId, event) => {
-    event.stopPropagation(); // Prevent click from bubbling up and closing other menus
+    event.stopPropagation();
     setOpenMenuPostId(prevId => prevId === postId ? null : postId);
   };
 
   return (
-    <div className="post-feed-container">
-      <h2 className="post-feed-title">Lost Items</h2>
+    <div className="ui-post-feed">
 
-      <div className="mp-filter-selector">
-        <span className="mp-filter-label">Filter:</span>
-        <button
-          onClick={() => setFilter('all')}
-          className={filter === 'all' ? 'mp-filter-btn mp-filter-btn-active mp-bg-default' : 'mp-filter-btn'}
-        >
-          All
-        </button>
-        <button
-          onClick={() => setFilter('claimed')}
-          className={filter === 'claimed' ? 'mp-filter-btn mp-filter-btn-active mp-bg-green' : 'mp-filter-btn'}
-        >
-          Claimed
-        </button>
-        <button
-          onClick={() => setFilter('unclaimed')}
-          className={filter === 'unclaimed' ? 'mp-filter-btn mp-filter-btn-active mp-bg-red' : 'mp-filter-btn'}
-        >
-          Unclaimed
-        </button>
+      {showErrorModal.show && (
+        <CustomModal
+          title={showErrorModal.title}
+          message={showErrorModal.message}
+          onCancel={closeErrorModal}
+          cancelText="Close"
+        />
+      )}
+
+      {deletingPostId && (
+        <CustomModal
+          title="Confirm Deletion"
+          message="Are you sure you want to delete this post? This action cannot be undone."
+          onConfirm={() => confirmDeletePost(deletingPostId)}
+          onCancel={cancelDelete}
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
+      )}
+
+      {editingPost && (
+        <EditPostModal
+          post={editingPost}
+          onSave={saveEditedPost}
+          onCancel={() => setEditingPost(null)}
+        />
+      )}
+
+      <div className="ui-filter-bar">
+        <span className="ui-filter-label">Filter by status:</span>
+        <div className="ui-filter-buttons">
+          <button
+            onClick={() => setFilter('all')}
+            className={filter === 'all' ? 'ui-filter-btn ui-active-filter' : 'ui-filter-btn'}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setFilter('claimed')}
+            className={filter === 'claimed' ? 'ui-filter-btn ui-active-filter ui-claimed-filter' : 'ui-filter-btn'}
+          >
+            Claimed
+          </button>
+          <button
+            onClick={() => setFilter('unclaimed')}
+            className={filter === 'unclaimed' ? 'ui-filter-btn ui-active-filter ui-unclaimed-filter' : 'ui-filter-btn'}
+          >
+            Unclaimed
+          </button>
+        </div>
       </div>
 
       {filteredPosts.length === 0 ? (
-        <p className="no-posts-message">No lost items to display yet. Be the first to post!</p>
+        <div className="ui-empty-state">
+          <p>No lost items to display yet. Be the first to post!</p>
+        </div>
       ) : (
-        filteredPosts.map((post) => (
-          <div
-            key={post.id}
-            id={post.id}
-            className={`post-card ${post.id === highlightedPostId ? 'highlighted-post' : ''} ${post.claimed ? 'claimed-post' : ''}`}
-          >
-            <div className="card-header">
-              <p className="post-author">
-                {post.isAnonymous ? (
-                  <>
-                    <strong>Anonymous User</strong>
-                    <span className="anon-badge">
-                        <span role="img" aria-label="anonymous">🕵️</span> Anonymous
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <strong>{post.authorName}</strong>
-                    {post.authorId === user?.uid && (
-                      <span className="your-post-badge">Your Post</span>
+        <div className="ui-post-list">
+          {filteredPosts.map((post) => (
+            <div
+              key={post.id}
+              id={post.id}
+              className={`ui-post-card ${post.id === highlightedPostId ? 'ui-post-highlighted' : ''}`}
+            >
+              <div className="ui-post-header">
+                <div className="ui-post-author">
+                {/* You can add a profile picture here if available */}
+                <div className="ui-profile-pic"></div>
+                <div className="ui-author-info">
+                  <p className="ui-author-name">
+                    {post.authorName || 'Anonymous'}
+                    {/* Conditionally render the 'my anonymous post' icon */}
+                    {post.isAnonymous && user && post.authorId === user.uid && (
+                      <span className="ui-my-anonymous-badge" title="This is your anonymous post">
+                        <FontAwesomeIcon icon={faUser} />
+                      </span>
                     )}
-                  </>
-                )}
-                {post.claimed && (
-                    <span className="claimed-indicator">
-                        <span role="img" aria-label="claimed">✅</span> Claimed
-                    </span>
-                )}
-              </p>
-              <p className="post-date">{post.createdAt ? timeAgo(post.createdAt) : '...'}</p>
+                  </p>
+                  <p className="ui-post-time">{post.createdAt ? timeAgo(post.createdAt) : '...'}</p>
+                </div>
+              </div>
 
-              {/* Ellipsis Menu Button - Report Post option removed */}
-              {user?.email.endsWith('@admin.com') ? ( // Only show ellipsis if admin to allow blocking
-                <div className="ellipsis-menu-container" ref={(el) => (menuRefs.current[post.id] = el)}>
-                  <button className="ellipsis-button" onClick={(e) => handleEllipsisClick(post.id, e)}>
-                    ...
+                <div className="ui-post-menu-container" ref={(el) => (menuRefs.current[post.id] = el)}>
+                  <button className="ui-post-menu-btn" onClick={(e) => handleEllipsisClick(post.id, e)}>
+                    <FontAwesomeIcon icon={faEllipsisH} />
                   </button>
                   {openMenuPostId === post.id && (
-                    <div className="ellipsis-dropdown">
+                    <div className="ui-post-menu-dropdown">
+                      {post.authorId === user?.uid && (
+                        <>
+                          <button onClick={() => handleEditPost(post)} className="ui-dropdown-item"><FontAwesomeIcon icon={faEdit} /> Edit Post</button>
+                          <button onClick={() => handleDeletePost(post.id)} className="ui-dropdown-item ui-dropdown-item-danger"><FontAwesomeIcon icon={faTrash} /> Delete Post</button>
+                          {post.claimed ? (
+                            <button onClick={() => handleUnclaimPost(post.id)} className="ui-dropdown-item"><FontAwesomeIcon icon={faCheckCircle} /> Unmark Claimed</button>
+                          ) : (
+                            <button onClick={() => handleClaimPost(post.id)} className="ui-dropdown-item"><FontAwesomeIcon icon={faCheckCircle} /> Mark as Claimed</button>
+                          )}
+                        </>
+                      )}
+                      {post.authorId !== user?.uid && (
+                        <button onClick={() => handleReportPost(post.id)} className="ui-dropdown-item"><FontAwesomeIcon icon={faExclamationTriangle} /> Report Post</button>
+                      )}
                       {user?.email.endsWith('@admin.com') && (
-                        <button onClick={() => handleBlockPost(post.id)} className="dropdown-item block-btn">Block Post</button>
+                        <button onClick={() => handleBlockPost(post.id)} className="ui-dropdown-item ui-dropdown-item-danger"><FontAwesomeIcon icon={faBan} /> Block Post</button>
                       )}
                     </div>
                   )}
                 </div>
-              ) : null}
-
-            </div>
-
-            {post.imageUrl && (
-              <div className="image-container">
-                <img src={post.imageUrl} alt="Post" className="post-image" />
               </div>
-            )}
 
-            <p className="post-text">{post.text}</p>
-
-            {/* Removed: Report Confirmation Modal */}
-
-            {/* Block Confirmation Modal (Now directly in JSX) */}
-            {blockingPostId === post.id && (
-                <div className="report-modal-overlay"> {/* Reusing overlay styles */}
-                    <div className="report-modal-content">
-                        <h4 className="modal-title">Confirm Block</h4>
-                        <p className="modal-message">Are you sure you want to **block** this post? This action cannot be undone.</p>
-                        <div className="modal-actions">
-                            <button onClick={() => confirmBlockPost(post.id)} className="modal-confirm-btn modal-block-confirm-btn">Yes, Block</button>
-                            <button onClick={cancelBlockPost} className="modal-cancel-btn">No, Cancel</button>
-                        </div>
-                    </div>
+              {post.imageUrl && (
+                <div className="ui-post-image-container">
+                  <img src={post.imageUrl} alt="Lost item" className="ui-post-image" />
                 </div>
-            )}
+              )}
 
-            <div className="comment-toggle-area">
+              <div className="ui-post-body">
+                <p className="ui-post-text">{post.text}</p>
+              </div>
+
+              <div className="ui-post-footer">
+                <div className="ui-status-badges">
+                  {post.isAnonymous && <span className="ui-badge ui-badge-anonymous">Anonymous</span>}
+                  {post.claimed && <span className="ui-badge ui-badge-claimed">Claimed</span>}
+                </div>
                 <button
-                    onClick={() => toggleComments(post.id)}
-                    className="toggle-comments-btn"
+                  onClick={() => toggleComments(post.id)}
+                  className="ui-comments-toggle-btn"
                 >
-                    {openCommentPostId === post.id ? 'Hide Comments' : `Comments (${post.comments?.length || 0})`}
+                  <FontAwesomeIcon icon={faComment} />
+                  <span>Comments ({post.comments?.length || 0})</span>
                 </button>
-            </div>
+              </div>
 
-            {openCommentPostId === post.id && (
-              <div className="comments-section">
-                <h4 className="comments-title">Comments:</h4>
-                <div
-                  ref={(el) => (commentsRef.current[post.id] = el)}
-                  className="comments-container"
-                >
-                  {post.comments?.length > 0 ? (
-                    post.comments.map((comment, index) => (
-                      <div key={index} className="comment">
-                        <p className="comment-text">
-                          <strong>{comment.author}</strong>
-                          {comment.isAnonymous && (
-                            <span className="anon-comment-badge">
-                                <span role="img" aria-label="anonymous">🕵️</span>
-                            </span>
-                          )}
-                          : {comment.text}
-                        </p>
-                        <p className="comment-time">
-                          {comment.timestamp ? timeAgo(comment.timestamp) : 'Just now'}
-                        </p>
-                      </div>
-                    ))
+              {blockingPostId === post.id && (
+                <CustomModal
+                  title="Confirm Block"
+                  message="Are you sure you want to **block** this post? This action cannot be undone."
+                  onConfirm={() => confirmBlockPost(post.id)}
+                  onCancel={cancelBlockPost}
+                  confirmText="Block"
+                  cancelText="Cancel"
+                />
+              )}
+
+              {showReportModalId === post.id && (
+                <div className="ui-modal-overlay">
+                  <div className="ui-modal-content">
+                    <h4 className="ui-modal-title">Report Post</h4>
+                    <p className="ui-modal-message">Please describe your reason for reporting this post:</p>
+                    <textarea
+                      value={reportMessage}
+                      onChange={(e) => setReportMessage(e.target.value)}
+                      className="ui-report-textarea"
+                      placeholder="E.g., Inappropriate content, spam, misleading information, etc."
+                      rows="4"
+                    />
+                    <div className="ui-modal-actions">
+                      <button onClick={cancelReport} className="ui-btn ui-btn-secondary">Cancel</button>
+                      <button onClick={() => confirmReport(post.id)} className="ui-btn ui-btn-primary">Submit Report</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {openCommentPostId === post.id && (
+                <div className="ui-comments-section">
+                  <div ref={(el) => (commentsRef.current[post.id] = el)} className="ui-comments-container">
+                    {post.comments?.length > 0 ? (
+                      post.comments.map((comment, index) => (
+                        <div key={index} className="ui-comment">
+                          <div className="ui-comment-author">
+                            <span className="ui-comment-author-name">{comment.author}</span>
+                            {comment.isAnonymous && <span className="ui-badge ui-badge-anonymous ui-badge-small">Anonymous</span>}
+                          </div>
+                          <p className="ui-comment-text">{comment.text}</p>
+                          <p className="ui-comment-time">{comment.timestamp ? timeAgo(comment.timestamp) : 'Just now'}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="ui-empty-comments">No comments yet. Be the first to comment!</p>
+                    )}
+                  </div>
+
+                  {!user ? (
+                    <p className="ui-login-to-comment-message">Log in to add a comment.</p>
+                  ) : verificationStatus !== 'verified' ? (
+                    <div className="verify-warning">
+                      <p>You must be verified to comment. Please complete verification in your profile.</p>
+                    </div>
                   ) : (
-                    <p className="no-comments">No comments yet. Be the first to comment!</p>
+                    <div className="ui-comment-form">
+                      <textarea
+                        placeholder="Write a comment..."
+                        value={commentTexts[post.id] || ''}
+                        onChange={(e) => handleCommentChange(post.id, e.target.value)}
+                        className="ui-comment-textarea"
+                        rows="1"
+                        disabled={isSubmittingComment[post.id]}
+                      />
+                      <div className="ui-comment-actions">
+                        <label className="ui-anonymous-toggle">
+                          <input
+                            type="checkbox"
+                            checked={isAnonymousComment}
+                            onChange={(e) => setIsAnonymousComment(e.target.checked)}
+                          />
+                          Anonymous
+                        </label>
+                        <button
+                          onClick={() => handleAddComment(post.id)}
+                          className="ui-btn ui-btn-sm ui-btn-primary"
+                          disabled={isSubmittingComment[post.id] || !commentTexts[post.id]?.trim()}
+                        >
+                          {isSubmittingComment[post.id] ? 'Sending...' : 'Post'}
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
-
-                {user ? (
-                    <div className="add-comment-area-wrapper">
-                        <h5 className="add-comment-heading">Add Your Comment</h5>
-                        <textarea
-                            placeholder={isSubmittingComment[post.id] ? "Sending comment..." : "Type your comment here..."}
-                            value={commentTexts[post.id] || ''}
-                            onChange={(e) => handleCommentChange(post.id, e.target.value)}
-                            className="comment-textarea"
-                            rows="3"
-                            disabled={isSubmittingComment[post.id]}
-                        />
-                        <div className="comment-options">
-                            <label htmlFor={`anonymous-comment-${post.id}`} className="anonymous-label">
-                                <input
-                                    type="checkbox"
-                                    id={`anonymous-comment-${post.id}`}
-                                    checked={isAnonymousComment}
-                                    onChange={(e) => setIsAnonymousComment(e.target.checked)}
-                                    disabled={isSubmittingComment[post.id]}
-                                />
-                                Comment as Anonymous
-                            </label>
-                            <button
-                                onClick={() => handleAddComment(post.id)}
-                                className="add-comment-btn"
-                                disabled={isSubmittingComment[post.id]}
-                            >
-                                {isSubmittingComment[post.id] ? 'Sending...' : 'Post Comment'}
-                            </button>
-                        </div>
-                    </div>
-                ) : (
-                    <p className="login-to-comment-message">Log in to add a comment.</p>
-                )}
-              </div>
-            )}
-          </div>
-        ))
+              )}
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

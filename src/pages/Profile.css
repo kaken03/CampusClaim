@@ -120,7 +120,220 @@
   transition: background 0.2s, color 0.2s;
 }
 
+/* Facebook specific styles */
+/* Profile.css */
+.profile-page-fb {
+  background: #f0f2f5;
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
 
+.profile-cover-fb {
+  background: linear-gradient(90deg, #1877f2 60%, #42b72a 100%);
+  padding: 32px 0 24px 0;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  border-radius: 0 0 18px 18px;
+  box-shadow: 0 2px 8px rgba(24,119,242,0.08);
+}
+
+.profile-avatar-fb {
+  margin-left: 48px;
+}
+
+.avatar-circle-fb {
+  width: 96px;
+  height: 96px;
+  background: #fff;
+  color: #1877f2;
+  border-radius: 50%;
+  font-size: 3rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 4px solid #fff;
+  box-shadow: 0 2px 8px rgba(24,119,242,0.08);
+}
+
+.profile-info-fb {
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.verify-status-fb {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 2px;
+  display: inline-block;
+  padding: 2px 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.2);
+}
+
+.verify-status-fb.verified {
+  background: #42b72a;
+  color: #fff;
+}
+.verify-status-fb.pending {
+  background: #f7b731;
+  color: #fff;
+}
+.verify-status-fb.rejected {
+  background: #e63946;
+  color: #fff;
+}
+
+.profile-role-fb {
+  font-size: 1.1rem;
+  opacity: 0.95;
+}
+
+.profile-main-fb {
+  display: flex;
+  gap: 32px;
+  justify-content: center;
+  margin-top: 32px;
+  flex-wrap: wrap;
+}
+
+.profile-card-fb {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(24,119,242,0.08);
+  padding: 32px 28px 28px 28px;
+  min-width: 340px;
+  max-width: 400px;
+  flex: 1;
+  margin-bottom: 24px;
+}
+
+.section-title-fb {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #1877f2;
+  margin-bottom: 18px;
+}
+
+.profile-fields-fb {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.profile-field-fb {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.profile-field-fb label {
+  font-size: 0.98rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.profile-field-fb input,
+.profile-field-fb select {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  font-size: 1rem;
+  background: #f7f7f7;
+  transition: border 0.2s;
+}
+
+.profile-field-fb input:disabled,
+.profile-field-fb select:disabled {
+  background: #e9ecef;
+  color: #888;
+}
+
+.edit-btn-fb,
+.save-btn-fb,
+.cancel-btn-fb,
+.verify-btn-fb {
+  margin-top: 18px;
+  padding: 10px 22px;
+  border-radius: 6px;
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.edit-btn-fb {
+  background: #1877f2;
+  color: #fff;
+}
+.save-btn-fb {
+  background: #42b72a;
+  color: #fff;
+  margin-right: 10px;
+}
+.cancel-btn-fb {
+  background: #e63946;
+  color: #fff;
+}
+.verify-btn-fb {
+  background: #1877f2;
+  color: #fff;
+}
+
+.profile-action-btns-fb {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.verified-badge-fb {
+  color: #42b72a;
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+.pending-badge-fb {
+  color: #f7b731;
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+.verify-desc-fb {
+  color: #444;
+  margin-bottom: 10px;
+}
+
+/* Verify Modal */
+.verify-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* Modal content */
+.verify-modal-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 32px 28px;
+  min-width: 320px;
+  max-width: 95vw;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.14);
+  position: relative;
+  animation: modalFadeIn 0.2s;
+}
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: translateY(40px);}
+  to { opacity: 1; transform: translateY(0);}
+}
 /* Responsive */
 @media (max-width: 600px) {
   .profile-container {

@@ -102,3 +102,11 @@
   font-size: 1.28em;
   font-weight: 700;
 }
+.dashboard-school-name {
+  font-size: 1.15rem;
+  color: #1877f2;
+  margin-bottom: 8px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+

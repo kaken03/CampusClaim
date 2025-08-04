@@ -1,320 +1,304 @@
-/* PostBox.css */
+/* src/components/PostBox.css */
 
-.post-box-container {
-    background-color: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    padding: 40px;
-    max-width: 700px; /* Consistent with previous card styling */
-    margin: 40px auto; /* Center the box and provide margin */
-    position: relative;
-    z-index: 10; /* Ensure it's above other elements if needed */
-  }
-  
-  .post-box-title {
-    font-size: 28px;
-    color: #333;
-    margin-bottom: 25px;
-    text-align: center;
-    font-weight: 700;
-  }
-  
-  .post-box-educate-message {
-    font-size: 15px;
-    line-height: 1.6;
-    color: #555;
-    margin-bottom: 25px;
-    padding: 15px 20px;
-    background-color: #f0f8ff; /* Light blue background for info box */
-    border-left: 4px solid #3498db; /* Blue border on the left */
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .post-box-educate-message .info-icon {
-      font-size: 1.5rem;
-      margin-bottom: 10px;
-  }
-  
-  .post-box-educate-message .highlight-text {
-    font-weight: bold;
-    color: #2c3e50;
-  }
-  
-  .post-box-office-line {
-    display: block; /* Ensure it breaks to a new line */
-    margin-top: 8px;
-    font-size: 0.95em;
-    color: #666;
-  }
-  
-  .post-box-textarea {
-    width: calc(100% - 20px); /* Account for padding */
-    padding: 15px; /* More padding */
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 16px;
-    line-height: 1.5;
-    margin-bottom: 20px;
-    resize: vertical;
-    min-height: 150px; /* Increased min-height */
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    font-family: 'Open Sans', sans-serif; /* Consistent font */
-    color: #333;
-  }
-  
-  .post-box-textarea:focus {
-    border-color: #3498db;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-    outline: none;
-  }
-  
-  /* --- Custom File Input Styling --- */
-  .post-box-file-upload-section {
-      display: flex;
-      align-items: center;
-      margin-bottom: 20px;
-      flex-wrap: wrap; /* Allow wrapping on small screens */
-  }
-  .post-box-file-upload-section input[type="file"] {
-    display: none; /* Hide the actual file input */
+/* Base container for the PostBox component */
+.ui-post-box {
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 24px;
+  margin-bottom: 24px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  transition: all 0.3s ease;
 }
-  
-  .custom-file-upload-btn {
-      background-color: #3498db; /* Blue for the file button */
-      color: white;
-      padding: 10px 18px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 15px;
-      transition: background-color 0.3s ease, transform 0.2s ease;
-      border: none;
-      margin-right: 15px;
-      flex-shrink: 0; /* Prevent shrinking */
+
+/* Post box header and title */
+.ui-post-box-header {
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+
+.ui-post-box-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+/* Informational message section */
+.ui-post-box-info-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background-color: #f0f8ff; /* A light, professional blue */
+  border-left: 4px solid #6495ed;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.ui-info-icon {
+  color: #6495ed;
+  font-size: 1.25rem;
+  flex-shrink: 0; /* Prevents icon from shrinking on smaller screens */
+}
+
+.ui-post-box-info-message p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #555;
+}
+
+.ui-highlight-text {
+  color: #004085;
+}
+
+/* Textarea styling */
+.ui-post-box-textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  font-family: inherit;
+}
+
+.ui-post-box-textarea:focus {
+  outline: none;
+  border-color: #6495ed;
+  box-shadow: 0 0 0 3px rgba(100, 149, 237, 0.2);
+}
+
+/* Action bar (file upload and anonymous checkbox) */
+.ui-post-box-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+  margin-bottom: 24px;
+}
+
+/* File upload section */
+.ui-file-upload-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-grow: 1;
+}
+
+.ui-custom-file-upload-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background-color: #f0f2f5;
+  color: #555;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.ui-custom-file-upload-btn:hover {
+  background-color: #e4e6eb;
+}
+
+/* Hide the default file input */
+.ui-file-upload-container input[type="file"] {
+  display: none;
+}
+
+.ui-clear-image-btn {
+  background-color: transparent;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 8px;
+  border-radius: 50%;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.ui-clear-image-btn:hover {
+  background-color: #f0f2f5;
+  color: #333;
+}
+
+.ui-clear-image-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Anonymous checkbox styling */
+.ui-anonymous-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ui-custom-checkbox {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  position: relative;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.ui-custom-checkbox:checked {
+  background-color: #6495ed;
+  border-color: #6495ed;
+}
+
+.ui-custom-checkbox:checked::before {
+  content: '\2713'; /* Checkmark symbol */
+  font-size: 14px;
+  color: #fff;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.ui-checkbox-label {
+  font-size: 0.9rem;
+  color: #555;
+  cursor: pointer;
+}
+
+/* Progress bar styling */
+.ui-post-box-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 8px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  margin-top: 16px;
+  margin-bottom: 24px;
+}
+
+.ui-progress-bar {
+  height: 100%;
+  background-color: #6495ed;
+  transition: width 0.3s ease;
+}
+
+.ui-progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.8rem;
+  color: #555;
+  font-weight: 500;
+}
+
+/* Post button styling */
+.ui-post-box-button {
+  width: 100%;
+  padding: 12px;
+  background-color: #6495ed;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ui-post-box-button:hover:not(:disabled) {
+  background-color: #5380d3;
+}
+
+.ui-post-box-button:disabled {
+  background-color: #e0e0e0;
+  color: #a0a0a0;
+  cursor: not-allowed;
+}
+.verify-warning {
+  display: flex;
+  align-items: center;
+  background: #fff3f3;
+  border: 1.5px solid #e63946;
+  color: #e63946;
+  border-radius: 8px;
+  padding: 18px 20px;
+  font-size: 1.08rem;
+  font-weight: 500;
+  margin: 32px auto;
+  max-width: 420px;
+  box-shadow: 0 2px 8px rgba(230,57,70,0.07);
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .ui-post-box {
+    padding: 16px;
   }
-  
-  .custom-file-upload-btn:hover {
-      background-color: #2980b9; /* Darker blue on hover */
-      transform: translateY(-1px);
+
+  .ui-post-box-title {
+    font-size: 1.25rem;
   }
-  
-  .post-box-file-input {
-      display: none; /* Hide the actual file input */
-  }
-  
-  .file-name-display {
-      font-size: 15px;
-      color: #777;
-      flex-grow: 1; /* Allow it to take available space */
-      white-space: nowrap; /* Prevent line breaks */
-      overflow: hidden; /* Hide overflow */
-      text-overflow: ellipsis; /* Add ellipsis for overflow */
-  }
-  
-  .clear-image-btn {
-      background-color: #e74c3c; /* Red for clear button */
-      color: white;
-      border: none;
-      border-radius: 50%; /* Make it round */
-      width: 28px; /* Fixed width */
-      height: 28px; /* Fixed height */
-      font-size: 14px;
-      cursor: pointer;
-      margin-left: 10px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      transition: background-color 0.3s ease;
-  }
-  
-  .clear-image-btn:hover {
-      background-color: #c0392b;
-  }
-  
-  
-  /* --- Progress Bar Styling --- */
-  .post-box-progress-container {
-    margin-bottom: 20px;
-    text-align: center;
-  }
-  
-  .post-box-progress-text {
-    font-size: 14px;
-    color: #555;
-    margin-bottom: 5px;
-  }
-  
-  .post-box-progress-bar {
-    width: 100%;
-    background-color: #e0e0e0;
-    border-radius: 5px;
-    overflow: hidden; /* Ensures fill stays within bounds */
-    height: 8px; /* Thinner bar */
-  }
-  
-  .post-box-progress-fill {
-    height: 100%;
-    background-color: #2ecc71; /* Green for progress */
-    border-radius: 5px;
-    transition: width 0.3s ease-in-out;
-  }
-  
-  /* --- Anonymous Checkbox Styling --- */
-  .post-box-anon-option {
-    display: flex;
+
+  .ui-post-box-info-message {
+    flex-direction: column;
     align-items: center;
-    margin-bottom: 25px; /* Spacing before post button */
-    cursor: pointer; /* Indicate entire area is clickable */
-  }
-  
-  .post-box-anon-option .custom-checkbox {
-    /* Hide default checkbox */
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    width: 20px;
-    height: 20px;
-    border: 2px solid #3498db;
-    border-radius: 4px;
-    vertical-align: middle;
-    cursor: pointer;
-    margin-right: 10px;
-    position: relative;
-    top: -1px;
-    outline: none;
-    transition: background-color 0.2s ease, border-color 0.2s ease;
-  }
-  
-  .post-box-anon-option .custom-checkbox:checked {
-    background-color: #3498db;
-    border-color: #3498db;
-  }
-  
-  .post-box-anon-option .custom-checkbox:checked::before {
-    content: '\2713';
-    display: block;
     text-align: center;
-    line-height: 18px;
-    color: #fff;
-    font-size: 16px;
   }
-  
-  .post-box-anon-option .custom-checkbox:focus {
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.5);
+
+  .ui-post-box-info-message p {
+    font-size: 0.85rem;
   }
-  
-  .post-box-anon-option .checkbox-label-text {
-    font-size: 16px;
-    color: #333;
-    cursor: pointer;
+
+  .ui-post-box-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
   }
-  
-  /* --- Post Button Styling --- */
-  .post-box-button {
-    background-color: #28a745; /* Green for "Post" action */
-    color: white;
-    padding: 15px 30px;
-    border: none;
-    border-radius: 8px;
-    font-size: 18px;
-    font-weight: 600;
-    cursor: pointer;
+
+  .ui-custom-file-upload-btn, .ui-clear-image-btn {
     width: 100%;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    justify-content: center;
   }
-  
-  .post-box-button:hover:not(:disabled) {
-    background-color: #218838; /* Darker green on hover */
-    transform: translateY(-2px);
+
+  .ui-anonymous-option {
+    justify-content: center;
+    width: 100%;
   }
-  
-  .post-box-button:disabled {
-    background-color: #cccccc; /* Grey when disabled */
-    cursor: not-allowed;
-    box-shadow: none;
-    transform: none;
+
+  .ui-post-box-button {
+    font-size: 0.95rem;
   }
-  
-  /* --- Responsive Adjustments --- */
-  @media (max-width: 768px) {
-    .post-box-container {
-      padding: 30px;
-      margin: 30px 15px; /* Adjust horizontal margin for smaller screens */
-    }
-  
-    .post-box-title {
-      font-size: 24px;
-      margin-bottom: 20px;
-    }
-  
-    .post-box-educate-message {
-      padding: 10px 15px;
-      font-size: 14px;
-    }
-  
-    .post-box-textarea {
-      min-height: 120px;
-      padding: 12px;
-    }
-  
-    .post-box-file-upload-section {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-  
-    .custom-file-upload-btn {
-        margin-bottom: 10px;
-        margin-right: 0;
-        /* REMOVE width: 100%; */
-        /* Instead, let its content dictate width, or set a max-width */
-        max-width: 180px; /* Example: Limit width to a reasonable size */
-        width: auto; /* Allow content to dictate width, but respect max-width */
-        text-align: center;
-        /* Make it self-align to center if flex-start isn't desired for the button itself */
-        align-self: center; /* This will center the button within its column */
-      }
-  
-    .file-name-display {
-      width: 100%;
-      text-align: center; /* Center filename when stacked */
-      margin-bottom: 10px; /* Space below filename */
-    }
-  
-    .clear-image-btn {
-        position: absolute; /* Position relative to file upload section */
-        top: 5px;
-        right: 5px;
-    }
-  
-    .post-box-button {
-      padding: 12px 25px;
-      font-size: 16px;
-    }
-  }
-  
-  @media (max-width: 480px) {
-    .post-box-container {
-      padding: 20px;
-      margin: 20px 10px;
-    }
-  
-    .post-box-title {
-      font-size: 20px;
-    }
-  
-    .post-box-educate-message {
-      font-size: 13px;
-    }
-  
-    .post-box-textarea {
-      min-height: 100px;
-    }
-  
-    .post-box-button {
-      font-size: 15px;
-      padding: 10px 20px;
-    }
-  }
+  .verify-warning {
+  display: flex;
+  align-items: center;
+  background: #fff3f3;
+  border: 1.5px solid #e63946;
+  color: #e63946;
+  border-radius: 8px;
+  padding: 18px 20px;
+  font-size: 1.08rem;
+  font-weight: 500;
+  margin: 32px auto;
+  max-width: 420px;
+  box-shadow: 0 2px 8px rgba(230,57,70,0.07);
+}
+}
