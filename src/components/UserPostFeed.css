@@ -1,0 +1,126 @@
+/*
+* Main container for the user post feed
+*/
+.user-post-feed-container {
+  max-width: 900px;
+  margin: 30px auto;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  font-family: Arial, sans-serif;
+}
+
+/*
+* Section title
+*/
+.admin-post-feed-title {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #1d3557;
+  border-bottom: 2px solid #a8dadc;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/*
+* Loading and empty states
+*/
+.loading-message,
+.no-items-message {
+  text-align: center;
+  font-size: 1.1rem;
+  color: #457b9d;
+  margin-top: 30px;
+  padding: 20px;
+  border-radius: 8px;
+  background-color: #e6f3f7;
+}
+
+/*
+* Grid layout for user items
+*/
+.user-item-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.filter-pills {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0 20px;
+}
+
+.pill {
+  padding: 6px 14px;
+  border-radius: 9999px;
+  border: 1px solid #ccc;
+  background-color: white;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.pill:hover {
+  background-color: #f5f5f5;
+}
+
+.pill.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+/*
+
+* Card styling for each item
+*/
+.user-item-card {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.user-item-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+.user-item-content {
+  padding: 15px;
+  flex: 1;
+}
+
+.user-item-text {
+  font-size: 0.95rem;
+  color: #333;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.user-item-footer {
+  font-size: 0.85rem;
+  color: #777;
+  padding: 10px 15px;
+  background-color: #f1f3f5;
+  border-top: 1px solid #e9ecef;
+}
+
+/*
+* Responsive adjustments
+*/
+@media (max-width: 600px) {
+  .admin-post-feed-title {
+    font-size: 1.5rem;
+  }
+
+  .user-item-text {
+    font-size: 0.9rem;
+  }
+}

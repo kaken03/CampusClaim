@@ -10,7 +10,6 @@ import SchoolHome from './pages/SchoolHome';
 import Profile from './pages/Profile';
 import Timeline from './pages/Timeline';
 import Notification from './pages/Notification';
-import ContactUs from './pages/ContactUs';
 import reportWebVitals from './reportWebVitals';
 import PostDetails from './components/PostDetails';
 import AdminDashboard from './pages/AdminDashboard';
@@ -64,9 +63,6 @@ root.render(
             <PostDetails />
           </RequireUser>
         } />
-
-        {/* Public Info Pages */}
-        <Route path="/contact" element={<ContactUs />} />
 
         {/* Admin Protected Routes */}
         <Route path="/admin-dashboard" element={

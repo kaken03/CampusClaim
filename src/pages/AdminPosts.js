@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { db } from '../firebase';
-import { collection, getDocs, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { db, auth } from '../firebase';
+import { collection, getDocs, getDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import Navbar from '../components/NavbarAdmin';
 import './AdminPosts.css';
 
@@ -9,13 +9,41 @@ export default function AdminPosts() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [mainTab, setMainTab] = useState('all'); // all | lost | found
-  const [subTab, setSubTab] = useState('all');    // all | claimed | unclaimed
+  const [subTab, setSubTab] = useState('all');   // all | claimed | unclaimed
+  const [schoolName, setSchoolName] = useState('');
 
+  // Fetch logged-in user's school name
   useEffect(() => {
+    async function fetchSchoolName() {
+      if (!auth.currentUser) return;
+
+      // Get the user's document from /users collection
+      const userDocRef = doc(db, 'users', auth.currentUser.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (userDocSnap.exists()) {
+        const school = userDocSnap.data()?.school;
+        if (school) {
+          setSchoolName(school);
+        }
+      }
+    }
+    fetchSchoolName();
+  }, []);
+
+  // Fetch Lost and Found posts after schoolName is set
+  useEffect(() => {
+    if (!schoolName) return;
+
     async function fetchPosts() {
       setLoading(true);
-      const foundSnapshot = await getDocs(collection(db, 'FoundItems'));
-      const lostSnapshot = await getDocs(collection(db, 'LostItems'));
+
+      const foundSnapshot = await getDocs(
+        collection(db, 'schools', schoolName, 'FoundItems')
+      );
+      const lostSnapshot = await getDocs(
+        collection(db, 'schools', schoolName, 'LostItems')
+      );
 
       const foundPosts = foundSnapshot.docs.map(docSnap => ({
         ...docSnap.data(),
@@ -32,11 +60,11 @@ export default function AdminPosts() {
       setLoading(false);
     }
     fetchPosts();
-  }, []);
+  }, [schoolName]);
 
   const handleBlock = async (postId, isBlocked, collectionName) => {
-    await updateDoc(doc(db, collectionName, postId), { isBlocked: !isBlocked });
-    setPosts(posts.map(post => 
+    await updateDoc(doc(db, 'schools', schoolName, collectionName, postId), { isBlocked: !isBlocked });
+    setPosts(posts.map(post =>
       post.id === postId && post.collection === collectionName
         ? { ...post, isBlocked: !isBlocked }
         : post
@@ -45,13 +73,12 @@ export default function AdminPosts() {
 
   const handleDelete = async (postId, collectionName) => {
     if (window.confirm("Are you sure you want to delete this post? This action is irreversible.")) {
-      await deleteDoc(doc(db, collectionName, postId));
+      await deleteDoc(doc(db, 'schools', schoolName, collectionName, postId));
       setPosts(posts.filter(post => !(post.id === postId && post.collection === collectionName)));
     }
   };
 
   // --- COUNTING LOGIC ---
-  // Counts for each category and filter:
   const totalAll = posts.length;
   const totalLost = posts.filter(p => p.collection === 'LostItems').length;
   const totalFound = posts.filter(p => p.collection === 'FoundItems').length;
@@ -182,9 +209,9 @@ export default function AdminPosts() {
         )}
       </button>
     </div>
-  )
+  );
 
-  // Show counts on main tabs as well
+  // Show counts on main tabs
   const renderMainTabs = () => (
     <div className="admin-posts-tabs">
       <button
@@ -237,10 +264,10 @@ export default function AdminPosts() {
           onChange={e => setSearch(e.target.value)}
         />
 
-        {/* Main Tabs with counts */}
+        {/* Main Tabs */}
         {renderMainTabs()}
-        
-        {/* Sub-tabs for Lost/Found with counts */}
+
+        {/* Sub-tabs */}
         {(mainTab === 'lost' || mainTab === 'found') && renderSubTabs()}
 
         {loading ? (

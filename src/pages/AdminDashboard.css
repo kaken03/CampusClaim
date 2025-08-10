@@ -1,112 +1,54 @@
-.admin-dashboard-container {
-  padding: 2.5rem 1rem 2rem 1rem;
-  max-width: 780px;
+/* src/components/AdminDashboard.css */
+
+.admin-dashboard {
+  max-width: 1200px;
   margin: 0 auto;
+  padding: 24px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #333;
 }
 
 .dashboard-title {
-  text-align: center;
-  font-size: 2.4rem;
+  font-size: 2.5rem;
   font-weight: 700;
-  color: #1d3557;
-  margin-bottom: 16px;
-}
-
-.dashboard-loading {
+  color: #2c3e50;
+  margin-bottom: 32px;
   text-align: center;
-  color: #888;
 }
 
-.dashboard-stats {
-  display: flex;
-  justify-content: center;
-  gap: 32px;
-  margin-bottom: 36px;
-  flex-wrap: wrap;
-}
-
-.stat-card {
-  background: #f8f9fa;
-  padding: 24px 32px;
-  border-radius: 12px;
-  text-align: center;
-  box-shadow: 0 2px 12px #eee;
-  min-width: 180px;
-  margin-bottom: 18px;
-}
-
-.stat-card.total-users .stat-number {
-  color: #007bff;
-}
-.stat-card.active-users .stat-number {
-  color: #28a745;
-}
-
-.stat-number {
-  font-size: 2.4rem;
-  font-weight: bold;
-  margin: 0.6rem 0 0.2rem 0;
-  display: block;
-}
-
-.dashboard-post-stats {
-  display: flex;
-  justify-content: center;
-  gap: 40px;
-  margin-bottom: 26px;
-  flex-wrap: wrap;
-}
-
-.stat-card.category {
-  min-width: 190px;
-  border-left: 7px solid #1d3557;
-}
-.stat-card.category.lost {
-  border-left-color: #f77f00;
-}
-.stat-card.category.found {
-  border-left-color: #457b9d;
-}
-.stat-card.category h3 {
-  margin-bottom: 8px;
-  color: #444;
-}
-
-.stat-sub {
-  margin-top: 10px;
+.dashboard-content {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  font-size: 1.06rem;
-  color: #555;
-}
-.stat-sub span {
-  display: flex;
-  justify-content: space-between;
+  gap: 40px;
 }
 
-.dashboard-post-summary {
-  text-align: center;
-  margin-top: 22px;
-  background: #f5f8fa;
+.admin-message {
+  padding: 24px;
+  background-color: #fdfdfd;
   border-radius: 8px;
-  padding: 12px 0;
-}
-.dashboard-post-summary h4 {
-  font-size: 1.18rem;
-  margin: 0;
-  color: #333;
-}
-.dashboard-post-summary .stat-number {
-  color: #b5179e;
-  font-size: 1.28em;
-  font-weight: 700;
-}
-.dashboard-school-name {
-  font-size: 1.15rem;
-  color: #1877f2;
-  margin-bottom: 8px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  text-align: center;
+  font-size: 1.1rem;
+  color: #555;
+  margin: 50px auto;
+  max-width: 500px;
 }
 
+.found-items-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.loading-message, .no-items-message {
+  text-align: center;
+  font-style: italic;
+  color: #777;
+  padding: 20px;
+}
+
+.found-items-list {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}

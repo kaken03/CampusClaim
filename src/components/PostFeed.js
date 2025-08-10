@@ -314,9 +314,8 @@ function PostFeed({ schoolName }) {
       return;
     }
     try {
-      const reportRef = collection(db, 'reports');
+      const reportRef = collection(db, 'schools', schoolName, 'LostItems', postId, 'reports');
       await addDoc(reportRef, {
-        postId: postId,
         reporterId: user.uid,
         reason: reportMessage,
         createdAt: Timestamp.now(),

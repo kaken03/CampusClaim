@@ -20,7 +20,7 @@ body {
 
 /* --- Main Layout and Typography --- */
 .ui-post-feed {
-  max-width: 768px;
+  max-width: 900px;
   margin: 24px auto;
   padding: 0 16px;
 }

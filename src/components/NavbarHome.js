@@ -75,8 +75,6 @@ const NavbarHome = () => {
             Profile
           </Link>
 
-          <Link to="/contact" onClick={() => setMenuOpen(false)}>Contact Us</Link>
-
           {/* Logout Button styled to stand out */}
           <button
             className="logout-button primary-action-btn" // Added primary-action-btn for distinct styling

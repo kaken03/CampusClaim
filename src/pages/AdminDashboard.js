@@ -1,107 +1,46 @@
-import React, { useEffect, useState } from 'react';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../firebase';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/NavbarAdmin';
+import AdminPostBox from '../components/AdminPostBox';
+import AdminPostFeed from '../components/AdminPostFeed';
 import './AdminDashboard.css';
 
 function AdminDashboard() {
-  const [totalUsers, setTotalUsers] = useState(0);
-  const [activeUsers, setActiveUsers] = useState(0);
-  const [totalLost, setTotalLost] = useState(0);
-  const [totalFound, setTotalFound] = useState(0);
-  const [totalLostClaimed, setTotalLostClaimed] = useState(0);
-  const [totalLostUnclaimed, setTotalLostUnclaimed] = useState(0);
-  const [totalFoundClaimed, setTotalFoundClaimed] = useState(0);
-  const [totalFoundUnclaimed, setTotalFoundUnclaimed] = useState(0);
-  const [loading, setLoading] = useState(true);
-
-  // Get admin's school from localStorage
-  const user = JSON.parse(localStorage.getItem('user'));
-  const schoolName = user?.school;
+  const [schoolName, setSchoolName] = useState(null);
 
   useEffect(() => {
-    const fetchStats = async () => {
-      setLoading(true);
-      try {
-        // Users for this school
-        const usersSnapshot = await getDocs(collection(db, 'schools', schoolName, 'users'));
-        setTotalUsers(usersSnapshot.size);
-
-        const activeQuery = query(collection(db, 'schools', schoolName, 'users'), where('active', '==', true));
-        const activeSnapshot = await getDocs(activeQuery);
-        setActiveUsers(activeSnapshot.size);
-
-        // Lost Items for this school
-        const lostSnapshot = await getDocs(collection(db, 'schools', schoolName, 'LostItems'));
-        const lostDocs = lostSnapshot.docs;
-        setTotalLost(lostDocs.length);
-        setTotalLostClaimed(lostDocs.filter(doc => doc.data().claimed === true).length);
-        setTotalLostUnclaimed(lostDocs.filter(doc => !doc.data().claimed).length);
-
-        // Found Items for this school
-        const foundSnapshot = await getDocs(collection(db, 'schools', schoolName, 'FoundItems'));
-        const foundDocs = foundSnapshot.docs;
-        setTotalFound(foundDocs.length);
-        setTotalFoundClaimed(foundDocs.filter(doc => doc.data().claimed === true).length);
-        setTotalFoundUnclaimed(foundDocs.filter(doc => !doc.data().claimed).length);
-
-      } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
-      }
-      setLoading(false);
-    };
-
-    if (schoolName) {
-      fetchStats();
+    // Get admin's school from localStorage
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user && user.school) {
+      setSchoolName(user.school);
     }
-  }, [schoolName]);
+  }, []);
 
+  // This component assumes authentication and permissions are handled upstream.
+  // It focuses only on displaying the AdminPostBox.
   return (
     <div>
-      <Navbar />
+      <Navbar /> 
       <div className="admin-dashboard-container">
-        {/* Display the school name */}
-        <h2 className="dashboard-school-name">
-          {schoolName ? `${schoolName}` : 'Not set'}
-        </h2>
-        <h1 className="dashboard-title">Admin Dashboard</h1>
-        {loading ? (
-          <p className="dashboard-loading">Loading statistics...</p>
-        ) : (
-          <>
-            <div className="dashboard-stats">
-              <div className="stat-card total-users">
-                <h2>Total Users</h2>
-                <p className="stat-number">{totalUsers}</p>
-              </div>
-              <div className="stat-card active-users">
-                <h2>Active Users</h2>
-                <p className="stat-number">{activeUsers}</p>
-              </div>
-            </div>
-            <div className="dashboard-post-stats">
-              <div className="stat-card category lost">
-                <h3>Lost Items</h3>
-                <p className="stat-number">{totalLost}</p>
-                <div className="stat-sub">
-                  <span>Claimed: <b>{totalLostClaimed}</b></span>
-                  <span>Unclaimed: <b>{totalLostUnclaimed}</b></span>
-                </div>
-              </div>
-              <div className="stat-card category found">
-                <h3>Found Items</h3>
-                <p className="stat-number">{totalFound}</p>
-                <div className="stat-sub">
-                  <span>Claimed: <b>{totalFoundClaimed}</b></span>
-                  <span>Unclaimed: <b>{totalFoundUnclaimed}</b></span>
-                </div>
-              </div>
-            </div>
-            <div className="dashboard-post-summary">
-              <h4>Total Posts (All Lost &amp; Found): <span className="stat-number">{totalLost + totalFound}</span></h4>
-            </div>
-          </>
-        )}
+        <div style={{
+          textAlign: 'center',
+          marginBottom: '30px',
+          padding: '20px',
+          boxShadow: '0 4px 16px rgba(29,53,87,0.2)'
+        }}>
+          <h1 style={{ margin: '0 0 10px 0', fontSize: '2.5rem', fontWeight: 'bold' }}>
+            {schoolName || "Admin Dashboard"}
+          </h1>
+          <p style={{ margin: '0', fontSize: '1.2rem', opacity: '0.9' }}>
+            lost and found community
+          </p>
+        </div>
+
+        <main className="dashboard-content">
+          <section className="posts-section">
+            <AdminPostBox schoolName={schoolName} />
+            <AdminPostFeed schoolName={schoolName} />
+          </section>
+        </main>
       </div>
     </div>
   );
