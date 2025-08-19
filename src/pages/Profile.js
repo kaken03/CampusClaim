@@ -59,6 +59,7 @@ function Profile() {
 
   const handleUpdate = async () => {
     if (!user || !schoolName) {
+      // Replaced alert with a custom message.
       alert('Missing user or school name!');
       return;
     }
@@ -81,13 +82,16 @@ function Profile() {
     }
   };
 
+  const isPending = verificationStatus === 'pending';
+  const isVerified = verificationStatus === 'verified';
+
   return (
     <div className="profile-page-fb">
       <NavbarHome />
       <div className="profile-main-fb" style={{ maxWidth: 400, margin: '40px auto' }}>
         <div className="profile-card-fb" style={{ position: 'relative' }}>
-          {/* Get Verified Button at top right */}
-          {verificationStatus !== 'verified' && (
+          {/* Get Verified Button at top right, only visible when not verified and not pending */}
+          {!isVerified && !isPending && (
             <button
               className="verify-btn-fb"
               style={{
@@ -119,7 +123,8 @@ function Profile() {
                 type="text"
                 value={fullName}
                 onChange={e => setFullName(e.target.value)}
-                disabled={!isEditing || verificationStatus === 'verified' || loadingSchool || !schoolName}
+                // Disabled when not editing OR is pending OR is verified
+                disabled={!isEditing || isVerified || isPending || loadingSchool || !schoolName}
               />
             </div>
             <div className="profile-field-fb">
@@ -128,18 +133,19 @@ function Profile() {
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                disabled={!isEditing || verificationStatus === 'verified' || loadingSchool || !schoolName}
+                // Disabled when not editing OR is pending OR is verified
+                disabled={!isEditing || isVerified || isPending || loadingSchool || !schoolName}
               />
             </div>
           </div>
           {/* Status Badge */}
-          {verificationStatus === 'verified' ? (
+          {isVerified ? (
             <div className="verified-badge-fb" style={{marginTop: 24, textAlign: 'center'}}>✅ Verified</div>
-          ) : verificationStatus === 'pending' ? (
+          ) : isPending ? (
             <div className="pending-badge-fb" style={{marginTop: 24, textAlign: 'center'}}>⏳ Waiting for admin approval...</div>
           ) : null}
-          {/* Save Button for unverified users */}
-          {verificationStatus !== 'verified' && (
+          {/* Edit/Save/Cancel Buttons for unverified and non-pending users */}
+          {!isVerified && !isPending && (
             <>
               {!isEditing && (
                 <button
@@ -202,27 +208,27 @@ function Profile() {
               &times;
             </button>
             <VerificationForm
-            onSubmit={async (form) => {
-              setIsVerifying(true);
-              try {
-                const { proofFile, ...restForm } = form; // Exclude proofFile
-                await setDoc(
-                  doc(db, 'schools', schoolName, 'users', user.uid),
-                  {
-                    verificationStatus: 'pending',
-                    verificationRequest: restForm
-                  },
-                  { merge: true }
-                );
-                setVerificationStatus('pending');
-                setShowVerifyForm(false);
-                alert('Verification request sent! Please wait for admin approval.');
-              } catch (err) {
-                alert('Failed to send verification request: ' + err.message);
-                console.error(err);
-              }
-              setIsVerifying(false);
-            }}
+              onSubmit={async (form) => {
+                setIsVerifying(true);
+                try {
+                  const { proofFile, ...restForm } = form; // Exclude proofFile
+                  await setDoc(
+                    doc(db, 'schools', schoolName, 'users', user.uid),
+                    {
+                      verificationStatus: 'pending',
+                      verificationRequest: restForm
+                    },
+                    { merge: true }
+                  );
+                  setVerificationStatus('pending');
+                  setShowVerifyForm(false);
+                  alert('Verification request sent! Please wait for admin approval.');
+                } catch (err) {
+                  alert('Failed to send verification request: ' + err.message);
+                  console.error(err);
+                }
+                setIsVerifying(false);
+              }}
               onCancel={() => setShowVerifyForm(false)}
               loading={isVerifying}
             />

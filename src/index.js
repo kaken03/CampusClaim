@@ -16,8 +16,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminUser from './pages/AdminUser';
 import AdminPosts from './pages/AdminPosts'
 import AdminApproval from './pages/AdminApproval';
-import AdminAnalytics from './pages/AdminAnalytics';
-import AdminInbox from './pages/AdminInbox'; // New admin inbox page
+import AdminReports from './pages/AdminReports'; 
 import RequireUser from './components/RequireUser';
 import RequireAdmin from './components/RequireAdmin';
 import ForgotPassword from './pages/ForgotPassword';
@@ -70,11 +69,6 @@ root.render(
             <AdminDashboard />
           </RequireAdmin>
         } />
-        <Route path="/admin-analytics" element={
-          <RequireAdmin>
-            <AdminAnalytics />
-          </RequireAdmin>
-        } />
         <Route path="/admin-posts" element={
           <RequireAdmin>
             <AdminPosts />
@@ -90,9 +84,9 @@ root.render(
             <AdminUser />
           </RequireAdmin>
         } />
-        <Route path="/admin-inbox" element={
+        <Route path="/admin-reports" element={
           <RequireAdmin>
-            <AdminInbox />
+            <AdminReports />
           </RequireAdmin>
         } />
         {/* Add more admin-protected routes below as needed */}

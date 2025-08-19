@@ -18,38 +18,43 @@ function UserFoundItem({ item }) {
 
   return (
     <>
-      <div className={`user-item-card ${claimedClass}`}>
-        <div className="user-item-content">
-          <p className="user-item-text">
-            {displayedText}
-            {isLongText && (
-              <span
-                className="see-more-text"
-                onClick={() => setIsExpanded(!isExpanded)}
-              >
-                {isExpanded ? ' See less' : '... See more'}
-              </span>
-            )}
-          </p>
-
-          <div className="user-item-status">
-            <FontAwesomeIcon
-              icon={item.claimed ? faCheckCircle : faTimesCircle}
-              className={`user-status-icon ${claimedClass}`}
-            />
-            <span className="user-status-text">{claimedText}</span>
-          </div>
-
-          {item.imageUrl && (
-            <button
-              className="see-photo-btn"
-              onClick={() => setShowImageModal(true)}
-            >
-              <FontAwesomeIcon icon={faImage} /> See Photo
-            </button>
-          )}
-        </div>
-      </div>
+      <div className={`item-card admin-item-card ${claimedClass}`}>
+              {/* Admin Header (Always shown now) */}
+              <div className="admin-item-header">
+                <div className="admin-item-status">
+                  <FontAwesomeIcon
+                    icon={item.claimed ? faCheckCircle : faTimesCircle}
+                    className={`admin-status-icon ${claimedClass}`}
+                  />
+                  <span className="admin-status-text">{claimedText}</span>
+                </div>
+              </div>
+      
+              {/* --- Shared Content --- */}
+              <div className="user-item-content">
+                <p className="user-item-text">
+                  {displayedText}
+                  {isLongText && (
+                    <span
+                      className="see-more-text"
+                      onClick={() => setIsExpanded((prev) => !prev)}
+                    >
+                      {isExpanded ? " See less" : "... See more"}
+                    </span>
+                  )}
+                </p>
+      
+                {/* Image button */}
+                {item.imageUrl && (
+                  <button
+                    className="see-photo-btn"
+                    onClick={() => setShowImageModal(true)}
+                  >
+                    <FontAwesomeIcon icon={faImage} /> See Photo
+                  </button>
+                )}
+              </div>
+            </div>
 
       {showImageModal && item.imageUrl && (
         <div className="modal-overlay" onClick={() => setShowImageModal(false)}>

@@ -58,15 +58,6 @@ function VerificationForm({ onSubmit, onCancel, loading }) {
         return (
           <>
             <div className="profile-field-fb">
-              <label>Employee ID Number</label>
-              <input
-                type="text"
-                value={form.idNumber}
-                onChange={e => setForm({ ...form, idNumber: e.target.value })}
-                required
-              />
-            </div>
-            <div className="profile-field-fb">
               <label>Department</label>
               <input
                 type="text"
@@ -113,15 +104,6 @@ function VerificationForm({ onSubmit, onCancel, loading }) {
         return (
           <>
             <div className="profile-field-fb">
-              <label>Officer ID Number</label>
-              <input
-                type="text"
-                value={form.idNumber}
-                onChange={e => setForm({ ...form, idNumber: e.target.value })}
-                required
-              />
-            </div>
-            <div className="profile-field-fb">
               <label>Office/Organization</label>
               <input
                 type="text"
@@ -164,6 +146,7 @@ function VerificationForm({ onSubmit, onCancel, loading }) {
 
   return (
     <form className="verification-form-fb" onSubmit={handleSubmit}>
+      <h4 style={{color:'red'}}>Make sure the Full Name and Email are correct!</h4>
       <div className="profile-field-fb">
         <label>Role</label>
         <select

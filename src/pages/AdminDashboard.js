@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from '../components/NavbarAdmin';
+import Navbar from '../components/AdminNavbar';
 import AdminPostBox from '../components/AdminPostBox';
 import AdminPostFeed from '../components/AdminPostFeed';
 import './AdminDashboard.css';

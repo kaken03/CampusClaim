@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { db } from '../firebase';
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, arrayUnion, Timestamp, addDoc, deleteDoc, where, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, arrayUnion, Timestamp, addDoc, deleteDoc, where } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { useLocation } from 'react-router-dom';
 import './PostFeed.css';
@@ -76,7 +76,7 @@ function PostFeed({ schoolName }) {
   const [showErrorModal, setShowErrorModal] = useState({ show: false, title: '', message: '' });
   const [deletingPostId, setDeletingPostId] = useState(null);
   const [editingPost, setEditingPost] = useState(null);
-  const [verificationStatus, setVerificationStatus] = useState('');
+  // Removed verificationStatus state
 
   const auth = getAuth();
   const user = auth.currentUser;
@@ -397,12 +397,7 @@ function PostFeed({ schoolName }) {
     setOpenMenuPostId(prevId => prevId === postId ? null : postId);
   };
 
-  useEffect(() => {
-    if (!user) return;
-    getDoc(doc(db, 'users', user.uid)).then(docSnap => {
-      setVerificationStatus(docSnap.data()?.verificationStatus || '');
-    });
-  }, [user]);
+  // Removed useEffect for fetching verificationStatus
 
   return (
     <div className="ui-post-feed">
@@ -593,10 +588,6 @@ function PostFeed({ schoolName }) {
 
                   {!user ? (
                     <p className="ui-login-to-comment-message">Log in to add a comment.</p>
-                  ) : verificationStatus !== 'verified' ? (
-                    <div className="ui-verify-warning">
-                      <p>You must be verified to comment. Please complete verification in your profile.</p>
-                    </div>
                   ) : (
                     <div className="ui-comment-form">
                       <textarea

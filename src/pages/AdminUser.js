@@ -2,29 +2,25 @@ import React, { useEffect, useState } from 'react';
 import { db } from '../firebase';
 import { collection, getDocs, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import './AdminUser.css'; // This CSS file will be provided next
-import Navbar from '../components/NavbarAdmin';
+import './AdminUser.css';
+import Navbar from '../components/AdminNavbar';
+import AdminUserAnalytics from '../components/AdminUserAnalytics'; // Import the new component
 
 export default function AdminUser() {
-  const [users, setUsers] = useState([]); // Stores non-admin users
-  const [admins, setAdmins] = useState([]); // Stores admin users
+  const [users, setUsers] = useState([]);
+  const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState('users'); // 'users' or 'admins'
+  const [activeTab, setActiveTab] = useState('users'); // 'users', 'admins', or 'analytics'
   const [currentUserId, setCurrentUserId] = useState(null);
-  // State for user category filter within the 'users' tab
-  const [userCategoryFilter, setUserCategoryFilter] = useState('all'); // 'all', 'verified', 'unverified'
-
-  // State for user statistics (non-admin users only)
+  const [userCategoryFilter, setUserCategoryFilter] = useState('all');
   const [totalNonAdminUsers, setTotalNonAdminUsers] = useState(0);
   const [verifiedNonAdminUsers, setVerifiedNonAdminUsers] = useState(0);
   const [unverifiedNonAdminUsers, setUnverifiedNonAdminUsers] = useState(0);
 
-  // Get admin's school from localStorage for Firestore path
   const userFromLocalStorage = JSON.parse(localStorage.getItem('user'));
   const schoolName = userFromLocalStorage?.school;
 
-  // Effect to get current user ID for "It's You" label
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = auth.onAuthStateChanged(user => {
@@ -33,7 +29,6 @@ export default function AdminUser() {
     return () => unsubscribe();
   }, []);
 
-  // Effect to fetch all users and process them into admin/non-admin lists
   useEffect(() => {
     async function fetchAllUsersAndProcess() {
       setLoading(true);
@@ -76,9 +71,8 @@ export default function AdminUser() {
       }
     }
     fetchAllUsersAndProcess();
-  }, [schoolName]); // Re-run effect if schoolName changes
+  }, [schoolName]);
 
-  // Handles blocking/unblocking a user
   const handleBlock = async (userId, isBlocked) => {
     try {
       const userDocRef = doc(db, 'schools', schoolName, 'users', userId);
@@ -91,9 +85,7 @@ export default function AdminUser() {
     }
   };
 
-  // Handles deleting a user
   const handleDelete = async (userId) => {
-    // IMPORTANT: Replace window.confirm with a custom modal UI for user confirmation
     if (window.confirm("Are you sure you want to delete this user? This action is irreversible.")) {
       try {
         const userDocRef = doc(db, 'schools', schoolName, 'users', userId);
@@ -116,7 +108,6 @@ export default function AdminUser() {
     }
   };
 
-  // Filters users and admins based on search input (fullName, email, ID)
   const filteredUsers = users.filter(
     user =>
       user.fullName?.toLowerCase().includes(search.toLowerCase()) ||
@@ -131,14 +122,12 @@ export default function AdminUser() {
       admin.id?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Determines user status for display
   function getUserStatus(user) {
     if (user.isBlocked) return 'Blocked';
     if (user.verificationStatus === 'verified') return 'Verified';
-    return 'Unverified'; // Default to unverified if not blocked and not explicitly verified
+    return 'Unverified';
   }
 
-  // Filters non-admin users based on the selected category (all, verified, unverified)
   const filteredUsersByCategory = filteredUsers.filter(user => {
     if (userCategoryFilter === 'all') {
       return true;
@@ -147,10 +136,9 @@ export default function AdminUser() {
     } else if (userCategoryFilter === 'unverified') {
       return user.verificationStatus !== 'verified';
     }
-    return true; // Fallback
+    return true;
   });
 
-  // Renders user data as cards for mobile view
   function renderCards(group, isAdminTable = false) {
     return (
       <div className="admin-users-cards-grid">
@@ -168,7 +156,7 @@ export default function AdminUser() {
                 <p><strong>Role:</strong> {user.role || 'User'}</p>
                 <p><strong>Registered:</strong> {user.createdAt?.seconds ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}</p>
                 
-                {!isAdminTable && ( // Status only for non-admins
+                {!isAdminTable && (
                   <p>
                     <strong>Status:</strong> 
                     <span className={`user-status-badge status-${getUserStatus(user).toLowerCase()}`}>
@@ -178,7 +166,7 @@ export default function AdminUser() {
                 )}
               </div>
               
-              {!isAdminTable && ( // Actions only for non-admins
+              {!isAdminTable && (
                 <div className="user-card-actions">
                   {user.id === currentUserId ? (
                     <span className="current-user-tag">It's You</span>
@@ -207,84 +195,25 @@ export default function AdminUser() {
     );
   }
 
-  // Renders user data as a table for desktop view
-  function renderTable(group, isAdminTable = false) {
-    return (
-      <div className="admin-users-table-wrapper">
-        <table className="admin-users-table">
-          <thead>
-            <tr>
-              <th>User ID</th>
-              <th>Name</th>
-              <th>Email</th>
-              {!isAdminTable && <th>Status</th>} {/* Status header only for non-admins */}
-              <th>Role</th>
-              <th>Registered</th>
-              {!isAdminTable && <th>Actions</th>} {/* Actions header only for non-admins */}
-            </tr>
-          </thead>
-          <tbody>
-            {group.length === 0 ? (
-              <tr>
-                <td colSpan={isAdminTable ? 5 : 7} className="empty-table-cell">No users found.</td>
-              </tr>
-            ) : (
-              group.map(user => (
-                <tr key={user.id} className={user.isBlocked ? 'user-row-blocked' : ''}>
-                  <td>{user.id}</td>
-                  <td>{user.fullName || '-'}</td>
-                  <td>{user.email || '-'}</td>
-                  {!isAdminTable && ( // Status cell only for non-admins
-                    <td>
-                      <span className={`user-status-badge status-${getUserStatus(user).toLowerCase()}`}>
-                        {getUserStatus(user)}
-                      </span>
-                    </td>
-                  )}
-                  <td>{user.role || 'User'}</td>
-                  <td>{user.createdAt?.seconds ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : '-'}</td>
-                  {!isAdminTable && ( // Actions cell only for non-admins
-                    <td>
-                      {user.id === currentUserId ? (
-                        <span className="current-user-tag">It's You</span>
-                      ) : (
-                        <div className="table-actions-buttons">
-                          <button
-                            className={`action-btn ${user.isBlocked ? 'action-btn-unblock' : 'action-btn-block'}`}
-                            onClick={() => handleBlock(user.id, user.isBlocked)}
-                          >
-                            {user.isBlocked ? 'Unblock' : 'Block'}
-                          </button>
-                          <button
-                            className="action-btn action-btn-delete"
-                            onClick={() => handleDelete(user.id)}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  )}
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    );
-  }
+  
 
   return (
     <div>
       <Navbar />
       <div className="admin-page-container">
         <header className="admin-page-header">
-          <h1>User & Admin Management</h1>
+          <h1>User Management</h1>
         </header>
 
         <div className="admin-content-area">
           <div className="admin-sidebar">
             <div className="admin-tabs-nav">
+              <button
+                className={`tab-button ${activeTab === 'analytics' ? 'active' : ''}`}
+                onClick={() => setActiveTab('analytics')}
+              >
+                Analytics 📊
+              </button>
               <button
                 className={`tab-button ${activeTab === 'users' ? 'active' : ''}`}
                 onClick={() => setActiveTab('users')}
@@ -327,32 +256,39 @@ export default function AdminUser() {
           </div>
 
           <main className="admin-main-content">
-            <div className="search-bar-container">
-              <input
-                className="search-input"
-                type="text"
-                placeholder="Search by name, email, or ID..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-              />
-            </div>
+            {activeTab !== 'analytics' && (
+              <div className="search-bar-container">
+                <input
+                  className="search-input"
+                  type="text"
+                  placeholder="Search by name, email, or ID..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                />
+              </div>
+            )}
 
             {loading ? (
               <div className="loading-state">Loading users...</div>
             ) : (
               <>
+                {activeTab === 'analytics' && (
+                  <section className="analytics-section">
+                    <AdminUserAnalytics users={users} />
+                  </section>
+                )}
+
                 {activeTab === 'admins' && (
                   <section className="admin-list-section">
                     <h3 className="section-title">Administrators</h3>
-                    {renderTable(filteredAdmins, true)}
-                    {renderCards(filteredAdmins, true)} {/* Render cards for mobile */}
+                    {renderCards(filteredAdmins, true)}
                   </section>
                 )}
+                
                 {activeTab === 'users' && (
                   <section className="user-list-section">
                     <h3 className="section-title">Regular Users</h3>
-                    {renderTable(filteredUsersByCategory, false)}
-                    {renderCards(filteredUsersByCategory, false)} {/* Render cards for mobile */}
+                    {renderCards(filteredUsersByCategory, false)}
                   </section>
                 )}
               </>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../firebase';
 import { collection, query, orderBy, onSnapshot, updateDoc, doc, deleteDoc } from 'firebase/firestore';
-import Navbar from '../components/NavbarAdmin';
+import Navbar from '../components/AdminNavbar';
 
 function AdminInbox() {
   const [messages, setMessages] = useState([]);

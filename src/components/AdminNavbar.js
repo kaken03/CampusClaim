@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
-import './NavbarAdmin.css'; // ✅ Make sure this is imported
+import './AdminNavbar.css'; // ✅ Make sure this is imported
+import logo from '../assets/images/CAMPUSCLAIM.png';
 
 function NavbarAdmin() {
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
@@ -24,11 +25,16 @@ function NavbarAdmin() {
   return (
     <>
       <nav className="navbar-admin">
-        <div className="navbar-admin-logo">
-          <Link to="/admin-dashboard">
-            CampusClaim <span>Admin</span>
+        <div className="logo-container">
+        <div className="logo">
+          <Link to="/admin-dashboard" className="logo-link">
+          <img src={logo} alt="CampusClaim Logo" className="logo-image" />
+            <span className="logo-text">CampusClaim</span>
+            
           </Link>
         </div>
+        </div>
+        
 
         {/* Hamburger for small screens */}
         <div className="admin-menu-toggle" onClick={() => setMenuOpen(!menuOpen)}>
@@ -41,8 +47,7 @@ function NavbarAdmin() {
           <li><Link to="/admin-users" onClick={() => setMenuOpen(false)}>Users</Link></li>
           <li><Link to="/admin-posts" onClick={() => setMenuOpen(false)}>Posts</Link></li>
           <li><Link to="/admin-approval" onClick={() => setMenuOpen(false)}>Approval</Link></li>
-          <li><Link to="/admin-analytics" onClick={() => setMenuOpen(false)}>Analytics</Link></li>
-          <li><Link to="/admin-inbox" onClick={() => setMenuOpen(false)}>Inbox</Link></li>
+          <li><Link to="/admin-reports" onClick={() => setMenuOpen(false)}>Reports</Link></li>
           <li>
             <button
               className="logout-btn"
