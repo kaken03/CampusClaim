@@ -68,15 +68,6 @@ function Login() {
         }));
 
         setSuccess('Login successful!');
-        setTimeout(() => {
-          setSuccess('');
-          if (userData.role === 'admin') {
-            navigate('/admin-dashboard');
-          } else {
-            // Redirect to school-specific homepage
-            navigate(`/school/${userSchool}/home`);
-          }
-        }, 1000); // Show message for 1s, then redirect
       } else {
         setError('No user profile found. Please contact support.');
       }

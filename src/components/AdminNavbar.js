@@ -48,6 +48,7 @@ function NavbarAdmin() {
           <li><Link to="/admin-posts" onClick={() => setMenuOpen(false)}>Posts</Link></li>
           <li><Link to="/admin-approval" onClick={() => setMenuOpen(false)}>Approval</Link></li>
           <li><Link to="/admin-reports" onClick={() => setMenuOpen(false)}>Reports</Link></li>
+          <li><Link to="/admin-profile" onClick={() => setMenuOpen(false)}>Profile</Link></li>
           <li>
             <button
               className="logout-btn"

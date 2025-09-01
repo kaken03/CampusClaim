@@ -5,7 +5,7 @@ import { getAuth } from 'firebase/auth';
 import { useLocation } from 'react-router-dom';
 import './PostFeed.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faComment, faEllipsisH, faCheckCircle, faExclamationTriangle, faBan, faEdit, faTrash, faTimes, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faComment, faEllipsisH, faCheckCircle, faExclamationTriangle, faBan, faEdit, faTrash, faTimes, faImage, faUser } from '@fortawesome/free-solid-svg-icons';
 
 // A reusable modal component
 const CustomModal = ({ title, message, onConfirm, onCancel, confirmText, cancelText }) => {
@@ -77,6 +77,8 @@ function PostFeed({ schoolName }) {
   const [deletingPostId, setDeletingPostId] = useState(null);
   const [editingPost, setEditingPost] = useState(null);
   const [verificationStatus, setVerificationStatus] = useState('');
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const auth = getAuth();
   const user = auth.currentUser;
@@ -192,10 +194,6 @@ function PostFeed({ schoolName }) {
     };
   }, [openMenuPostId]);
 
-  // THIS IS THE CORRECTED PART OF THE CODE
-  // The original code was looking for the user document in the wrong place.
-  // It was trying to access `db, 'users', user.uid` instead of the correct
-  // path `db, 'schools', schoolName, 'users', user.uid`.
   useEffect(() => {
     if (!user || !schoolName) {
       setVerificationStatus('');
@@ -218,7 +216,6 @@ function PostFeed({ schoolName }) {
     };
     fetchVerificationStatus();
   }, [user, schoolName]);
-  // END OF CORRECTED CODE
 
   const handleCommentChange = (postId, text) => {
     setCommentTexts((prev) => ({ ...prev, [postId]: text }));
@@ -379,7 +376,7 @@ function PostFeed({ schoolName }) {
   const updateClaimStatus = async (postId, newClaimedStatus) => {
     const originalPosts = posts;
     setPosts(posts.map(p => p.id === postId ? { ...p, claimed: newClaimedStatus } : p));
-
+    
     try {
       const postRef = doc(db, 'schools', schoolName, 'LostItems', postId);
       await updateDoc(postRef, { claimed: newClaimedStatus });
@@ -394,8 +391,13 @@ function PostFeed({ schoolName }) {
   const handleUnclaimPost = (postId) => updateClaimStatus(postId, false);
 
   const filteredPosts = posts.filter((post) => {
-    if (filter === 'claimed') return post.claimed;
-    if (filter === 'unclaimed') return !post.claimed;
+    if (filter === 'claimed' && !post.claimed) return false;
+    if (filter === 'unclaimed' && post.claimed) return false;
+
+    if (post.isBlocked && post.authorId !== user?.uid && user?.email !== 'admin.com') {
+      return false;
+    }
+    
     return true;
   });
 
@@ -473,21 +475,19 @@ function PostFeed({ schoolName }) {
             >
               <div className="ui-post-header">
                 <div className="ui-post-author">
-                {/* You can add a profile picture here if available */}
-                <div className="ui-profile-pic"></div>
-                <div className="ui-author-info">
-                  <p className="ui-author-name">
-                    {post.authorName || 'Anonymous'}
-                    {/* Conditionally render the 'my anonymous post' icon */}
-                    {post.isAnonymous && user && post.authorId === user.uid && (
-                      <span className="ui-my-anonymous-badge" title="This is your anonymous post">
-                        <FontAwesomeIcon icon={faUser} />
-                      </span>
-                    )}
-                  </p>
-                  <p className="ui-post-time">{post.createdAt ? timeAgo(post.createdAt) : '...'}</p>
+                  <div className="ui-profile-pic"></div>
+                  <div className="ui-author-info">
+                    <p className="ui-author-name">
+                      {post.authorName || 'Anonymous'}
+                      {post.isAnonymous && user && post.authorId === user.uid && (
+                        <span className="ui-my-anonymous-badge" title="This is your anonymous post">
+                          <FontAwesomeIcon icon={faUser} />
+                        </span>
+                      )}
+                    </p>
+                    <p className="ui-post-time">{post.createdAt ? timeAgo(post.createdAt) : '...'}</p>
+                  </div>
                 </div>
-              </div>
 
                 <div className="ui-post-menu-container" ref={(el) => (menuRefs.current[post.id] = el)}>
                   <button className="ui-post-menu-btn" onClick={(e) => handleEllipsisClick(post.id, e)}>
@@ -495,37 +495,69 @@ function PostFeed({ schoolName }) {
                   </button>
                   {openMenuPostId === post.id && (
                     <div className="ui-post-menu-dropdown">
-                      {post.authorId === user?.uid && (
-                        <>
-                          <button onClick={() => handleEditPost(post)} className="ui-dropdown-item"><FontAwesomeIcon icon={faEdit} /> Edit Post</button>
+                      {post.isBlocked ? (
+                        (post.authorId === user?.uid || user?.email.endsWith('@admin.com')) && (
                           <button onClick={() => handleDeletePost(post.id)} className="ui-dropdown-item ui-dropdown-item-danger"><FontAwesomeIcon icon={faTrash} /> Delete Post</button>
-                          {post.claimed ? (
-                            <button onClick={() => handleUnclaimPost(post.id)} className="ui-dropdown-item"><FontAwesomeIcon icon={faCheckCircle} /> Unmark Claimed</button>
-                          ) : (
-                            <button onClick={() => handleClaimPost(post.id)} className="ui-dropdown-item"><FontAwesomeIcon icon={faCheckCircle} /> Mark as Claimed</button>
+                        )
+                      ) : (
+                        <>
+                          {post.authorId === user?.uid && (
+                            <>
+                              <button onClick={() => handleEditPost(post)} className="ui-dropdown-item"><FontAwesomeIcon icon={faEdit} /> Edit Post</button>
+                              <button onClick={() => handleDeletePost(post.id)} className="ui-dropdown-item ui-dropdown-item-danger"><FontAwesomeIcon icon={faTrash} /> Delete Post</button>
+                              {post.claimed ? (
+                                <button onClick={() => handleUnclaimPost(post.id)} className="ui-dropdown-item"><FontAwesomeIcon icon={faCheckCircle} /> Unmark Claimed</button>
+                              ) : (
+                                <button onClick={() => handleClaimPost(post.id)} className="ui-dropdown-item"><FontAwesomeIcon icon={faCheckCircle} /> Mark as Claimed</button>
+                              )}
+                            </>
+                          )}
+                          {post.authorId !== user?.uid && (
+                            <button onClick={() => handleReportPost(post.id)} className="ui-dropdown-item"><FontAwesomeIcon icon={faExclamationTriangle} /> Report Post</button>
+                          )}
+                          {user?.email.endsWith('@admin.com') && (
+                            <button onClick={() => handleBlockPost(post.id)} className="ui-dropdown-item ui-dropdown-item-danger"><FontAwesomeIcon icon={faBan} /> Block Post</button>
                           )}
                         </>
-                      )}
-                      {post.authorId !== user?.uid && (
-                        <button onClick={() => handleReportPost(post.id)} className="ui-dropdown-item"><FontAwesomeIcon icon={faExclamationTriangle} /> Report Post</button>
-                      )}
-                      {user?.email.endsWith('@admin.com') && (
-                        <button onClick={() => handleBlockPost(post.id)} className="ui-dropdown-item ui-dropdown-item-danger"><FontAwesomeIcon icon={faBan} /> Block Post</button>
                       )}
                     </div>
                   )}
                 </div>
               </div>
 
-              {post.imageUrl && (
-                <div className="ui-post-image-container">
-                  <img src={post.imageUrl} alt="Lost item" className="ui-post-image" />
+              {post.isBlocked && post.authorId === user?.uid && (
+                <div className="ui-blocked-warning">
+                  <FontAwesomeIcon icon={faBan} /> This post is blocked by the admin.
                 </div>
               )}
-
+              
               <div className="ui-post-body">
                 <p className="ui-post-text">{post.text}</p>
               </div>
+              {post.imageUrl && (
+                <button
+                  className="see-photo-btn"
+                  onClick={() => {
+                    setSelectedImage(post.imageUrl);
+                    setShowImageModal(true);
+                  }}
+                >
+                  <FontAwesomeIcon icon={faImage} /> See Photo
+                </button>
+              )}
+              {showImageModal && (
+                <div className="modal-overlay" onClick={() => setShowImageModal(false)}>
+                  <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      className="close-btn"
+                      onClick={() => setShowImageModal(false)}
+                    >
+                      <FontAwesomeIcon icon={faTimes} />
+                    </button>
+                    <img src={selectedImage} alt="Post" className="modal-image" />
+                  </div>
+                </div>
+              )}
 
               <div className="ui-post-footer">
                 <div className="ui-status-badges">

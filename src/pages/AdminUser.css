@@ -1,14 +1,27 @@
-/* General Container */
+/* General Layout & Containers */
+body {
+  background-color: #f0f2f5; /* Light gray, Facebook-like background */
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
 .admin-page-container {
   max-width: 1400px;
   margin: 20px auto;
   padding: 20px;
   background-color: #fff;
   border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.admin-content-area {
+  display: flex;
+  gap: 20px;
+  flex-direction: row;
 }
 
 /* Header */
@@ -23,13 +36,13 @@
   color: #1c1e21;
 }
 
-/* Sidebar */
+/* Sidebar & Navigation */
 .admin-sidebar {
   flex: 0 0 250px;
   background-color: #f0f2f5;
   border-radius: 8px;
   padding: 15px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -50,6 +63,11 @@
   font-weight: 500;
   cursor: pointer;
   text-align: left;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.tab-button:hover {
+  background-color: #d8dbe0;
 }
 
 .tab-button.active {
@@ -57,11 +75,38 @@
   color: #fff;
 }
 
-/* Filter Buttons */
+.user-filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.filter-section-title {
+  color: #65676b;
+  font-size: 1rem;
+  margin: 0;
+}
+
 .filter-buttons-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.filter-button {
+  background-color: #e4e6eb;
+  color: #1c1e21;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  text-align: center;
+}
+
+.filter-button:hover {
+  background-color: #d8dbe0;
 }
 
 .filter-button.active {
@@ -70,7 +115,7 @@
   font-weight: 600;
 }
 
-/* Main content */
+/* Main Content & Search */
 .admin-main-content {
   flex: 1;
   display: flex;
@@ -78,15 +123,25 @@
   gap: 20px;
 }
 
-/* Search bar */
+.search-bar-container {
+  margin-bottom: 10px;
+}
+
 .search-input {
   width: 100%;
   padding: 10px 15px;
   border-radius: 20px;
   border: 1px solid #ccd0d5;
+  font-size: 1rem;
 }
 
-/* Cards grid */
+.section-title {
+  font-size: 1.5rem;
+  color: #1c1e21;
+  margin-bottom: 10px;
+}
+
+/* User Cards */
 .admin-users-cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -100,24 +155,63 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s ease-in-out;
+  position: relative; /* Crucial for positioning the ellipsis menu */
 }
 
 .user-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
+.user-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
 .user-card-header h4,
 .user-card-header p {
-  width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin: 0;
 }
 
-/* Status badges */
+.user-card-header h4 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1c1e21;
+}
+
+.user-card-header p {
+  font-size: 0.9rem;
+  color: #65676b;
+}
+
+.user-card-details-summary {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.user-card-details-summary p {
+  margin: 5px 0;
+  font-size: 0.9rem;
+}
+
+.current-user-tag,
+.main-admin-tag {
+  background-color: #f0f2f5;
+  color: #65676b;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-block;
+  margin-top: 5px;
+}
+
 .user-status-badge {
   padding: 5px 10px;
   border-radius: 15px;
@@ -130,39 +224,206 @@
 }
 
 .status-verified { background-color: #38a169; }
-.status-unverified { background-color: #f0c300; color:#1c1e21;}
+.status-unverified { background-color: #f0c300; color: #1c1e21; }
 .status-blocked { background-color: #dc3545; }
 
-/* Actions */
-.user-card-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
+/* Ellipsis Dropdown Menu */
+.ellipsis-menu-container {
+  position: absolute; /* Positions it relative to the parent .user-card */
+  top: 15px;
+  right: 15px;
 }
 
-.action-btn {
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-weight: 600;
+.ellipsis-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: #000000;
+  padding: 5px;
+  position: relative; /* Keep relative to be on top of the card's content */
+  z-index: 2; /* A small z-index is fine here since it's a child of the card */
+}
+
+.ellipsis-dropdown-menu {
+  position: fixed; /* Crucial change: positions relative to the viewport */
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  z-index: 1001; /* High z-index to ensure it's on top */
+  padding: 8px 0;
+  /* top and left are now set dynamically in JS, so we remove them from here */
+}
+
+.ellipsis-menu-item {
+  background: none;
+  border: none;
+  padding: 10px 15px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #1c1e21;
+  transition: background-color 0.2s;
+}
+
+.ellipsis-menu-item:hover {
+  background-color: #f0f2f5;
+}
+
+.promote-option { color: #1877f2; }
+.demote-option { color: #f02849; }
+.block-option { color: #f02849; }
+.delete-option { color: #f02849; }
+
+/* Modal Styling */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  min-width: 300px;
+  max-width: 500px;
+  transition: all 0.3s ease-in-out;
+  transform: scale(0.95);
+  opacity: 0;
+}
+
+.modal-overlay .modal-content {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.user-details-modal {
+  text-align: left;
+}
+
+.user-details-modal p {
+  margin: 10px 0;
+  font-size: 1rem;
+}
+
+.user-details-modal p strong {
+  color: #65676b;
+}
+
+.modal-title {
+  font-size: 1.5rem;
+  color: #1c1e21;
+  margin-bottom: 1.5rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.modal-close-btn {
+  background-color: #1877f2;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+}
+
+.modal-close-btn:hover {
+  background-color: #166fe5;
+}
+
+.action-btn-confirm {
+  background-color: #f02849;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
   cursor: pointer;
 }
 
-.action-btn-block { background-color: #f02849; color:#fff;}
-.action-btn-unblock { background-color: #42b72a; color:#fff;}
-.action-btn-delete { background-color: #e4e6eb; color:#1c1e21;}
+.action-btn-cancel {
+  background-color: #e4e6eb;
+  color: #1c1e21;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+}
 
 /* Responsive adjustments */
 @media (max-width: 992px) {
-  .admin-content-area { flex-direction: column; }
-  .admin-sidebar { flex: none; width: 100%; flex-direction: row; justify-content: center; gap:10px; }
-  .admin-tabs-nav { flex-direction: row; flex-wrap: wrap; justify-content: center; width:100%; }
-  .tab-button { flex:1; text-align:center; padding:10px 12px; }
-  .filter-buttons-group { flex-direction: row; flex-wrap: wrap; justify-content:center; }
+  .admin-content-area {
+    flex-direction: column;
+  }
+  
+  .admin-sidebar {
+    flex: none;
+    width: 100%;
+    flex-direction: row;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px;
+  }
+  
+  .admin-tabs-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .tab-button {
+    flex: 1;
+    text-align: center;
+    padding: 10px 12px;
+  }
+  
+  .filter-buttons-group {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 768px) {
-  .admin-page-container { margin: 10px; padding: 15px; }
-  .admin-page-header h1 { font-size: 1.5rem; }
-  .user-card { padding: 15px; }
-  .action-btn { padding: 6px 10px; font-size: 0.8rem; }
+  .admin-page-container {
+    margin: 10px;
+    padding: 15px;
+  }
+  
+  .admin-page-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .user-card {
+    padding: 15px;
+  }
+  
+  .modal-content {
+    width: 90%;
+    padding: 1.5rem;
+  }
+  
+  .filter-button,
+  .ellipsis-menu-item {
+    font-size: 0.85rem;
+  }
 }

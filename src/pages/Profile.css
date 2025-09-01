@@ -4,6 +4,42 @@
   background: #fff;
   font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
 }
+/* Skeleton Loader Styles */
+.skeleton-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.skeleton-title {
+  height: 20px;
+  width: 120px;
+  background: #e0e0e0;
+  border-radius: 6px;
+  margin-bottom: 24px;
+}
+
+.skeleton-field {
+  height: 38px;
+  background: #e0e0e0;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.skeleton-btn {
+  height: 40px;
+  background: #e0e0e0;
+  border-radius: 6px;
+  margin-top: 20px;
+}
+
+@keyframes pulse {
+  0% { background-color: #e0e0e0; }
+  50% { background-color: #f0f0f0; }
+  100% { background-color: #e0e0e0; }
+}
 
 /* Center the profile container */
 .profile-container {

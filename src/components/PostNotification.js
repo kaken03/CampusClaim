@@ -1,255 +1,134 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { collection, query, where, onSnapshot, doc, setDoc } from 'firebase/firestore';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { useNavigate } from 'react-router-dom';
-import { db } from '../firebase'; // Assuming your firebase.js file exports 'db'
+import React, { useEffect, useState } from "react";
+import { db } from "../firebase";
+import { collection, doc, getDoc, onSnapshot } from "firebase/firestore";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import './PostNotification.css';
+import { useNavigate } from 'react-router-dom';
 
-/**
- * React component for displaying and managing post-related notifications.
- * It listens for new comments on the user's own posts in two collections: 'LostItems' and 'FoundItems'.
- * It also tracks which notifications have been read by the user using a sub-collection in Firestore.
- */
-function PostNotification() {
+export default function PostNotification() {
   const [notifications, setNotifications] = useState([]);
-  const [readIds, setReadIds] = useState({});
-  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const auth = getAuth();
   const navigate = useNavigate();
 
-  const auth = getAuth();
-  const userRef = useRef(null);
-
-  // Set up authentication listener to get the current user
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
-      userRef.current = currentUser;
-      setIsAuthReady(true);
-    });
+    let unsubscribe = null;
 
-    return () => unsubscribeAuth();
-  }, [auth]);
+    const fetchUserAndListen = async (user) => {
+      if (!user) return;
 
-  /**
-   * Calculates the time difference and returns a human-readable string.
-   * @param {Date | {toDate: () => Date}} timestamp - The timestamp to format.
-   * @returns {string} The formatted time string (e.g., "5m ago").
-   */
-  const timeAgo = (timestamp) => {
-    let date = timestamp;
-    if (timestamp?.toDate) {
-      date = timestamp.toDate();
-    }
-    const now = new Date();
-    const timeDiff = now - date;
+      // Get the user's school
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (!userDoc.exists()) {
+        console.error("User profile not found in Firestore!");
+        return;
+      }
 
-    const seconds = Math.floor(timeDiff / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-    const weeks = Math.floor(days / 7);
+      const userData = userDoc.data();
+      const schoolName = userData.school;
 
-    if (seconds < 60) return `${seconds}s ago`;
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    if (days < 7) return `${days}d ago`;
-    return `${weeks}w ago`;
-  };
+      // Listen to posts in the school
+      const postsRef = collection(db, "schools", schoolName, "LostItems");
 
-  // Fetch read notification IDs and notifications for user's posts
-  useEffect(() => {
-    if (!isAuthReady || !userRef.current) {
-      return;
-    }
+      unsubscribe = onSnapshot(postsRef, (snapshot) => {
+  let newNotifications = [];
 
-    const user = userRef.current;
-    let unsubscribes = [];
+  snapshot.forEach((docSnap) => {
+    const post = docSnap.data();
 
-    // Listener for read notification IDs
-    const readNotificationsRef = collection(db, 'users', user.uid, 'readNotifications');
-    const unsubscribeRead = onSnapshot(readNotificationsRef, (snapshot) => {
-      const ids = {};
-      snapshot.forEach(docSnap => {
-        ids[docSnap.id] = docSnap.data().readAt;
-      });
-      setReadIds(ids);
-    }, (error) => {
-      console.error("Error fetching read notifications:", error);
-    });
+    if (post.authorId !== user.uid) return;
 
-    unsubscribes.push(unsubscribeRead);
+    if (Array.isArray(post.comments) && post.comments.length > 0) {
+      const otherComments = post.comments.filter(
+        (c) => c.authorId !== user.uid
+      );
 
-    /**
-     * Sets up a real-time listener for posts in a specific collection.
-     * @param {string} collectionName - The name of the Firestore collection.
-     */
-    const fetchNotifications = (collectionName) => {
-      const postsRef = collection(db, collectionName);
-      const q = query(postsRef, where('authorId', '==', user.uid));
+      if (otherComments.length > 0) {
+        const latestComment = otherComments[otherComments.length - 1];
 
-      return onSnapshot(q, (snapshot) => {
-        const userPosts = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        const newNotifications = [];
-        userPosts.forEach((post) => {
-          if (post.comments && post.comments.length > 0) {
-            const latestComment = post.comments[post.comments.length - 1];
-            const notificationId = `${post.id}-${collectionName}`;
-
-            // Create a new notification object
-            newNotifications.push({
-              notificationId,
-              postId: post.id,
-              postText: post.text,
-              latestCommentText: latestComment.text,
-              latestCommentAuthor: latestComment.author,
-              latestTimestamp: latestComment.timestamp,
-              commentCount: post.comments.length,
-              collectionName,
-            });
-          }
+        newNotifications.push({
+          id: docSnap.id,
+          postId: docSnap.id,
+          postText: post.text || "(no text)",
+          latestCommentText: latestComment.text,
+          latestCommentAuthor: latestComment.author || "Someone",
+          commentCount: otherComments.length,
+          timestamp: latestComment.timestamp,
+          schoolName: schoolName, // make sure you pass this too
         });
-
-        setNotifications((prevNotifications) => {
-          // Remove previous notifications for this collection to prevent duplicates
-          const filteredPrev = prevNotifications.filter(
-            (n) => n.collectionName !== collectionName
-          );
-          // Merge and sort by latest timestamp
-          const mergedNotifications = [
-            ...filteredPrev,
-            ...newNotifications,
-          ].sort((a, b) => {
-            const timeA = new Date(
-              a.latestTimestamp?.toDate
-                ? a.latestTimestamp.toDate()
-                : a.latestTimestamp
-            );
-            const timeB = new Date(
-              b.latestTimestamp?.toDate
-                ? b.latestTimestamp.toDate()
-                : b.latestTimestamp
-            );
-            return timeB - timeA;
-          });
-          return mergedNotifications;
-        });
-      }, (error) => {
-        console.error(`Error fetching notifications from ${collectionName}:`, error);
-      });
-    };
-
-    const unsubscribeLostItems = fetchNotifications('LostItems');
-    const unsubscribeFoundItems = fetchNotifications('FoundItems');
-
-    unsubscribes.push(unsubscribeLostItems, unsubscribeFoundItems);
-
-    return () => {
-      unsubscribes.forEach(unsub => unsub());
-    };
-  }, [isAuthReady, readIds]);
-
-  /**
-   * Marks a notification as read and navigates to the post.
-   * @param {string} postId - The ID of the post.
-   * @param {string} collectionName - The collection the post belongs to.
-   * @param {string} notificationId - The unique ID of the notification.
-   */
-  const handleNotificationClick = async (postId, collectionName, notificationId) => {
-    if (!userRef.current) return;
-
-    // Check if the notification is already read
-    if (!readIds[notificationId]) {
-      try {
-        await setDoc(
-          doc(db, 'users', userRef.current.uid, 'readNotifications', notificationId),
-          { readAt: new Date() }
-        );
-      } catch (error) {
-        console.error("Error marking notification as read:", error);
       }
     }
-    navigate(`/home?postId=${postId}&collection=${collectionName}`);
-  };
+  });
 
-  // SVG icon for the empty state
-  const EmptyStateIcon = () => (
-    <svg className="empty-state-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.731 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-    </svg>
+  // Sort by latest
+  newNotifications.sort(
+    (a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)
   );
 
-  if (!isAuthReady) {
-    return (
-      <div className="notifications-container">
-        <p>Loading...</p>
-      </div>
-    );
-  }
+  setNotifications(newNotifications);
+
+  // ✅ Always stop loading, even if no notifications
+  setLoading(false);
+});
+
+    };
+
+    // Wait for auth state
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) fetchUserAndListen(user);
+      else setLoading(false);
+    });
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribe) unsubscribe();
+    };
+  }, [auth]);
+
+  const timeAgo = (timestamp) => {
+    if (!timestamp) return "just now";
+    const now = new Date();
+    const time =
+      timestamp.toDate?.() ||
+      new Date(timestamp.seconds ? timestamp.seconds * 1000 : timestamp);
+    const diff = Math.floor((now - time) / 1000);
+
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  };
+
+  
 
   return (
-    <div className="notifications-container">
-      <h2 className="notifications-header">Notifications</h2>
-      {notifications.length > 0 ? (
-        <ul className="notifications-list">
-          {notifications.map((notification) => {
-            const isRead = !!readIds[notification.notificationId];
-            return (
-              <li
-                key={notification.notificationId}
-                className={`notification-item ${isRead ? 'read' : ''}`}
-                onClick={() =>
-                  handleNotificationClick(
-                    notification.postId,
-                    notification.collectionName,
-                    notification.notificationId
-                  )
-                }
-                role="button"
-                tabIndex={0}
-              >
-                <div className="notification-content">
-                  <p className="notification-text">
-                    <strong>New activity on your post:</strong> "{notification.postText}"{' '}
-                    <span
-                      className={`notification-tag ${
-                        notification.collectionName === 'LostItems' ? 'tag-lost' : 'tag-found'
-                      }`}
-                    >
-                      {notification.collectionName === 'LostItems'
-                        ? 'Lost Item'
-                        : 'Found Item'}
-                    </span>
-                  </p>
-                  <p className="comment-text">
-                    <strong>
-                      Latest comment by {notification.latestCommentAuthor}:
-                    </strong>{' '}
-                    {notification.latestCommentText}
-                  </p>
-                  <p className="meta-text">
-                    <strong>Total comments:</strong> {notification.commentCount}
-                  </p>
-                  <p className="time-text">
-                    {notification.latestTimestamp
-                      ? timeAgo(notification.latestTimestamp)
-                      : 'Just now'}
-                  </p>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+    <div className="post-notifications">
+      <h2>Notifications</h2>
+      {loading ? (
+        <p className="loading">Loading notifications...</p>
+      ) : notifications.length === 0 ? (
+        <p className="no-notifications">No new notifications</p>
       ) : (
-        <div className="empty-state">
-          <EmptyStateIcon />
-          <p className="no-notifications">No new activity on your posts.</p>
-        </div>
+         <ul>
+    {notifications.map((n) => (
+      <li
+        key={n.id}
+        className="notification-item"
+        onClick={() => navigate(`/timeline?postId=${n.postId}&school=${encodeURIComponent(n.schoolName)}`)}
+        style={{ cursor: 'pointer' }}
+      >
+        <strong>{n.latestCommentAuthor}</strong> commented on your post "
+        {n.postText.substring(0, 30)}..."
+        {n.commentCount > 1 && (
+          <span className="more-comments">
+            (+{n.commentCount - 1} more)
+          </span>
+        )}
+        <span className="timestamp"> ({timeAgo(n.timestamp)})</span>
+      </li>
+    ))}
+  </ul>
       )}
     </div>
   );
 }
-
-export default PostNotification;

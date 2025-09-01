@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, updateDoc, doc,addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import NavbarAdmin from '../components/AdminNavbar';
 import './AdminApproval.css';
@@ -49,27 +49,51 @@ function AdminApproval() {
 
     // Function to handle the confirmed action from the modal
     const handleConfirmAction = async () => {
-        const { userId, action } = modalData;
-        if (!userId || !action) return;
+  const { userId, action } = modalData;
+  if (!userId || !action) return;
 
-        try {
-            if (action === 'approve') {
-                await updateDoc(doc(db, 'schools', schoolName, 'users', userId), { verificationStatus: 'verified' });
-                setPendingUsers(pendingUsers.filter(u => u.id !== userId));
-                setActionMessage('User approved.');
-            } else if (action === 'reject') {
-                await updateDoc(doc(db, 'schools', schoolName, 'users', userId), { verificationStatus: 'rejected' });
-                setPendingUsers(pendingUsers.filter(u => u.id !== userId));
-                setActionMessage('User rejected.');
-            }
-        } catch (err) {
-            setActionMessage(`Error ${action}ing user.`);
-            console.error(`Error ${action}ing user:`, err);
-        }
+  try {
+    const userRef = doc(db, 'schools', schoolName, 'users', userId);
 
-        setShowModal(false);
-        setModalData({ userId: null, action: null });
-    };
+    if (action === 'approve') {
+      await updateDoc(userRef, { verificationStatus: 'verified' });
+
+      // 🔔 Add notification
+      const notifRef = collection(db, 'schools', schoolName, 'users', userId, 'notifications');
+      await addDoc(notifRef, {
+        message: "✅ Your verification request has been approved! You can now post lost items and comment.",
+        type: "verification",
+        timestamp: serverTimestamp(),
+        read: false,
+      });
+
+      setPendingUsers(pendingUsers.filter(u => u.id !== userId));
+      setActionMessage('User approved.');
+
+    } else if (action === 'reject') {
+      await updateDoc(userRef, { verificationStatus: 'rejected' });
+
+      // 🔔 Add notification
+      const notifRef = collection(db, 'schools', schoolName, 'users', userId, 'notifications');
+      await addDoc(notifRef, {
+        message: "❌ Your verification request has been rejected. Please review your details and try again.",
+        type: "verification",
+        timestamp: serverTimestamp(),
+        read: false,
+      });
+
+      setPendingUsers(pendingUsers.filter(u => u.id !== userId));
+      setActionMessage('User rejected.');
+    }
+  } catch (err) {
+    setActionMessage(`Error ${action}ing user.`);
+    console.error(`Error ${action}ing user:`, err);
+  }
+
+  setShowModal(false);
+  setModalData({ userId: null, action: null });
+};
+
 
     // Toggle function for the details
     const toggleDetails = (userId) => {

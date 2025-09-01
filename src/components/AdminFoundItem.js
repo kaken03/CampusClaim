@@ -114,7 +114,12 @@ function AdminFoundItem({ item, type }) {
                 >
                   <FontAwesomeIcon icon={faEdit} /> Edit
                 </button>
-                <button onClick={() => setShowDeleteModal(true)}>
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(true);
+                    setShowMenu(false);
+                  }}
+                >
                   <FontAwesomeIcon icon={faTrash} /> Delete
                 </button>
                 <button onClick={handleClaimedToggle}>

@@ -14,7 +14,7 @@
 .user-item-card:hover {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
-
+modal image
 .user-item-card.claimed {
   border-left: 6px solid #4caf50;
 }
@@ -65,45 +65,78 @@
   background-color: #1976d2;
 }
 
-/* Modal Styles */
+/* Modal overlay */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.7); /* Dark overlay */
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   z-index: 1000;
+  animation: fadeIn 0.3s ease-in-out;
 }
 
+/* Modal content */
 .modal-content {
   position: relative;
   background: #fff;
-  padding: 12px;
   border-radius: 12px;
+  padding: 15px;
   max-width: 90%;
   max-height: 90%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  animation: scaleIn 0.25s ease-in-out;
 }
 
+/* Image inside modal */
 .modal-image {
   max-width: 100%;
   max-height: 80vh;
-  display: block;
   border-radius: 8px;
+  object-fit: contain;
 }
 
-.modal-close-btn {
+/* Close button */
+.close-btn {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  background: none;
+  top: 12px;
+  right: 12px;
+  color: black;
   border: none;
-  font-size: 1.4rem;
+  border-radius: 50%;
   cursor: pointer;
+  font-size: 16px;
+  transition: background 0.2s ease-in-out;
 }
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    background: rgba(0, 0, 0, 0);
+  }
+  to {
+    background: rgba(0, 0, 0, 0.7);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 .see-more-text {
   color: #3498db;
   cursor: pointer;

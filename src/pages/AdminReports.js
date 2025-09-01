@@ -1,165 +1,180 @@
-import React, { useEffect, useState } from 'react';
-import { db } from '../firebase';
-import { collection, query, orderBy, onSnapshot, updateDoc, doc, deleteDoc } from 'firebase/firestore';
-import Navbar from '../components/AdminNavbar';
+// src/pages/AdminReport.js
+import React, { useEffect, useState } from "react";
+import { db } from "../firebase";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import Navbar from "../components/AdminNavbar";
+import "./AdminReports.css";
 
-function AdminInbox() {
-  const [messages, setMessages] = useState([]);
+export default function AdminReport() {
+  const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedMessage, setSelectedMessage] = useState(null);
-  const [replies, setReplies] = useState([]);
+  const [selectedPost, setSelectedPost] = useState(null);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
-    const q = query(collection(db, 'contact_messages'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, snapshot => {
-      setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setLoading(false);
-    });
-    return () => unsubscribe();
+    const fetchReports = async () => {
+      try {
+        let allReports = [];
+        const postsSnapshot = await getDocs(
+          collection(db, "schools", "Consolatrix College of Toledo City", "LostItems")
+        );
+
+        for (const postDoc of postsSnapshot.docs) {
+          const postId = postDoc.id;
+          const reportsSnapshot = await getDocs(
+            collection(db, "schools", "Consolatrix College of Toledo City", "LostItems", postId, "reports")
+          );
+
+          reportsSnapshot.forEach((reportDoc) => {
+            allReports.push({
+              id: reportDoc.id,
+              postId,
+              ...reportDoc.data(),
+            });
+          });
+        }
+
+        // Sort by createdAt newest → oldest
+        allReports.sort((a, b) => {
+          const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
+          const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
+          return dateB - dateA;
+        });
+
+        setReports(allReports);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching reports:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchReports();
   }, []);
 
-  // Load replies for selected message
-  useEffect(() => {
-    if (!selectedMessage) return setReplies([]);
-    const q = collection(db, 'contact_messages', selectedMessage.id, 'replies');
-    const unsub = onSnapshot(q, snap => {
-      setReplies(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
-    return () => unsub();
-  }, [selectedMessage]);
+  // Function to open modal with post details
+  const handleViewPost = async (postId) => {
+    try {
+      const postRef = doc(db, "schools", "Consolatrix College of Toledo City", "LostItems", postId);
+      const postSnap = await getDoc(postRef);
 
-  const markAsRead = async (id) => {
-    await updateDoc(doc(db, 'contact_messages', id), { status: 'read' });
+      if (postSnap.exists()) {
+        const postData = postSnap.data();
+        setSelectedPost({
+          author: postData.authorName,
+          text: postData.text,
+          imageUrl: postData.imageUrl || null,
+        });
+        setExpanded(false); // reset expanded state when opening new modal
+      } else {
+        alert("This post no longer exists.");
+      }
+    } catch (error) {
+      console.error("Error fetching post:", error);
+      alert("Failed to load post details.");
+    }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Delete this message?')) {
-      await deleteDoc(doc(db, 'contact_messages', id));
-      setSelectedMessage(null);
-    }
+  const closeModal = () => {
+    setSelectedPost(null);
   };
 
   return (
     <div>
       <Navbar />
-      <div style={{ maxWidth: 800, margin: '40px auto', padding: 24, background: '#f9f9f9', borderRadius: 12 }}>
-        <h2>Admin Inbox</h2>
-        {loading ? (
-          <div>Loading messages...</div>
-        ) : messages.length === 0 ? (
-          <div>No messages received.</div>
-        ) : (
-          <div style={{ display: 'flex', gap: 32 }}>
-            {/* Message List */}
-            <div style={{ flex: 1, borderRight: '1px solid #ddd', paddingRight: 24 }}>
-              <h3>Messages</h3>
-              <ul style={{ listStyle: 'none', padding: 0, maxHeight: 500, overflowY: 'auto' }}>
-                {messages.map(msg => (
-                  <li
-                    key={msg.id}
-                    style={{
-                      background: selectedMessage && selectedMessage.id === msg.id
-                        ? '#e3f6fc'
-                        : msg.status === 'unread'
-                          ? '#f5f0ff'
-                          : '#fff',
-                      marginBottom: 12,
-                      padding: 12,
-                      borderRadius: 8,
-                      border: '1px solid #dee2e6',
-                      cursor: 'pointer',
-                      fontWeight: msg.status === 'unread' ? 600 : 400
-                    }}
-                    onClick={() => {
-                      setSelectedMessage(msg);
-                      if (msg.status !== 'read') markAsRead(msg.id);
-                    }}
-                  >
-                    <div><strong>{msg.name}</strong> &lt;{msg.email}&gt;</div>
-                    <div style={{ fontSize: 13, color: '#888' }}>
-                      {msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleString() : '-'}
-                    </div>
-                    <div style={{
-                      marginTop: 4,
-                      color: msg.status === 'unread' ? '#b1003a' : '#888',
-                      fontSize: 12
-                    }}>
-                      {msg.status === 'unread' ? 'Unread' : 'Read'}
-                    </div>
-                    {msg.hasReply && <span style={{ color: "green", marginLeft: 8, fontWeight: 500 }}>[Replied]</span>}
-                  </li>
+      <div className="admin-report">
+        <div className="report-container">
+          <h2>All Reports</h2>
+          {loading ? (
+            <p>Loading reports...</p>
+          ) : reports.length === 0 ? (
+            <p>No reports found.</p>
+          ) : (
+            <table className="report-table">
+              <thead>
+                <tr>
+                  <th>Report ID</th>
+                  <th>Post ID</th>
+                  <th>Reason</th>
+                  <th>Reporter ID</th>
+                  <th>Created At</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reports.map((report) => (
+                  <tr key={report.id}>
+                    <td data-label="Report ID">{report.id}</td>
+                    <td data-label="Post ID">{report.postId}</td>
+                    <td data-label="Reason">{report.reason}</td>
+                    <td data-label="Reporter ID">{report.reporterId}</td>
+                    <td data-label="Created At">
+                      {report.createdAt?.toDate
+                        ? report.createdAt.toDate().toLocaleString()
+                        : report.createdAt}
+                    </td>
+                    <td data-label="Action">
+                      <button
+                        className="view-btn"
+                        onClick={() => handleViewPost(report.postId)}
+                      >
+                        View Post
+                      </button>
+                    </td>
+                  </tr>
                 ))}
-              </ul>
-            </div>
-            {/* Message Details */}
-            <div style={{ flex: 2, paddingLeft: 24 }}>
-              {selectedMessage ? (
-                <div>
-                  <h3>Message Details</h3>
-                  <p>
-                    <strong>From:</strong> {selectedMessage.name} &lt;{selectedMessage.email}&gt;
-                  </p>
-                  <p>
-                    <strong>Received:</strong> {selectedMessage.createdAt?.toDate ? selectedMessage.createdAt.toDate().toLocaleString() : '-'}
-                  </p>
-                  <div
-                    style={{
-                      background: '#fff',
-                      borderRadius: 8,
-                      padding: 16,
-                      margin: '18px 0',
-                      minHeight: 80,
-                      border: '1px solid #e0e7ef'
-                    }}
-                  >
-                    {selectedMessage.message}
-                  </div>
-                  <div>
-                    <ul style={{ listStyle: 'none', padding: 0 }}>
-                      {replies.map(r => (
-                        <li key={r.id} style={{
-                          background: r.admin ? '#e9f9ee' : '#f1f3f8',
-                          borderRadius: 6,
-                          marginBottom: 10,
-                          padding: 10
-                        }}>
-                          <div style={{ fontWeight: 600, color: r.admin ? '#009688' : '#1565c0' }}>
-                            {r.admin ? 'Admin' : 'User'}:
-                          </div>
-                          <div>{r.reply}</div>
-                          <div style={{ fontSize: 12, color: '#888' }}>
-                            {r.repliedAt?.toDate ? r.repliedAt.toDate().toLocaleString() : ''}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <button
-                    style={{
-                      marginTop: 24,
-                      padding: '8px 24px',
-                      background: '#e63946',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: 6,
-                      cursor: 'pointer'
-                    }}
-                    onClick={() => handleDelete(selectedMessage.id)}
-                  >
-                    Delete Message
-                  </button>
-                </div>
-              ) : (
-                <div style={{ color: '#888', fontStyle: 'italic', marginTop: 60 }}>
-                  Select a message to view details
-                </div>
-              )}
-            </div>
-          </div>
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* Modal */}
+        {selectedPost && (
+          <div className="modal-overlay">
+  <div className="modal-content">
+    <div className="modal-header">
+      <button className="close-btn" onClick={closeModal}>
+        ✕
+      </button>
+    </div>
+
+    <div className="modal-body">
+      <p className="post-author">
+        <span className="label">Author:</span> {selectedPost.author}
+      </p>
+
+      <div className="post-text">
+        <span className="label">Text:</span>{" "}
+        {expanded
+          ? selectedPost.text
+          : selectedPost.text.length > 150
+          ? selectedPost.text.slice(0, 150) + "..."
+          : selectedPost.text}
+        {selectedPost.text.length > 150 && (
+          <button
+            className="toggle-btn"
+            onClick={() => setExpanded(!expanded)}
+          >
+            {expanded ? "Show Less" : "Read More"}
+          </button>
+        )}
+      </div>
+
+      {selectedPost.imageUrl && (
+        <div className="post-image-wrapper">
+          <img
+            src={selectedPost.imageUrl}
+            alt="Post"
+            className="modal-image"
+          />
+        </div>
+      )}
+    </div>
+  </div>
+</div>
+
         )}
       </div>
     </div>
   );
 }
-
-export default AdminInbox;

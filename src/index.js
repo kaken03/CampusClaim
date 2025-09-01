@@ -17,6 +17,7 @@ import AdminUser from './pages/AdminUser';
 import AdminPosts from './pages/AdminPosts'
 import AdminApproval from './pages/AdminApproval';
 import AdminReports from './pages/AdminReports'; 
+import AdminProfile from './pages/AdminProfile';
 import RequireUser from './components/RequireUser';
 import RequireAdmin from './components/RequireAdmin';
 import ForgotPassword from './pages/ForgotPassword';
@@ -87,6 +88,11 @@ root.render(
         <Route path="/admin-reports" element={
           <RequireAdmin>
             <AdminReports />
+          </RequireAdmin>
+        } />
+        <Route path="/admin-profile" element={
+          <RequireAdmin>
+            <AdminProfile />
           </RequireAdmin>
         } />
         {/* Add more admin-protected routes below as needed */}
