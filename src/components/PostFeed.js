@@ -6,7 +6,7 @@ import { useLocation } from 'react-router-dom';
 import './PostFeed.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faComment, faEllipsisH, faCheckCircle, faExclamationTriangle, faBan, faEdit, faTrash, faTimes, faImage, faUser } from '@fortawesome/free-solid-svg-icons';
-
+import UserReport from './UserReport';
 // A reusable modal component
 const CustomModal = ({ title, message, onConfirm, onCancel, confirmText, cancelText }) => {
   return (
@@ -72,13 +72,15 @@ function PostFeed({ schoolName }) {
   const [filter, setFilter] = useState('all');
   const [openMenuPostId, setOpenMenuPostId] = useState(null);
   const [showReportModalId, setShowReportModalId] = useState(null);
-  const [reportMessage, setReportMessage] = useState('');
-  const [showErrorModal, setShowErrorModal] = useState({ show: false, title: '', message: '' });
-  const [deletingPostId, setDeletingPostId] = useState(null);
-  const [editingPost, setEditingPost] = useState(null);
-  const [verificationStatus, setVerificationStatus] = useState('');
-  const [showImageModal, setShowImageModal] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [reportMessage, setReportMessage] = useState(''); 
+  const [showErrorModal, setShowErrorModal] = useState({ show: false, title: '', message: '' }); 
+  const [deletingPostId, setDeletingPostId] = useState(null); 
+  const [editingPost, setEditingPost] = useState(null); 
+  const [verificationStatus, setVerificationStatus] = useState(''); 
+  const [showImageModal, setShowImageModal] = useState(false); 
+  const [selectedImage, setSelectedImage] = useState(null); 
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  const [selectedReason, setSelectedReason] = useState('');
 
   const auth = getAuth();
   const user = auth.currentUser;
@@ -243,7 +245,7 @@ function PostFeed({ schoolName }) {
 
     setIsSubmittingComment(prev => ({ ...prev, [postId]: true }));
     const postRef = doc(db, 'schools', schoolName, 'LostItems', postId);
-    const commentAuthorName = isAnonymousComment ? 'Anonymous User' : (user?.displayName || 'Anonymous User');
+    const commentAuthorName = isAnonymousComment ? 'Anonymous' : (user?.displayName || 'Anonymous');
 
     const newComment = {
       text: commentText,
@@ -302,29 +304,36 @@ function PostFeed({ schoolName }) {
   };
 
   const confirmReport = async (postId) => {
-    if (!user) {
-      displayErrorModal("Permission Denied", "You must be logged in to report a post.");
-      return;
-    }
-    if (!reportMessage.trim()) {
-      displayErrorModal("Error", "Please provide a reason for the report.");
-      return;
-    }
-    try {
-      const reportRef = collection(db, 'schools', schoolName, 'LostItems', postId, 'reports');
-      await addDoc(reportRef, {
-        reporterId: user.uid,
-        reason: reportMessage,
-        createdAt: Timestamp.now(),
-      });
-      displayErrorModal("Success", "Post reported successfully. An admin will review it shortly.");
-      setShowReportModalId(null);
-      setReportMessage('');
-    } catch (error) {
-      console.error("Error reporting post:", error);
-      displayErrorModal("Error", "Failed to report post. Please try again.");
-    }
-  };
+  if (isSubmittingReport) return; // Prevent duplicate submissions
+  setIsSubmittingReport(true);
+
+  if (!user) {
+    displayErrorModal("Permission Denied", "You must be logged in to report a post.");
+    setIsSubmittingReport(false);
+    return;
+  }
+  if (!reportMessage.trim()) {
+    displayErrorModal("Error", "Please provide a reason for the report.");
+    setIsSubmittingReport(false);
+    return;
+  }
+  try {
+    const reportRef = collection(db, 'schools', schoolName, 'LostItems', postId, 'reports');
+    await addDoc(reportRef, {
+      reporterId: user.uid,
+      reason: reportMessage,
+      createdAt: Timestamp.now(),
+    });
+    displayErrorModal("Success", "Post reported successfully. An admin will review it shortly.");
+    setShowReportModalId(null);
+    setReportMessage('');
+  } catch (error) {
+    console.error("Error reporting post:", error);
+    displayErrorModal("Error", "Failed to report post. Please try again.");
+  } finally {
+    setIsSubmittingReport(false);
+  }
+};
 
   const cancelReport = () => {
     setShowReportModalId(null);
@@ -407,7 +416,7 @@ function PostFeed({ schoolName }) {
   };
 
   return (
-    <div className="ui-post-feed">
+    <div className="user-post-feed-container">
 
       {showErrorModal.show && (
         <CustomModal
@@ -545,9 +554,9 @@ function PostFeed({ schoolName }) {
                   <FontAwesomeIcon icon={faImage} /> See Photo
                 </button>
               )}
-              {showImageModal && (
-                <div className="modal-overlay" onClick={() => setShowImageModal(false)}>
-                  <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              {showImageModal && selectedImage && (
+                <div className="ui-modal-overlay" onClick={() => setShowImageModal(false)}>
+                  <div className="ui-modal-content" onClick={(e) => e.stopPropagation()}>
                     <button
                       className="close-btn"
                       onClick={() => setShowImageModal(false)}
@@ -557,11 +566,10 @@ function PostFeed({ schoolName }) {
                     <img src={selectedImage} alt="Post" className="modal-image" />
                   </div>
                 </div>
-              )}
+              )}    
 
               <div className="ui-post-footer">
                 <div className="ui-status-badges">
-                  {post.isAnonymous && <span className="ui-badge ui-badge-anonymous">Anonymous</span>}
                   {post.claimed && <span className="ui-badge ui-badge-claimed">Claimed</span>}
                 </div>
                 <button
@@ -584,25 +592,17 @@ function PostFeed({ schoolName }) {
                 />
               )}
 
-              {showReportModalId === post.id && (
-                <div className="ui-modal-overlay">
-                  <div className="ui-modal-content">
-                    <h4 className="ui-modal-title">Report Post</h4>
-                    <p className="ui-modal-message">Please describe your reason for reporting this post:</p>
-                    <textarea
-                      value={reportMessage}
-                      onChange={(e) => setReportMessage(e.target.value)}
-                      className="ui-report-textarea"
-                      placeholder="E.g., Inappropriate content, spam, misleading information, etc."
-                      rows="4"
-                    />
-                    <div className="ui-modal-actions">
-                      <button onClick={cancelReport} className="ui-btn ui-btn-secondary">Cancel</button>
-                      <button onClick={() => confirmReport(post.id)} className="ui-btn ui-btn-primary">Submit Report</button>
-                    </div>
-                  </div>
-                </div>
-              )}
+                              <UserReport
+                  show={showReportModalId === post.id}
+                  postId={post.id}
+                  reportMessage={reportMessage}
+                  setReportMessage={setReportMessage}
+                  onCancel={cancelReport}
+                  onSubmit={confirmReport}
+                  isSubmittingReport={isSubmittingReport}
+                  selectedReason={selectedReason}
+                  setSelectedReason={setSelectedReason}
+                />
 
               {openCommentPostId === post.id && (
                 <div className="ui-comments-section">
@@ -611,9 +611,15 @@ function PostFeed({ schoolName }) {
                       post.comments.map((comment, index) => (
                         <div key={index} className="ui-comment">
                           <div className="ui-comment-author">
-                            <span className="ui-comment-author-name">{comment.author}</span>
-                            {comment.isAnonymous && <span className="ui-badge ui-badge-anonymous ui-badge-small">Anonymous</span>}
-                          </div>
+                          <span className="ui-comment-author-name">
+                            {comment.author}
+                            {comment.isAnonymous && user && comment.authorId === user.uid && (
+                              <span className="ui-my-anonymous-badge" title="This is your anonymous comment">
+                                <FontAwesomeIcon icon={faUser} />
+                              </span>
+                            )}
+                          </span>
+                        </div>
                           <p className="ui-comment-text">{comment.text}</p>
                           <p className="ui-comment-time">{comment.timestamp ? timeAgo(comment.timestamp) : 'Just now'}</p>
                         </div>
@@ -631,14 +637,26 @@ function PostFeed({ schoolName }) {
                     </div>
                   ) : (
                     <div className="ui-comment-form">
-                      <textarea
+                         <textarea
                         placeholder="Write a comment..."
                         value={commentTexts[post.id] || ''}
-                        onChange={(e) => handleCommentChange(post.id, e.target.value)}
+                        onChange={(e) => {
+                          const value = e.target.value.slice(0, 33); // Limit to 35 chars
+                          handleCommentChange(post.id, value);
+                        }}
+                        maxLength={33}
                         className="ui-comment-textarea"
                         rows="1"
                         disabled={isSubmittingComment[post.id]}
                       />
+                      <div className="ui-comment-char-count">
+                        {(commentTexts[post.id]?.length || 0)}/33
+                      </div>
+                      {(commentTexts[post.id]?.length === 33) && (
+                        <div className="ui-comment-warning" style={{ color: '#e74c3c', fontSize: '0.92rem', marginTop: '2px' }}>
+                          The text reached the limit.
+                        </div>
+                      )}
                       <div className="ui-comment-actions">
                         <label className="ui-anonymous-toggle">
                           <input

@@ -4,10 +4,34 @@ import { db } from '../firebase';
 import UserFoundItem from './UserFoundItem';
 import './UserPostFeed.css';
 
+const itemCategories = [
+  'Cellphone',
+  'Tablet',
+  'Laptop',
+  'Bag/Backpack',
+  'Keys',
+  'Watch',
+  'Wallet/Purse',
+  'ID Card/Student Card',
+  'Umbrella',
+  'Book/Notebook',
+  'Calculator',
+  'Earphones/Headphones',
+  'Charger/Powerbank',
+  'Clothing (Jacket, etc.)',
+  'Shoes/Slippers',
+  'Eyeglasses',
+  'Water Bottle',
+  'Sports Equipment',
+  'USB/Flash Drive',
+  'Other',
+];
+
 function UserPostFeed({ schoolName }) {
   const [foundItems, setFoundItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
 
   useEffect(() => {
     if (!schoolName) {
@@ -38,10 +62,17 @@ function UserPostFeed({ schoolName }) {
   }, [schoolName]);
 
   // Filtering logic
-  const filteredPosts = foundItems.filter((post) => {
-    if (filter === 'claimed') return post.claimed;
-    if (filter === 'unclaimed') return !post.claimed;
-    return true;
+  const filteredItems = foundItems.filter(item => {
+    const statusMatch =
+      filter === 'all' ||
+      (filter === 'claimed' && item.claimed === true) ||
+      (filter === 'unclaimed' && item.claimed !== true);
+
+    const categoryMatch =
+      categoryFilter === 'all' ||
+      (item.category && item.category === categoryFilter);
+
+    return statusMatch && categoryMatch;
   });
 
   const FilterBar = () => (
@@ -75,6 +106,22 @@ function UserPostFeed({ schoolName }) {
           Unclaimed
         </button>
       </div>
+      <div className="ui-category-filter">
+        <label htmlFor="category-filter" className="ui-category-filter-label">
+          Item Category:
+        </label>
+        <select
+          id="category-filter"
+          className="ui-category-filter-select"
+          value={categoryFilter}
+          onChange={e => setCategoryFilter(e.target.value)}
+        >
+          <option value="all">All</option>
+          {itemCategories.map(cat => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
+        </select>
+      </div>
     </div>
   );
 
@@ -93,7 +140,7 @@ function UserPostFeed({ schoolName }) {
     );
   }
 
-  if (!loading && filteredPosts.length === 0) {
+  if (!loading && filteredItems.length === 0) {
     return (
       <div className="user-post-feed-container">
         <h2 className="admin-post-feed-title">
@@ -101,11 +148,6 @@ function UserPostFeed({ schoolName }) {
         </h2>
         <FilterBar />
         <div className="empty-state">
-          <img
-            src="/no-items.svg"
-            alt="No found items"
-            className="empty-state-img"
-          />
           <p className="no-items-message">
             No {filter} found items have been posted yet.
           </p>
@@ -121,7 +163,7 @@ function UserPostFeed({ schoolName }) {
       </h2>
       <FilterBar />
       <div className="user-item-list">
-        {filteredPosts.map((item) => (
+        {filteredItems.map((item) => (
           <UserFoundItem key={item.id} item={item} />
         ))}
       </div>

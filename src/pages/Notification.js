@@ -5,11 +5,14 @@ import './Notification.css';
 
 function Notification() {
   return (
+    <div>
+    <NavbarHome />
     <div className="notification-page">
-      <NavbarHome />
       <div className="notification-container">
+        <h1>Notifications</h1>
         <PostNotification /> {/* Render the PostNotification component */}
       </div>
+    </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import NavbarHome from '../components/NavbarHome';
 import MyPost from '../components/MyPost'; // Import MyPost component
+import PostBox from '../components/PostBox';
 
 function Timeline() {
   const [userSchool, setUserSchool] = useState(null);
@@ -28,6 +29,7 @@ function Timeline() {
       <NavbarHome />
       <div className="timeline-container">
         {/* Render MyPost component with schoolName prop */}
+        <PostBox schoolName={userSchool} />
         <MyPost schoolName={userSchool} />
       </div>
     </div>

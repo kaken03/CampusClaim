@@ -17,11 +17,13 @@ function Login() {
     const user = localStorage.getItem('user');
     if (user) {
       const userData = JSON.parse(user);
-      if (userData.school) {
+      if (userData.role === 'main-admin') {
+        navigate('/admin-dashboard');
+      } else if (userData.school) {
         // Redirect to school-specific homepage
         navigate(`/school/${userData.school}/home`);
       } else {
-        // Fallback for users without school data
+        // fallback
         navigate('/home');
       }
     }
@@ -36,8 +38,10 @@ function Login() {
       const user = userCredential.user;
 
       // First, try to find which school the user belongs to
-      // We'll check both CCTC and UV (add more schools as needed)
-      const schools = ['Consolatrix College of Toledo City', 'UV', 'CTU'];
+      
+      const schools = ['Consolatrix College of Toledo City', 
+                       'Kaken College of Toledo City'];
+                       // (add more schools as needed)
       let userData = null;
       let userSchool = null;
 
@@ -68,6 +72,14 @@ function Login() {
         }));
 
         setSuccess('Login successful!');
+
+        if (userData.role === 'main-admin') {
+          navigate('/admin-dashboard');
+        } else if (userData.school) {
+          navigate(`/school/${userData.school}/home`);
+        } else {
+          navigate('/home');
+        }
       } else {
         setError('No user profile found. Please contact support.');
       }

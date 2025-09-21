@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getAuth, updateProfile, updateEmail } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, updateProfile, updateEmail } from 'firebase/auth';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import NavbarHome from '../components/NavbarHome';
@@ -8,7 +8,7 @@ import './Profile.css';
 
 function Profile() {
   const auth = getAuth();
-  const user = auth.currentUser;
+  const [user, setUser] = useState(null);
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -19,7 +19,15 @@ function Profile() {
   const [schoolName, setSchoolName] = useState('');
   const [loadingSchool, setLoadingSchool] = useState(true);
 
-  // 1. Read school & cached status from localStorage
+  // 1. Watch for auth state changes (fixes refresh issue)
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+    });
+    return () => unsubscribe();
+  }, [auth]);
+
+  // 2. Read cached school/status from localStorage
   useEffect(() => {
     const localUser = localStorage.getItem('user');
     if (localUser) {
@@ -29,7 +37,7 @@ function Profile() {
     }
   }, []);
 
-  // 2. Subscribe to Firestore user doc with onSnapshot
+  // 3. Subscribe to Firestore user doc when user + schoolName available
   useEffect(() => {
     if (!user || !schoolName) return;
 
@@ -42,6 +50,7 @@ function Profile() {
         setFullName(data.fullName || user.displayName || '');
         setEmail(data.email || user.email || '');
         setVerificationStatus(data.verificationStatus || '');
+
         // cache
         localStorage.setItem(
           'user',
@@ -70,8 +79,10 @@ function Profile() {
       if (email !== user.email) {
         await updateEmail(user, email);
       }
+
       const schoolUserRef = doc(db, 'schools', schoolName, 'users', user.uid);
       await setDoc(schoolUserRef, { fullName, email }, { merge: true });
+
       const topUserRef = doc(db, 'users', user.uid);
       await setDoc(topUserRef, { fullName, email, school: schoolName }, { merge: true });
 
@@ -85,11 +96,10 @@ function Profile() {
   const isVerified = verificationStatus === 'verified';
 
   return (
-    <div className="profile-page-fb">
+    <div>
       <NavbarHome />
-      <div className="profile-main-fb" style={{ maxWidth: 400, margin: '40px auto' }}>
+      <div className="profile-main-fb">
         {loadingSchool ? (
-          // Skeleton Loader
           <div className="skeleton-card">
             <div className="skeleton-title"></div>
             <div className="skeleton-field"></div>
@@ -123,9 +133,7 @@ function Profile() {
               </button>
             )}
 
-            <h3 className="section-title-fb" style={{ marginBottom: 28 }}>
-              Profile
-            </h3>
+            <h1 style={{ textAlign: 'center' }}>Profile</h1>
             <div className="profile-fields-fb">
               <div className="profile-field-fb">
                 <label>Full Name</label>
@@ -146,7 +154,7 @@ function Profile() {
                 />
               </div>
             </div>
-            {/* Status Badge */}
+
             {isVerified ? (
               <div className="verified-badge-fb" style={{ marginTop: 24, textAlign: 'center' }}>
                 ✅ Verified
@@ -156,7 +164,7 @@ function Profile() {
                 ⏳ Waiting for admin approval...
               </div>
             ) : null}
-            {/* Edit/Save/Cancel Buttons */}
+
             {!isVerified && !isPending && (
               <>
                 {!isEditing && (

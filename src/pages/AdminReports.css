@@ -1,5 +1,6 @@
 /* AdminReport.css */
 
+/* Layout */
 .admin-report {
   padding: 20px;
   background: #f8f9fa;
@@ -18,8 +19,60 @@
   margin-bottom: 15px;
   color: #2c3e50;
   font-size: 22px;
+  font-weight: 600;
 }
 
+/* Actions */
+.report-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.manage-btn,
+.delete-btn,
+.view-btn {
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 8px 16px;
+  font-size: 14px;
+  transition: all 0.2s ease-in-out;
+}
+
+/* Manage button */
+.manage-btn {
+  background: #007bff;
+  color: #fff;
+}
+.manage-btn:hover {
+  background: #0056b3;
+}
+
+/* Delete buttons */
+.delete-btn {
+  background: #f39c12;
+  color: #fff;
+}
+.delete-btn:hover {
+  opacity: 0.9;
+}
+.delete-btn.danger {
+  background: #e74c3c;
+}
+
+/* View button */
+.view-btn {
+  background: #3498db;
+  color: #fff;
+  padding: 6px 12px;
+}
+.view-btn:hover {
+  background: #2980b9;
+}
+
+/* Table */
 .report-table {
   width: 100%;
   border-collapse: collapse;
@@ -31,35 +84,26 @@
   color: #fff;
 }
 
-.report-table th,
+.report-table th {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+  color: #ffffff;
+  word-break: break-word;
+}
 .report-table td {
   padding: 12px 15px;
   text-align: left;
   border-bottom: 1px solid #ddd;
-}
-.view-btn {
-  background: #3498db;
-  color: #fff;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  transition: 0.3s;
-}
-
-.view-btn:hover {
-  background: #2980b9;
-}
-
-
-
-.report-table td {
   color: #333;
   word-break: break-word;
 }
-/* Modal styles */
-/* Overlay */
+
+.report-table th {
+  font-weight: 600;
+}
+
+/* Modal */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -74,7 +118,6 @@
   padding: 1rem;
 }
 
-/* Modal Box */
 .modal-content {
   background: #fff;
   border-radius: 12px;
@@ -87,23 +130,15 @@
   flex-direction: column;
 }
 
-/* Header */
 .modal-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   border-bottom: 1px solid #eee;
   padding-bottom: 0.75rem;
   margin-bottom: 1rem;
 }
 
-.modal-header h3 {
-  font-size: 1.2rem;
-  margin: 0;
-  color: #333;
-}
-
-/* Close button */
 .close-btn {
   background: none;
   border: none;
@@ -116,7 +151,6 @@
   color: #000;
 }
 
-/* Body */
 .modal-body {
   font-size: 0.95rem;
   color: #444;
@@ -128,13 +162,11 @@
   color: #222;
 }
 
-/* Text with read more */
 .post-text {
   margin: 0.75rem 0;
 }
 
 .toggle-btn {
-  display: inline-block;
   margin-left: 0.5rem;
   font-size: 0.85rem;
   background: none;
@@ -147,7 +179,6 @@
   color: #0056b3;
 }
 
-/* Image */
 .post-image-wrapper {
   margin-top: 1rem;
   text-align: center;
@@ -166,9 +197,7 @@
   to { opacity: 1; transform: scale(1); }
 }
 
-
-
-/* Responsive design */
+/* Responsive */
 @media (max-width: 768px) {
   .report-table thead {
     display: none;
@@ -176,20 +205,35 @@
 
   .report-table tr {
     display: block;
-    margin-bottom: 15px;
-    border-bottom: 2px solid #eee;
+    margin-bottom: 10px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 10px;
+    background: #fff;
   }
 
   .report-table td {
     display: flex;
     justify-content: space-between;
-    padding: 10px;
+    padding: 8px;
     border: none;
   }
 
   .report-table td::before {
     content: attr(data-label);
-    font-weight: bold;
-    color: #2c3e50;
+    font-weight: 600;
+    color: #555;
+  }
+
+  .report-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .manage-btn,
+  .delete-btn,
+  .view-btn {
+    width: 100%;
+    text-align: center;
   }
 }

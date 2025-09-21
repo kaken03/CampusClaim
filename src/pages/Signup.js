@@ -90,8 +90,7 @@ function Signup() {
             >
               <option value="">Select your school</option>
               <option value="Consolatrix College of Toledo City">Consolatrix College of Toledo City</option>
-              <option value="UV">UV</option>
-              <option value="CTU">CTU</option>
+              <option value="Kaken College of Toledo City">Kaken College of Toledo City</option>
               {/* Add more schools as needed */}
             </select>
 

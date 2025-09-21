@@ -79,3 +79,35 @@
 .menu-dropdown button:hover {
   background-color: #f5f5f5;
 }
+.ui-category-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 100px;
+}
+
+.ui-category-filter-label {
+  font-weight: 500;
+  color: #2c3e50;
+  font-size: 1rem;
+}
+
+.ui-category-filter-select {
+  padding: 7px 12px;
+  border-radius: 6px;
+  border: 1.5px solid #dbe6f6;
+  font-size: 1rem;
+  background: #f8fafc;
+  transition: border 0.2s;
+}
+.ui-category-filter-select:focus {
+  border-color: #6495ed;
+  outline: none;
+}
+@media (max-width: 700px) {
+  .ui-category-filter {
+    margin-left: 20px;
+    margin-top: 10px;
+    width: 100%;
+  }
+}

@@ -229,10 +229,9 @@
 }
 
 .profile-main-fb {
-  display: flex;
-  gap: 32px;
+  display: flex;  
   justify-content: center;
-  margin-top: 32px;
+  margin-top: 30px;
   flex-wrap: wrap;
 }
 

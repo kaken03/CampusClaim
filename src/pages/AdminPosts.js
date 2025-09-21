@@ -190,7 +190,14 @@ export default function AdminPosts() {
               <div className="user-card-details-summary">
                 <p><strong>Post ID:</strong> {post.id}</p>
                 <p><strong>Author ID:</strong> {post.authorId || 'N/A'}</p>
-                <p><strong>Text:</strong> {post.text || '-'}</p>
+                <p>
+                  <strong>Text:</strong>{' '}
+                  {post.text
+                    ? post.text.length > 30
+                      ? post.text.slice(0, 30) + '...'
+                      : post.text
+                    : '-'}
+                </p>
                 <p><strong>Status:</strong>
                   <span className={`user-status-badge status-${getPostStatus(post).toLowerCase()}`}>
                     {getPostStatus(post)}

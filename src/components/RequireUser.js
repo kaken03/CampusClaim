@@ -6,7 +6,7 @@ const RequireUser = ({ children }) => {
   if (!user) {
     return <Navigate to="/login" replace />;
   }
-  if (user.role === 'admin') {
+  if (user.role === 'admin' && user.role !== 'main-admin') {
     // Prevent admin from accessing user routes
     return <Navigate to="/admin-dashboard" replace />;
   }

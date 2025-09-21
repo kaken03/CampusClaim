@@ -5,7 +5,7 @@ import { getAuth } from 'firebase/auth';
 import { uploadToCloudinary } from '../utils/uploadToCloudinary';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {  faTimes, faImage } from '@fortawesome/free-solid-svg-icons';
-import './AdminPostBox.css'; // New CSS file for AdminPostBox
+import './PostBox.css'; // New CSS file for AdminPostBox
 
 // This component is specifically for admins to post found items.
 function AdminPostBox({ schoolName }) {
@@ -15,6 +15,8 @@ function AdminPostBox({ schoolName }) {
   const [progress, setProgress] = useState(0);
   const [selectedFileName, setSelectedFileName] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
+  const [category, setCategory] = useState('');
+  const [description, setDescription] = useState('');
 
   const auth = getAuth();
 
@@ -29,13 +31,12 @@ function AdminPostBox({ schoolName }) {
     setSelectedFileName('');
   };
 
-  const handlePost = async () => {
-    if (!text.trim() && !image) {
-      // Use a custom modal or message box instead of alert()
-      console.error('Please provide a description or photo for the found item.');
+  const handlePost = async (e) => {
+    e.preventDefault();
+    if (!category) {
+      console.error('Please select an item category.');
       return;
     }
-
     setLoading(true);
     setProgress(0);
 
@@ -64,12 +65,16 @@ function AdminPostBox({ schoolName }) {
         type: 'found',
         school: schoolName,
         claimed: false,
+        category, // Include category in the posted data
+        description, // Include description in the posted data
       });
 
       // Reset form
       setText('');
       setImage(null);
       setSelectedFileName('');
+      setCategory(''); // Reset category
+      setDescription(''); // Reset description
       // Use a custom modal or message box instead of alert()
       console.log('Found item posted successfully!');
       setIsExpanded(false); // Minimize the PostBox after a successful post
@@ -82,68 +87,107 @@ function AdminPostBox({ schoolName }) {
     }
   };
 
+  const itemCategories = [
+    "Cellphone",
+    "Tablet",
+    "Laptop",
+    "Bag/Backpack",
+    "Keys",
+    "Watch",
+    "Wallet/Purse",
+    "ID Card/Student Card",
+    "Umbrella",
+    "Book/Notebook",
+    "Calculator",
+    "Earphones/Headphones",
+    "Charger/Powerbank",
+    "Clothing (Jacket, Hoodie, etc.)",
+    "Shoes/Slippers",
+    "Eyeglasses",
+    "Water Bottle",
+    "Sports Equipment",
+    "USB/Flash Drive",
+    "Other"
+  ];
+
   return (
-    <div className="ui-admin-post-box-container">
+    <div className="ui-post-box-container">
       {isExpanded ? (
         // Expanded PostBox
-        <div className="ui-admin-post-box">
+        <div className="ui-post-box">
           <button onClick={() => setIsExpanded(false)} className="ui-close-btn">
             <FontAwesomeIcon icon={faTimes} />
           </button>
-          <div className="ui-admin-post-box-header">
-            <h2 className="ui-admin-post-box-title">Post a Found Item</h2>
+          <div className="ui-post-box-header">
+            <h2 className="ui-post-box-title">Post a Found Item</h2>
           </div>
-          <div className="ui-admin-post-box-form">
-            <textarea
-              className="ui-admin-post-box-textarea"
-              placeholder="Describe the found item in detail..."
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              disabled={loading}
-            />
-            <div className="ui-admin-post-box-actions">
-              <div className="ui-file-upload-container">
-                <label htmlFor="file-upload-found" className="ui-custom-file-upload-btn">
-                  <FontAwesomeIcon icon={faImage} />
-                  <span>&nbsp;{selectedFileName || 'Choose Image'}</span>
-                </label>
-                <input
-                  id="file-upload-found"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
+          <div className="ui-post-box-form">
+            <form onSubmit={handlePost}>
+              <div className="ui-category-group">
+              <label className="ui-category-label">
+                Item Category<span style={{color: 'red'}}>*</span>
+              </label>
+              <select
+                className="ui-category-select"
+                value={category}
+                onChange={e => setCategory(e.target.value)}
+                required
+              >
+                <option value="">Select category</option>
+                {itemCategories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+                <textarea
+                  className="ui-post-box-textarea"
+                  placeholder="Any other details about the found item..."
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
                   disabled={loading}
                 />
-                {image && (
-                  <button className="ui-clear-image-btn" onClick={clearImage} disabled={loading}>
-                    <FontAwesomeIcon icon={faTimes} />
-                  </button>
-                )}
+              <div className="ui-post-box-actions">
+                <div className="ui-file-upload-container">
+                                <label htmlFor="file-upload" className="ui-custom-file-upload-btn">
+                                  <FontAwesomeIcon icon={faImage} />
+                                  <span>&nbsp;{selectedFileName || "Choose Image"}</span>
+                                </label>
+                                <input
+                                  id="file-upload"
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={handleFileChange}
+                                  disabled={loading}
+                                />
+                               {image && (
+                               <button className="ui-clear-image-btn" onClick={clearImage} disabled={loading}>
+                               <FontAwesomeIcon icon={faTimes} />
+                               </button>
+                               )}
+                              </div>
               </div>
-            </div>
-            {loading && (
-              <div className="ui-admin-post-box-progress">
-                <div
-                  className="ui-progress-bar"
-                  style={{ width: `${progress}%` }}
-                ></div>
-              </div>
-            )}
-            <button
-              className="ui-admin-post-box-button"
-              onClick={handlePost}
-              disabled={loading || (!text.trim() && !image)}
-            >
-              {loading ? 'Posting...' : 'Post Found Item'}
-            </button>
+              {loading && (
+                <div className="ui-admin-post-box-progress">
+                  <div
+                    className="ui-progress-bar"
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                </div>
+              )}
+              <button
+                className="ui-post-box-button"
+                type="submit"
+                disabled={loading || !category}
+              >
+                {loading ? 'Posting...' : 'Post Found Item'}
+              </button>
+            </form>
           </div>
         </div>
       ) : (
         // Minimized "Post" button
-        <div className="ui-minimized-admin-post-box" onClick={() => setIsExpanded(true)}>
-          <button className="ui-minimized-admin-post-box-btn">
-            Post a Found Item
-          </button>
+        <div className="ui-minimized-post-box" onClick={() => setIsExpanded(true)}>
+          <button className="ui-minimized-post-box-btn">What did you found?</button>
         </div>
       )}
     </div>

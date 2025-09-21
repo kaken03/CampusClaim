@@ -1,42 +1,43 @@
-
-
-/* Card container */
-.admin-item-card {
+.item-card.admin-item-card {
   background: #fff;
   border-radius: 10px;
-  padding: 15px 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  position: relative;
-  font-family: Arial, sans-serif;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  box-shadow: 0 2px 12px rgba(24,119,242,0.07);
+  padding: 24px 32px 28px 32px;
+  margin-bottom: 28px;
+  max-width: 350px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  border: 1px solid #e4e6eb;
+  transition: box-shadow 0.18s;
 }
 
-/* Claimed / Unclaimed status */
-.admin-item-header {
+.item-card.admin-item-card:hover {
+  box-shadow: 0 6px 24px rgba(24,119,242,0.13);
+}
+
+.admin-card-top-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  margin-bottom: 2px;
 }
 
-.admin-item-status {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 500;
+.admin-card-author {
+  font-size: 1.07rem;
+  color: #222;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
-.admin-status-icon.claimed {
-  color: #2ecc71;
+.admin-card-time {
+  font-size: 0.93rem;
+  color: #8a8d91;
+  margin-top: 1px;
 }
 
-.admin-status-icon.unclaimed {
-  color: #e74c3c;
-}
-
-/* Dropdown menu */
-.menu-wrapper {
+.admin-card-menu {
   position: relative;
 }
 
@@ -44,164 +45,249 @@
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 1.1rem;
-}
-
-.menu-dropdown {
-  position: absolute;
-  top: 28px;
-  right: 0;
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-  z-index: 999;
-  min-width: 150px;
-}
-
-.menu-dropdown button {
-  width: 100%;
-  padding: 8px 12px;
-  text-align: left;
-  background: none;
-  border: none;
-  cursor: pointer;
+  color: #65676b;
+  font-size: 1.2rem;
+  padding: 6px;
+  border-radius: 50%;
   transition: background 0.2s;
 }
-
-.menu-dropdown button:hover {
-  background-color: #f5f5f5;
+.ellipsis-btn:hover {
+  background: #f0f2f5;
 }
 
+.admin-card-divider {
+  border: none;
+  border-top: 1.5px solid #e4e6eb;
+  margin: 14px 0 16px 0;
+}
 
-.see-more-toggle {
-  color: #4fd1c5;
+.admin-card-status-category {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.admin-status-text {
+  font-size: 1.08rem;
+  font-weight: 600;
+  color: #e67e22;
+  letter-spacing: 0.5px;
+  text-transform: capitalize;
+}
+.admin-status-text.claimed {
+  color: #27ae60;
+}
+.admin-status-text.unclaimed {
+  color: #e67e22;
+}
+
+.admin-card-category {
+  font-size: 1.08rem;
+  color: #1877f2;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.admin-card-description {
+  background: #f5f6fa;
+  border-radius: 7px;
+  padding: 18px 16px;
+  font-size: 1.0rem;
+  color: #222;
+  margin-bottom: 18px;
+  min-height: 44px;
+  word-break: break-word;
+  border: 1px solid #e4e6eb;
+}
+
+.see-more-text {
+  color: #1877f2;
   cursor: pointer;
   font-weight: 500;
-  font-size: 0.95rem;
-  margin-top: 4px;
-  user-select: none;
+  margin-left: 4px;
 }
 
-.see-more-toggle:hover {
-  text-decoration: underline;
-}
-
-/* Image button */
-.see-photo-btn {
-  background: #3498db;
+.admin-card-photo-btn {
+  display: block;
+  width: 50%;
+  margin: 0 auto;
+  background: #1877f2;
   color: #fff;
   border: none;
-  padding: 6px 14px;
-  border-radius: 4px;
+  border-radius: 16px;
+  padding: 12px 0;
+  font-size: 1.08rem;
+  font-weight: 600;
   cursor: pointer;
-  font-size: 0.95rem;
-  align-self: flex-start;
-  transition: background 0.2s;
+  transition: background 0.18s;
+  text-align: center;
+  margin-top: 10px;
+  box-shadow: 0 1px 4px rgba(24,119,242,0.04);
 }
-
-.see-photo-btn:hover {
-  background: #2980b9;
+.admin-card-photo-btn:hover {
+  background: #145dc1;
 }
-
-/* --- Modals --- */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(30,38,49,0.55);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-
+/* --- Base Modal --- */
 .modal-content,
 .modal-content-edit,
 .modal-content-delete {
   background: #fff;
   border-radius: 12px;
-  padding: 1.8rem 2rem;
-  min-width: 320px;
-  max-width: 90vw;
-  text-align: center;
-  box-shadow: 0 4px 32px rgba(0,0,0,0.12);
-}
-
-.modal-content-edit textarea {
+  padding: 20px;
   width: 100%;
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  resize: vertical;
-  font-size: 1rem;
+  max-width: 480px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.25s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
-
-.modal-buttons {
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: rgba(0, 0, 0, 0.132);
   display: flex;
   justify-content: center;
-  gap: 1.5rem;
-  margin-top: 1rem;
+  align-items: center;
+  z-index: 2000;
+  padding: 1rem;
 }
 
-.modal-btn {
-  padding: 6px 18px;
-  border-radius: 6px;
+@media (max-width: 700px) {
+
+  
+  .item-card.admin-item-card {
+    padding: 12px 2vw 18px 2vw;
+  max-width: 340px;
+  }
+  .admin-card-status-category {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .admin-card-description {
+    font-size: 0.98rem;
+    padding: 12px 8px;
+  }
+  .admin-card-photo-btn {
+    font-size: 1rem;
+    padding: 10px 0;
+  }
+  .modal-content,
+.modal-content-edit,
+.modal-content-delete {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  width: 80%;
+  max-width: 280px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.25s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+}
+
+
+
+
+/* --- Close Button (Image Modal, etc.) --- */
+.close-btn {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: rgba(0, 0, 0, 0.6);
   border: none;
+  color: #fff;
+  font-size: 1.1rem;
+  padding: 6px 10px;
+  border-radius: 50%;
   cursor: pointer;
-  font-weight: 500;
-  font-size: 0.95rem;
   transition: background 0.2s;
 }
 
+/* --- Edit Modal --- */
+.modal-content-edit h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1c1e21;
+}
+.modal-content-edit textarea {
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 5px;
+  font-size: 14px;
+  resize: none;
+  outline: none;
+  transition: border 0.2s;
+}
+.modal-content-edit textarea:focus {
+  border-color: #1877f2;
+}
+
+/* --- Delete Modal --- */
+.modal-content-delete p {
+  font-size: 15px;
+  color: #444;
+  margin: 0 0 1rem;
+  text-align: center;
+}
+
+/* --- Buttons --- */
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.modal-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
 .modal-btn-confirm {
-  background: #e74c3c;
+  background: #1877f2;
   color: #fff;
 }
-
 .modal-btn-confirm:hover {
-  background: #c0392b;
+  background: #145dbf;
 }
-
 .modal-btn-cancel {
-  background: #f4f6f8;
-  color: #333;
-  border: 1px solid #ddd;
+  background: #e4e6eb;
+  color: #050505;
 }
-
 .modal-btn-cancel:hover {
-  background: #e0e0e0;
+  background: #d8dadf;
 }
 
-/* Close button for image modal */
-.modal-close-btn {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: none;
-  border: none;
-  font-size: 1.1rem;
-  cursor: pointer;
-}
-
-.modal-image {
+/* --- Image Modal --- */
+.modal-content img.modal-image {
   max-width: 100%;
-  border-radius: 8px;
-  margin-top: 10px;
+  max-height: 80vh;
+  border-radius: 10px;
+  object-fit: contain;
 }
 
-/* Responsive adjustments */
+
+/* --- Responsive --- */
 @media (max-width: 600px) {
-  .admin-item-card {
-    padding: 12px 16px;
+  .modal-content,
+  .modal-content-edit,
+  .modal-content-delete {
+    max-width: 95%;
+    padding: 16px;
   }
-  .menu-dropdown {
-    right: -5px;
-  }
-  .see-photo-btn {
-    width: 100%;
-    text-align: center;
+  .modal-content-edit textarea {
+    font-size: 13px;
   }
 }

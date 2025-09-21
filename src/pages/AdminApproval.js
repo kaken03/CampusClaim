@@ -12,10 +12,7 @@ function AdminApproval() {
     const [expandedUserIds, setExpandedUserIds] = useState(new Set());
     const user = JSON.parse(localStorage.getItem('user'));
     const schoolName = user?.school;
-
-    // State for managing the confirmation modal
-    const [showModal, setShowModal] = useState(false);
-    const [modalData, setModalData] = useState({ userId: null, action: null });
+    
 
     useEffect(() => {
         const fetchPending = async () => {
@@ -41,60 +38,6 @@ function AdminApproval() {
         fetchPending();
     }, [schoolName]);
 
-    // Function to show the modal
-    const handleActionClick = (userId, action) => {
-        setModalData({ userId, action });
-        setShowModal(true);
-    };
-
-    // Function to handle the confirmed action from the modal
-    const handleConfirmAction = async () => {
-  const { userId, action } = modalData;
-  if (!userId || !action) return;
-
-  try {
-    const userRef = doc(db, 'schools', schoolName, 'users', userId);
-
-    if (action === 'approve') {
-      await updateDoc(userRef, { verificationStatus: 'verified' });
-
-      // 🔔 Add notification
-      const notifRef = collection(db, 'schools', schoolName, 'users', userId, 'notifications');
-      await addDoc(notifRef, {
-        message: "✅ Your verification request has been approved! You can now post lost items and comment.",
-        type: "verification",
-        timestamp: serverTimestamp(),
-        read: false,
-      });
-
-      setPendingUsers(pendingUsers.filter(u => u.id !== userId));
-      setActionMessage('User approved.');
-
-    } else if (action === 'reject') {
-      await updateDoc(userRef, { verificationStatus: 'rejected' });
-
-      // 🔔 Add notification
-      const notifRef = collection(db, 'schools', schoolName, 'users', userId, 'notifications');
-      await addDoc(notifRef, {
-        message: "❌ Your verification request has been rejected. Please review your details and try again.",
-        type: "verification",
-        timestamp: serverTimestamp(),
-        read: false,
-      });
-
-      setPendingUsers(pendingUsers.filter(u => u.id !== userId));
-      setActionMessage('User rejected.');
-    }
-  } catch (err) {
-    setActionMessage(`Error ${action}ing user.`);
-    console.error(`Error ${action}ing user:`, err);
-  }
-
-  setShowModal(false);
-  setModalData({ userId: null, action: null });
-};
-
-
     // Toggle function for the details
     const toggleDetails = (userId) => {
         setExpandedUserIds(prevIds => {
@@ -113,6 +56,48 @@ function AdminApproval() {
         user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.email.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    // NEW: Directly handle approve/reject
+    const handleAction = async (userId, action) => {
+        if (!userId || !action) return;
+        try {
+            const userRef = doc(db, 'schools', schoolName, 'users', userId);
+
+            if (action === 'approve') {
+                await updateDoc(userRef, { verificationStatus: 'verified' });
+
+                // 🔔 Add notification
+                const notifRef = collection(db, 'schools', schoolName, 'users', userId, 'notifications');
+                await addDoc(notifRef, {
+                    message: "✅ Your verification request has been approved! You can now post lost items and comment.",
+                    type: "verification",
+                    timestamp: serverTimestamp(),
+                    read: false,
+                });
+
+                setPendingUsers(pendingUsers.filter(u => u.id !== userId));
+                setActionMessage('User approved.');
+
+            } else if (action === 'reject') {
+                await updateDoc(userRef, { verificationStatus: 'rejected' });
+
+                // 🔔 Add notification
+                const notifRef = collection(db, 'schools', schoolName, 'users', userId, 'notifications');
+                await addDoc(notifRef, {
+                    message: "❌ Your verification request has been rejected. Please review your details and try again.",
+                    type: "verification",
+                    timestamp: serverTimestamp(),
+                    read: false,
+                });
+
+                setPendingUsers(pendingUsers.filter(u => u.id !== userId));
+                setActionMessage('User rejected.');
+            }
+        } catch (err) {
+            setActionMessage(`Error ${action}ing user.`);
+            console.error(`Error ${action}ing user:`, err);
+        }
+    };
 
     return (
         <>
@@ -159,7 +144,6 @@ function AdminApproval() {
                                         {expandedUserIds.has(user.id) && (
                                             <div className="request-details-content">
                                                 {Object.entries(user.verificationRequest).map(([key, value]) => (
-                                                    // Only show the detail if the value is not an empty string or null/undefined
                                                     value && value !== '' && (
                                                         <p key={key}>
                                                             <strong>{key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}:</strong> {value}
@@ -171,26 +155,14 @@ function AdminApproval() {
                                     </div>
                                 )}
                                 <div className="approval-actions">
-                                    <button onClick={() => handleActionClick(user.id, 'approve')} className="approve-btn">Approve</button>
-                                    <button onClick={() => handleActionClick(user.id, 'reject')} className="reject-btn">Reject</button>
+                                    <button onClick={() => handleAction(user.id, 'approve')} className="approve-btn">Approve</button>
+                                    <button onClick={() => handleAction(user.id, 'reject')} className="reject-btn">Reject</button>
                                 </div>
                             </div>
                         ))}
                     </div>
                 )}
             </div>
-            {/* The modal is now inlined in this file */}
-            {showModal && (
-                <div className="modal-backdrop">
-                    <div className="modal-content">
-                        <p className="modal-message">{`Are you sure you want to ${modalData.action} this user?`}</p>
-                        <div className="modal-actions">
-                            <button className="modal-btn cancel-btn" onClick={() => setShowModal(false)}>Cancel</button>
-                            <button className="modal-btn confirm-btn" onClick={handleConfirmAction}>Confirm</button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </>
     );
 }

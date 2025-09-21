@@ -358,7 +358,7 @@ function MyPost({ schoolName }) {
   };
 
   return (
-    <div className="ui-post-feed">
+    <div className="user-post-feed-container">
 
       {showErrorModal.show && (
         <CustomModal
@@ -388,7 +388,7 @@ function MyPost({ schoolName }) {
         />
       )}
 
-      <div className="ui-filter-bar">
+       <div className="ui-filter-bar">
         <span className="ui-filter-label">Filter by status:</span>
         <div className="ui-filter-buttons">
           <button
@@ -490,8 +490,8 @@ function MyPost({ schoolName }) {
                 </button>
               )}
               {showImageModal && (
-                <div className="modal-overlay" onClick={() => setShowImageModal(false)}>
-                  <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <div className="ui-modal-overlay" onClick={() => setShowImageModal(false)}>
+                  <div className="ui-modal-content" onClick={(e) => e.stopPropagation()}>
                     <button
                       className="close-btn"
                       onClick={() => setShowImageModal(false)}

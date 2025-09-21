@@ -13,6 +13,8 @@ import './AdminPostFeed.css'; // Styling for this component
 function AdminPostFeed({ schoolName }) {
   const [foundItems, setFoundItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
 
   useEffect(() => {
     // Stop fetching if no schoolName is provided
@@ -46,15 +48,104 @@ function AdminPostFeed({ schoolName }) {
     return () => unsubscribe();
   }, [schoolName]);
 
+  const FilterBar = () => (
+  <div className="ui-filter-bar">
+    <span className="ui-filter-label">Filter by status:</span>
+    <div className="ui-filter-buttons">
+      <button
+        onClick={() => setFilter('all')}
+        className={filter === 'all' ? 'ui-filter-btn ui-active-filter' : 'ui-filter-btn'}
+      >
+        All
+      </button>
+      <button
+        onClick={() => setFilter('claimed')}
+        className={
+          filter === 'claimed'
+            ? 'ui-filter-btn ui-active-filter ui-claimed-filter'
+            : 'ui-filter-btn'
+        }
+      >
+        Claimed
+      </button>
+      <button
+        onClick={() => setFilter('unclaimed')}
+        className={
+          filter === 'unclaimed'
+            ? 'ui-filter-btn ui-active-filter ui-unclaimed-filter'
+            : 'ui-filter-btn'
+        }
+      >
+        Unclaimed
+      </button>
+    </div>
+    <div className="ui-category-filter">
+      <label htmlFor="category-filter" className="ui-category-filter-label">
+        Item Category:
+      </label>
+      <select
+        id="category-filter"
+        className="ui-category-filter-select"
+        value={categoryFilter}
+        onChange={e => setCategoryFilter(e.target.value)}
+      >
+        <option value="all">All</option>
+        {itemCategories.map(cat => (
+          <option key={cat} value={cat}>{cat}</option>
+        ))}
+      </select>
+    </div>
+  </div>
+);
+
+  const filteredItems = foundItems.filter(item => {
+  const statusMatch =
+    filter === 'all' ||
+    (filter === 'claimed' && item.claimed === true) ||
+    (filter === 'unclaimed' && item.claimed !== true);
+
+  const categoryMatch =
+    categoryFilter === 'all' ||
+    (item.category && item.category === categoryFilter);
+
+  return statusMatch && categoryMatch;
+});
+
+  const itemCategories = [
+  "Cellphone",
+  "Tablet",
+  "Laptop",
+  "Bag/Backpack",
+  "Keys",
+  "Watch",
+  "Wallet/Purse",
+  "ID Card/Student Card",
+  "Umbrella",
+  "Book/Notebook",
+  "Calculator",
+  "Earphones/Headphones",
+  "Charger/Powerbank",
+  "Clothing (Jacket, Hoodie, etc.)",
+  "Shoes/Slippers",
+  "Eyeglasses",
+  "Water Bottle",
+  "Sports Equipment",
+  "USB/Flash Drive",
+  "Other"
+];
+
+
+
   return (
     <div className="admin-post-feed-container">
       <h2 className="admin-post-feed-title">Found Items</h2>
+      <FilterBar />
       {loading ? (
         <p className="loading-message">Loading found items...</p>
-      ) : foundItems.length > 0 ? (
+      ) : filteredItems.length > 0 ? (
         <div className="admin-items-list">
           {/* Map through the found items and render a component for each one */}
-          {foundItems.map(item => (
+          {filteredItems.map(item => (
             <AdminFoundItem 
               key={item.id} 
               item={item} 

@@ -7,9 +7,7 @@
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  min-height: 90vh;
   background: linear-gradient(to bottom, #f9f9f9 0%, #ffffff 100%);
-  padding: 0px 40px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.05);
   flex-wrap: wrap;
 }
@@ -34,9 +32,6 @@
   margin-bottom: 30px;
 }
 
-.hero-cta {
-  margin-top: 20px;
-}
 
 .cta-button {
   padding: 12px 30px;
@@ -76,75 +71,5 @@
   background-color: #f9f9f9;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-  margin-top: 40px;
   width: 100%;
-}
-
-.about-title {
-  font-size: 2rem;
-  color: #1d3557;
-  margin-bottom: 20px;
-}
-
-.about-description {
-  font-size: 1.1rem;
-  color: #555;
-  line-height: 1.6;
-  margin-bottom: 30px;
-}
-
-.steps-container {
-  display: flex;
-  justify-content: space-around;
-  flex-wrap: wrap;
-}
-
-.step {
-  flex: 1 1 250px;
-  text-align: center;
-  margin: 20px;
-  padding: 20px;
-  background-color: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.step-icon {
-  margin-bottom: 15px;
-}
-
-.step-title {
-  font-size: 1.5rem;
-  color: #1d3557;
-  margin-bottom: 10px;
-}
-
-.step-description {
-  font-size: 1rem;
-  color: #555;
-  line-height: 1.4;
-}
-
-.vision-section {
-  margin-top: 40px;
-  padding: 20px;
-  background-color: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.vision-title {
-  text-align: center;
-  font-size: 1.5rem;
-  color: #1d3557;
-  margin-bottom: 15px;
-  display: block;
-}
-
-.vision-description {
-  display: block;
-  font-size: 1rem;
-  text-align: center;
-  color: #555;
-  line-height: 1.6;
 }

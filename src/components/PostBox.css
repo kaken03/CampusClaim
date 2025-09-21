@@ -123,7 +123,7 @@
 }
 
 .ui-post-box-textarea {
-  width: 94%;
+  width: 96%;
   min-height: 120px;
   padding: 16px;
   border: 1px solid #ccc;
@@ -157,8 +157,8 @@
   align-items: center;
   gap: 8px;
   flex-grow: 1;
+  margin-bottom: 10px;
 }
-
 .ui-custom-file-upload-btn {
   display: flex;
   align-items: center;
@@ -302,9 +302,58 @@
   max-width: 420px;
   box-shadow: 0 2px 8px rgba(230,57,70,0.07);
 }
+/* Item Category Field Styling */
+.ui-category-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
 
+.ui-category-label {
+  font-weight: 500;
+  color: #2c3e50;
+  margin-bottom: 6px;
+  font-size: 1rem;
+}
+
+.ui-category-select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #dbe6f6;
+  font-size: 1rem;
+  background: #f8fafc;
+  transition: border 0.2s;
+}
+
+.ui-category-select:focus {
+  border-color: #6495ed;
+  outline: none;
+}
 /* Responsive adjustments */
-@media (max-width: 600px) {
+@media (max-width: 700px) {
+  .ui-post-box-textarea {
+  width: 91%;
+  min-height: 120px;
+  padding: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  font-family: inherit;
+}
+  .ui-category-group {
+    margin-bottom: 12px;
+  }
+  .ui-category-label {
+    font-size: 0.97rem;
+  }
+  .ui-category-select {
+    font-size: 0.97rem;
+    padding: 9px 8px;
+  }
   .ui-post-box {
     padding: 16px;
   }

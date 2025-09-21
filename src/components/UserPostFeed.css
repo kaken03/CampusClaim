@@ -111,11 +111,40 @@
   background-color: #f1f3f5;
   border-top: 1px solid #e9ecef;
 }
+.ui-category-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 100px;
+}
 
-/*
-* Responsive adjustments
-*/
-@media (max-width: 600px) {
+.ui-category-filter-label {
+  font-weight: 400;
+  color: #2c3e50;
+  font-size: 1rem;
+}
+
+.ui-category-filter-select {
+  padding: 7px 12px;
+  border-radius: 6px;
+  border: 1.5px solid #dbe6f6;
+  font-size: 1rem;
+  background: #f8fafc;
+  transition: border 0.2s;
+}
+.ui-category-filter-select:focus {
+  border-color: #6495ed;
+  outline: none;
+}
+@media (max-width: 700px) {
+  .ui-category-filter {
+    margin-left: 20px;
+    margin-top: 10px;
+    width: 100%;
+  }
+  .ui-category-filter-select {
+  font-size: 0.5rem;
+}
   .admin-post-feed-title {
     font-size: 1.5rem;
   }

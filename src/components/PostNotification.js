@@ -103,7 +103,6 @@ export default function PostNotification() {
 
   return (
     <div className="post-notifications">
-      <h2>Notifications</h2>
       {loading ? (
         <p className="loading">Loading notifications...</p>
       ) : notifications.length === 0 ? (
