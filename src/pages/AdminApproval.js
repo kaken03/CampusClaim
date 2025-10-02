@@ -99,6 +99,13 @@ function AdminApproval() {
         }
     };
 
+    useEffect(() => {
+        if (actionMessage) {
+            const timer = setTimeout(() => setActionMessage(''), 2200);
+            return () => clearTimeout(timer);
+        }
+    }, [actionMessage]);
+
     return (
         <>
             <NavbarAdmin />
@@ -125,8 +132,16 @@ function AdminApproval() {
                         {filteredUsers.map(user => (
                             <div className="approval-card" key={user.id}>
                                 <div className="card-header">
-                                    <h4 className="user-name">{user.fullName}</h4>
-                                    <p className="user-email">{user.email}</p>
+                                <h4 className="user-name" title={user.fullName}>
+                                    {user.fullName && user.fullName.length > 20
+                                    ? user.fullName.slice(0, 20) + '...'
+                                    : user.fullName || 'N/A'}
+                                </h4>
+                                <p className="user-email" title={user.email}>
+                                    {user.email && user.email.length > 30
+                                    ? user.email.slice(0, 30) + '...'
+                                    : user.email || 'N/A'}
+                                </p>
                                 </div>
                                 {user.verificationRequest && (
                                     <div className="request-details-section">
@@ -150,14 +165,14 @@ function AdminApproval() {
                                                         </p>
                                                     )
                                                 ))}
+                                                <div className="approval-actions">
+                                                <button onClick={() => handleAction(user.id, 'approve')} className="approve-btn">Approve</button>
+                                                <button onClick={() => handleAction(user.id, 'reject')} className="reject-btn">Reject</button>
+                                            </div>
                                             </div>
                                         )}
                                     </div>
                                 )}
-                                <div className="approval-actions">
-                                    <button onClick={() => handleAction(user.id, 'approve')} className="approve-btn">Approve</button>
-                                    <button onClick={() => handleAction(user.id, 'reject')} className="reject-btn">Reject</button>
-                                </div>
                             </div>
                         ))}
                     </div>

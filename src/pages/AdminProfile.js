@@ -88,6 +88,7 @@ function AdminProfile() {
                     type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
+                    maxLength={50}
                     disabled={!isEditing}
                   />
                 </div>

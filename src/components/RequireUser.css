@@ -1,0 +1,38 @@
+.blocked-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.18);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.blocked-modal {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(24,119,242,0.14);
+  max-width: 350px;
+  width: 95vw;
+  padding: 32px 24px 24px 24px;
+  text-align: center;
+}
+.blocked-modal h2 {
+  color: #e74c3c;
+  margin-bottom: 12px;
+}
+.blocked-modal button {
+  margin-top: 18px;
+  background: #1877f2;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 10px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 80%;
+  transition: background 0.18s;
+}
+.blocked-modal button:hover {
+  background: #1456b2;
+}

@@ -248,6 +248,32 @@ body {
     background-color: #d8dadf;
     transform: translateY(-1px);
 }
+.admin-approval-message {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 260px;
+  max-width: 90vw;
+  background: #fff;
+  color: #222;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(24,119,242,0.18), 0 1.5px 8px rgba(0,0,0,0.07);
+  padding: 22px 36px;
+  font-size: 1.15rem;
+  font-weight: 600;
+  text-align: center;
+  z-index: 9999;
+  animation: fadeInOut 2.5s;
+  pointer-events: none;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translate(-50%, -60%);}
+  10% { opacity: 1; transform: translate(-50%, -50%);}
+  90% { opacity: 1; transform: translate(-50%, -50%);}
+  100% { opacity: 0; transform: translate(-50%, -40%);}
+}
 
 /* Responsive Design */
 @media (max-width: 768px) {
@@ -266,7 +292,6 @@ body {
     }
 
     .approval-actions {
-        flex-direction: column;
         gap: 10px;
     }
 
@@ -274,6 +299,13 @@ body {
     .reject-btn {
         width: 100%;
     }
+    .admin-approval-header h2 {
+    font-size: 1.5rem;
+    color: #1c1e21;
+    text-align: center;
+    margin: 0;
+    font-weight: 700;
+}
 }
 
 @keyframes fadeIn {

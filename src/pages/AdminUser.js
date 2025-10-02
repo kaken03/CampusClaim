@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { db } from '../firebase';
-import { collection, getDocs, updateDoc, deleteDoc, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, updateDoc,  doc, getDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import './AdminUser.css';
 import Navbar from '../components/AdminNavbar';
 import AdminUserAnalytics from '../components/AdminUserAnalytics';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEllipsisH } from '@fortawesome/free-solid-svg-icons';
+import ReactDOM from 'react-dom';
 
 // Modal component for confirmations and info messages
 const ActionModal = ({ message, onConfirm, onCancel, showConfirm = false, title = 'Notification' }) => {
@@ -57,22 +58,58 @@ const EllipsisMenu = ({ user, currentUser, onAction, onDetails, onClose, positio
         onClose();
       }
     };
+    const handleScrollOrResize = () => {
+      onClose(); // Close menu on scroll/resize for simplicity
+    };
     document.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('scroll', handleScrollOrResize, true);
+    window.addEventListener('resize', handleScrollOrResize);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('scroll', handleScrollOrResize, true);
+      window.removeEventListener('resize', handleScrollOrResize);
     };
   }, [onClose]);
+
+  // Smart positioning: adjust if menu would go off screen
+  const menuWidth = 180;
+  const menuHeight = 220;
+  let top = position.top;
+  let left = position.left;
+  if (window.innerHeight - top < menuHeight) {
+    top = window.innerHeight - menuHeight - 12;
+  }
+  if (window.innerWidth - left < menuWidth) {
+    left = window.innerWidth - menuWidth - 12;
+  }
+
+  const menuStyle = {
+    position: 'fixed',
+    top: Math.max(top, 12),
+    left: Math.max(left, 12),
+    width: menuWidth,
+    maxHeight: menuHeight,
+    zIndex: 2000,
+    background: '#fff',
+    borderRadius: '10px',
+    boxShadow: '0 4px 24px rgba(24,119,242,0.14)',
+    overflowY: 'auto',
+    padding: '8px 0',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2px',
+  };
 
   const isMainAdmin = currentUser.role === "main-admin";
   const isTargetAdmin = user.role === "admin" || user.role === "main-admin";
   const isTargetMainAdmin = user.role === "main-admin";
   const isCurrentUser = user.id === currentUser.id;
 
-  return (
+  return ReactDOM.createPortal(
     <div
       className="ellipsis-dropdown-menu"
       ref={menuRef}
-      style={{ top: position.top, left: position.left }}
+      style={menuStyle}
     >
       <button onClick={() => { onDetails(user); onClose(); }} className="ellipsis-menu-item">
         Details
@@ -94,14 +131,15 @@ const EllipsisMenu = ({ user, currentUser, onAction, onDetails, onClose, positio
               <button onClick={() => { onAction('block', user.id, user.isBlocked); onClose(); }} className="ellipsis-menu-item block-option">
                 {user.isBlocked ? 'Unblock User' : 'Block User'}
               </button>
-              <button onClick={() => { onAction('delete', user.id); onClose(); }} className="ellipsis-menu-item delete-option">
+              {/* <button onClick={() => { onAction('delete', user.id); onClose(); }} className="ellipsis-menu-item delete-option">
                 Delete User
-              </button>
+              </button> */}
             </>
           )}
         </>
       )}
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -213,7 +251,7 @@ export default function AdminUser() {
       await updateDoc(userDocRef, { isBlocked: !isBlocked });
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, isBlocked: !isBlocked } : u));
       setAdmins(prev => prev.map(a => a.id === userId ? { ...a, isBlocked: !isBlocked } : a));
-      showInfoModal(`✅ User successfully ${!isBlocked ? 'blocked' : 'unblocked'}.`);
+      
     } catch (error) {
       console.error("Error blocking/unblocking user:", error);
       showInfoModal("An error occurred.");
@@ -222,41 +260,41 @@ export default function AdminUser() {
     }
   };
 
-  const handleDelete = (userId, role) => {
-    if (isProcessing) return;
-    if (role === "main-admin") {
-      showInfoModal("❌ Main Admin cannot be deleted.");
-      return;
-    }
-    showConfirmModal("Are you sure you want to delete this user? This action is irreversible.", 'delete', userId);
-  };
+  // const handleDelete = (userId, role) => {
+  //   if (isProcessing) return;
+  //   if (role === "main-admin") {
+  //     showInfoModal("❌ Main Admin cannot be deleted.");
+  //     return;
+  //   }
+  //   showConfirmModal("Are you sure you want to delete this user? This action is irreversible.", 'delete', userId);
+  // };
   
-  const confirmDelete = async (userId) => {
-    setIsProcessing(true);
-    try {
-      const userDocRef = doc(db, 'schools', schoolName, 'users', userId);
-      await deleteDoc(userDocRef);
-      const isUser = users.some(u => u.id === userId);
-      if (isUser) {
-        setUsers(prev => {
-            const updatedUsers = prev.filter(u => u.id !== userId);
-            const newVerifiedCount = updatedUsers.filter(u => u.verificationStatus === 'verified').length;
-            setTotalNonAdminUsers(updatedUsers.length);
-            setVerifiedNonAdminUsers(newVerifiedCount);
-            setUnverifiedNonAdminUsers(updatedUsers.length - newVerifiedCount);
-            return updatedUsers;
-        });
-      } else {
-        setAdmins(prev => prev.filter(a => a.id !== userId));
-      }
-      showInfoModal("✅ User has been successfully deleted.");
-    } catch (error) {
-      console.error("Error deleting user:", error);
-      showInfoModal("An error occurred while deleting the user.");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+  // const confirmDelete = async (userId) => {
+  //   setIsProcessing(true);
+  //   try {
+  //     const userDocRef = doc(db, 'schools', schoolName, 'users', userId);
+  //     await deleteDoc(userDocRef);
+  //     const isUser = users.some(u => u.id === userId);
+  //     if (isUser) {
+  //       setUsers(prev => {
+  //           const updatedUsers = prev.filter(u => u.id !== userId);
+  //           const newVerifiedCount = updatedUsers.filter(u => u.verificationStatus === 'verified').length;
+  //           setTotalNonAdminUsers(updatedUsers.length);
+  //           setVerifiedNonAdminUsers(newVerifiedCount);
+  //           setUnverifiedNonAdminUsers(updatedUsers.length - newVerifiedCount);
+  //           return updatedUsers;
+  //       });
+  //     } else {
+  //       setAdmins(prev => prev.filter(a => a.id !== userId));
+  //     }
+  //     showInfoModal("✅ User has been successfully deleted.");
+  //   } catch (error) {
+  //     console.error("Error deleting user:", error);
+  //     showInfoModal("An error occurred while deleting the user.");
+  //   } finally {
+  //     setIsProcessing(false);
+  //   }
+  // };
 
   const handlePromoteToAdmin = (targetUserId) => {
     if (isProcessing) return;
@@ -309,7 +347,6 @@ export default function AdminUser() {
       await updateDoc(targetDoc, { role: "user" });
       setAdmins(prev => prev.filter(a => a.id !== targetUserId));
       setUsers(prev => [...prev, { ...targetUser, role: "user" }]);
-      showInfoModal(`✅ ${targetUser.fullName} has been successfully demoted.`);
     } catch (error) {
       console.error("Error demoting admin:", error);
       showInfoModal("An error occurred while demoting the admin.");
@@ -323,8 +360,8 @@ export default function AdminUser() {
       confirmPromote(modalState.targetId, modalState.targetUser);
     } else if (modalState.action === 'demote') {
       confirmDemote(modalState.targetId, modalState.targetUser);
-    } else if (modalState.action === 'delete') {
-      confirmDelete(modalState.targetId);
+    // } else if (modalState.action === 'delete') {
+    //   confirmDelete(modalState.targetId);
     } else if (modalState.action === 'block') {
       handleBlock(modalState.targetId, modalState.targetUser.isBlocked, modalState.targetUser.role);
     }
@@ -343,9 +380,10 @@ export default function AdminUser() {
       handleDemoteAdmin(userId);
     } else if (action === 'block') {
       showConfirmModal(`Are you sure you want to ${isBlocked ? 'unblock' : 'block'} this user?`, 'block', userId, user);
-    } else if (action === 'delete') {
-      handleDelete(userId, user.role);
-    }
+    } 
+    // else if (action === 'delete') {
+    //   handleDelete(userId, user.role);
+    // }
   };
 
   const handleShowDetails = (user) => {
@@ -383,6 +421,7 @@ export default function AdminUser() {
     if (userCategoryFilter === 'all') return true;
     if (userCategoryFilter === 'verified') return user.verificationStatus === 'verified';
     if (userCategoryFilter === 'unverified') return user.verificationStatus !== 'verified';
+    if (userCategoryFilter === 'blocked') return user.isBlocked;
     return true;
   });
 
@@ -398,8 +437,16 @@ export default function AdminUser() {
           <div key={user.id} className={`user-card ${user.isBlocked ? 'user-card-blocked' : ''}`}>
             <div className="user-card-header">
               <div className="user-card-info">
-                <h4 className="user-card-name">{user.fullName || 'N/A'}</h4>
-                <p className="user-card-email">{user.email || 'N/A'}</p>
+                <h4 className="user-card-name" title={user.fullName}>
+                  {user.fullName && user.fullName.length > 20
+                    ? user.fullName.slice(0, 20) + '...'
+                    : user.fullName || 'N/A'}
+                </h4>
+                <p className="user-card-email" title={user.email}>
+                  {user.email && user.email.length > 30
+                    ? user.email.slice(0, 30) + '...'
+                    : user.email || 'N/A'}
+                </p>
               </div>
               <button
                 className="ellipsis-button"
@@ -482,6 +529,12 @@ export default function AdminUser() {
                   >
                     Unverified ({unverifiedNonAdminUsers})
                   </button>
+                  <button
+                  className={`filter-button ${userCategoryFilter === 'blocked' ? 'active' : ''}`}
+                  onClick={() => setUserCategoryFilter('blocked')}
+                >
+                  Blocked ({users.filter(u => u.isBlocked).length})
+                </button>
                 </div>
               </div>
             )}

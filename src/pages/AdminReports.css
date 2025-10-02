@@ -226,14 +226,15 @@
   }
 
   .report-actions {
-    flex-direction: column;
+    flex-direction: row;
     gap: 8px;
   }
 
   .manage-btn,
   .delete-btn,
   .view-btn {
-    width: 100%;
+    width: 31%;
     text-align: center;
+    font-size: 0.7rem;
   }
 }

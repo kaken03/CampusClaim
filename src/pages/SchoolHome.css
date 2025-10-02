@@ -1,0 +1,119 @@
+/* Main page container */
+
+/* School header card */
+.school-header-card {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 10px;
+  box-shadow: 0 4px 16px rgba(29,53,87,0.2);
+  background-color: #fff;
+  border-radius: 12px;
+}
+
+.school-header-title {
+  margin: 0 0 0px 0;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.school-header-desc {
+  margin: 0;
+  font-size: 1.2rem;
+  opacity: 0.9;
+  color: #7f8c8d;
+}
+
+/* Tab buttons container */
+.tab-buttons-container {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 20px auto;
+  max-width: 600px;
+}
+
+/* Tab button styles */
+.tab-btn {
+  position: relative;
+  flex: 1;
+  padding: 12px 24px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #34495e;
+  background-color: #ecf0f1;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Active states */
+.tab-btn.active-lost {
+  color: #fff;
+  background-color: #e74c3c;
+  box-shadow: 0 4px 8px rgba(231, 76, 60, 0.4);
+}
+.tab-btn.active-found {
+  color: #fff;
+  background-color: #2ecc71;
+  box-shadow: 0 4px 8px rgba(46, 204, 113, 0.4);
+}
+
+/* Notification badge */
+.notif-badge {
+  position: absolute;
+  top: 2px;
+  right: 60px;
+  width: 16px;
+  height: 16px;
+  background: #e74c3c;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px #e74c3c55;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: badge-pop 0.4s;
+  z-index: 2;
+}
+@keyframes badge-pop {
+  0% { transform: scale(0.5);}
+  80% { transform: scale(1.2);}
+  100% { transform: scale(1);}
+}
+
+/* Responsive styles */
+@media (max-width: 700px) {
+  .school-header-card {
+    padding: 14px 4vw;
+    border-radius: 8px;
+  }
+  .school-header-title {
+    font-size: 1.2rem;
+  }
+  .school-header-desc {
+    font-size: 1rem;
+  }
+  .tab-buttons-container {
+    gap: 12px;
+    max-width: 98vw;
+  }
+  .tab-btn {
+    width: 100%;
+    font-size: 1.08rem;
+    padding: 16px 0;
+    border-radius: 18px;
+    margin: 0;
+  }
+  .notif-badge {
+    position: absolute;
+  top: 2px;
+  right: 10px;
+  width: 16px;
+  }
+}

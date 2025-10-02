@@ -5,6 +5,7 @@ import { db } from '../firebase';
 import NavbarHome from '../components/NavbarHome';
 import VerificationForm from '../components/VerificationForm';
 import './Profile.css';
+import {FaCheckCircle} from 'react-icons/fa';
 
 function Profile() {
   const auth = getAuth();
@@ -107,33 +108,7 @@ function Profile() {
             <div className="skeleton-btn"></div>
           </div>
         ) : (
-          <div className="profile-card-fb" style={{ position: 'relative' }}>
-            {/* Get Verified Button */}
-            {!isVerified && !isPending && (
-              <button
-                className="verify-btn-fb"
-                style={{
-                  position: 'absolute',
-                  top: 24,
-                  right: 24,
-                  padding: '8px 18px',
-                  fontSize: '0.98rem',
-                  fontWeight: 600,
-                  background: '#1877f2',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 6,
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(24,119,242,0.08)',
-                }}
-                onClick={() => setShowVerifyForm(true)}
-                disabled={!schoolName}
-              >
-                Get Verified
-              </button>
-            )}
-
-            <h1 style={{ textAlign: 'center' }}>Profile</h1>
+          <div className="profile-card-fb">
             <div className="profile-fields-fb">
               <div className="profile-field-fb">
                 <label>Full Name</label>
@@ -141,6 +116,7 @@ function Profile() {
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
+                  maxLength={50}
                   disabled={!isEditing || isVerified || isPending || !schoolName}
                 />
               </div>
@@ -156,21 +132,26 @@ function Profile() {
             </div>
 
             {isVerified ? (
-              <div className="verified-badge-fb" style={{ marginTop: 24, textAlign: 'center' }}>
-                ✅ Verified
-              </div>
+              <div className="verified-badge-fb"> <FaCheckCircle /> Verified</div>
             ) : isPending ? (
-              <div className="pending-badge-fb" style={{ marginTop: 24, textAlign: 'center' }}>
-                ⏳ Waiting for admin approval...
-              </div>
-            ) : null}
+              <div className="pending-badge-fb">⏳ Waiting for admin approval...</div>
+            ) : (
+              <button
+                className="verify-btn-fb"
+                onClick={() => setShowVerifyForm(true)}
+                disabled={!schoolName}
+                style={{ margin: '24px auto 0 auto', display: 'block', width: '80%' }}
+              >
+                Get Verified
+              </button>
+            )}
 
             {!isVerified && !isPending && (
               <>
                 {!isEditing && (
                   <button
                     className="edit-btn-fb"
-                    style={{ marginTop: 24, width: '100%' }}
+                    style={{ marginTop: 18, width: '80%', display: 'block', marginLeft: 'auto', marginRight: 'auto' }}
                     onClick={() => setIsEditing(true)}
                     disabled={!schoolName}
                   >
@@ -178,7 +159,7 @@ function Profile() {
                   </button>
                 )}
                 {isEditing && (
-                  <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+                  <div style={{ display: 'flex', gap: 12, marginTop: 18 }}>
                     <button
                       className="save-btn-fb"
                       style={{ flex: 1 }}

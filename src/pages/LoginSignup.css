@@ -1,0 +1,207 @@
+/* LoginSignup.css */
+
+/* Card container for both forms */
+.signup-card, .login-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(24,119,242,0.10);
+  max-width: 370px;
+  width: 100%;
+  margin: 32px auto;
+  padding: 32px 28px 24px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+}
+.password-input-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  width: 100%;
+  padding-right: 38px; /* space for the icon */
+}
+
+.password-toggle-icon {
+  position: absolute;
+  right: 12px;
+  top: 60%;
+  transform: translateY(-50%);
+  color: #888;
+  font-size: 1.18rem;
+  user-select: none;
+}
+.password-toggle-icon:active,
+.password-toggle-icon:focus {
+  outline: none;
+  color: #2c3e50;
+}
+/* Title for both forms */
+.signup-title, .login-title {
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: #2c3e50;
+  margin-top: -10px;
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+/* Form styling */
+.signup-form, .login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Label styling */
+.signup-form label, .login-form label {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 2px;
+  font-size: 1rem;
+}
+
+/* Input and select styling */
+.signup-form input, .login-form input,
+.signup-form select {
+  padding: 12px 14px;
+  margin-bottom: 5px;
+  border-radius: 8px;
+  border: 1.5px solid #dbe6f6;
+  font-size: 1rem;
+  background: #f8fafc;
+  transition: border 0.18s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.signup-form input:focus, .login-form input:focus,
+.signup-form select:focus {
+  border-color: #2c3e50;
+  outline: none;
+}
+
+/* Button styling */
+.signup-button, .login-button {
+  background: #2c3e50;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 0;
+  font-size: 1.08rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background 0.18s;
+  width: 100%;
+}
+
+.signup-button:hover, .login-button:hover {
+  background: #3d566f;
+}
+
+/* Error and success messages */
+.error-message {
+  color: #e74c3c;
+  background: #fdecea;
+  border-radius: 8px;
+  padding: 10px 0;
+  width: 100%;
+  text-align: center;
+  margin-bottom: 10px;
+  margin-top: -20px;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.success-popup {
+  color: #27ae60;
+  background: #eafaf1;
+  border-radius: 8px;
+  padding: 10px 0;
+  width: 100%;
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 1rem;
+}
+
+/* Prompt and switch link */
+.login-prompt, .signup-prompt {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 1rem;
+  color: #444;
+}
+
+.switch-link {
+  color: #2c3e50;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.switch-link:hover {
+  text-decoration: underline;
+}
+.form-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh; /* Vertically center on the page */
+  width: 100%;
+  background: transparent; /* Or set a background if you want */
+  box-sizing: border-box;
+}
+
+.signup-success-message {
+  position: absolute;
+  top: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #27ae60;
+  color: #fff;
+  padding: 14px 32px;
+  border-radius: 10px;
+  font-size: 1.08rem;
+  font-weight: 600;
+  box-shadow: 0 4px 24px rgba(39,174,96,0.18);
+  z-index: 10;
+  animation: fadeInOut 2s;
+  text-align: center;
+  pointer-events: none;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-10px);}
+  10% { opacity: 1; transform: translateX(-50%) translateY(0);}
+  90% { opacity: 1; transform: translateX(-50%) translateY(0);}
+  100% { opacity: 0; transform: translateX(-50%) translateY(-10px);}
+}
+/* Responsive design for mobile */
+@media (max-width: 600px) {
+    .form-container {
+    min-height: 80vh; /* Slightly less height for mobile */
+    padding: 0;
+  }
+  .signup-title, .login-title {
+    font-size: 1.25rem;
+  }
+  .signup-form, .login-form {
+    gap: 10px;
+  }
+  .login-prompt, .signup-prompt {
+    font-size: 0.97rem;
+    margin-top: 12px;
+  }
+  .error-message, .success-popup {
+    font-size: 0.97rem;
+    padding: 8px 0;
+    margin-bottom: 8px;
+  }
+}

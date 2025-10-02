@@ -246,129 +246,135 @@ body {
 }
 
 .ellipsis-dropdown-menu {
-  position: fixed; /* Crucial change: positions relative to the viewport */
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-size: 1rem;
+  min-width: 160px;
+  max-width: 220px;
+  max-height: 220px;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 24px rgba(24,119,242,0.14);
+  z-index: 2000;
+  padding: 8px 0;
   display: flex;
   flex-direction: column;
-  min-width: 180px;
-  z-index: 1001; /* High z-index to ensure it's on top */
-  padding: 8px 0;
-  /* top and left are now set dynamically in JS, so we remove them from here */
+  gap: 2px;
 }
 
 .ellipsis-menu-item {
   background: none;
   border: none;
-  padding: 10px 15px;
   text-align: left;
+  padding: 10px 18px;
   cursor: pointer;
-  font-size: 0.9rem;
-  color: #1c1e21;
-  transition: background-color 0.2s;
+  font-size: 1rem;
+  color: #222;
+  transition: background 0.18s;
 }
 
 .ellipsis-menu-item:hover {
-  background-color: #f0f2f5;
+  background: #eaf1fb;
 }
 
 .promote-option { color: #1877f2; }
-.demote-option { color: #f02849; }
-.block-option { color: #f02849; }
-.delete-option { color: #f02849; }
+.demote-option { color: #e67e22; }
+.block-option { color: #e74c3c; }
+.delete-option { color: #c0392b; }
 
 /* Modal Styling */
+/* Modal Overlay */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.18);
   z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  padding: 2rem;
-  border-radius: 8px;
-  text-align: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  min-width: 300px;
-  max-width: 500px;
-  transition: all 0.3s ease-in-out;
-  transform: scale(0.95);
-  opacity: 0;
-}
-
-.modal-overlay .modal-content {
-  transform: scale(1);
-  opacity: 1;
-}
-
-.user-details-modal {
-  text-align: left;
-}
-
-.user-details-modal p {
-  margin: 10px 0;
-  font-size: 1rem;
-}
-
-.user-details-modal p strong {
-  color: #65676b;
-}
-
-.modal-title {
-  font-size: 1.5rem;
-  color: #1c1e21;
-  margin-bottom: 1.5rem;
-}
-
-.modal-actions {
   display: flex;
+  align-items: center;
   justify-content: center;
+}
+
+/* Modal Content */
+.modal-content.user-details-modal {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(24,119,242,0.14);
+  max-width: 350px;
+  width: 95vw;
+  padding: 28px 22px 18px 22px;
+  position: relative;
+  animation: fadeIn 0.2s;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
 }
 
-.modal-close-btn {
-  background-color: #1877f2;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+
+/* Modal Title */
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1877f2;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+/* Modal Details */
+.user-details-modal p {
   font-size: 1rem;
-  transition: background-color 0.2s;
+  color: #222;
+  margin: 0 0 4px 0;
+  word-break: break-word;
+  line-height: 1.5;
+}
+.user-details-modal strong {
+  color: #555;
+  font-weight: 600;
 }
 
+/* Close Button */
+.modal-close-btn {
+  margin: 18px auto 0 auto;
+  display: block;
+  background: #f0f2f5;
+  color: #333;
+  border: none;
+  border-radius: 7px;
+  padding: 10px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 80%;
+  transition: background 0.18s;
+}
 .modal-close-btn:hover {
-  background-color: #166fe5;
+  background: #eaf1fb;
 }
 
-.action-btn-confirm {
-  background-color: #f02849;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
+/* Responsive */
+@media (max-width: 768px) {
+  .modal-content.user-details-modal {
+    max-width: 70vw;
+    padding: 14px 6vw 14px 6vw;
+    gap: 5px;
+    margin-right: 30px;
+  }
+  .modal-title {
+    font-size: 1.08rem;
+  }
+  .user-details-modal p {
+    font-size: 0.97rem;
+  }
+  .modal-close-btn {
+    font-size: 0.97rem;
+    padding: 8px 0;
+    width: 100%;
+  }
 }
 
-.action-btn-cancel {
-  background-color: #e4e6eb;
-  color: #1c1e21;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-/* Responsive adjustments */
 @media (max-width: 992px) {
   .admin-content-area {
     flex-direction: column;

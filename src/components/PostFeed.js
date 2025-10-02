@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { db } from '../firebase';
-import { collection, query, onSnapshot, doc, updateDoc, arrayUnion, Timestamp, addDoc, deleteDoc, getDoc, orderBy } from 'firebase/firestore';
+import { collection, query, onSnapshot, doc, updateDoc, Timestamp, addDoc, deleteDoc, getDoc, orderBy } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { useLocation } from 'react-router-dom';
 import './PostFeed.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faComment, faEllipsisH, faCheckCircle, faExclamationTriangle, faBan, faEdit, faTrash, faTimes, faImage, faUser } from '@fortawesome/free-solid-svg-icons';
 import UserReport from './UserReport';
+import Comment from './Comment';
 // A reusable modal component
 const CustomModal = ({ title, message, onConfirm, onCancel, confirmText, cancelText }) => {
   return (
@@ -65,9 +66,6 @@ function PostFeed({ schoolName }) {
   const [posts, setPosts] = useState([]);
   const [highlightedPostId, setHighlightedPostId] = useState(null);
   const [openCommentPostId, setOpenCommentPostId] = useState(null);
-  const [commentTexts, setCommentTexts] = useState({});
-  const [isSubmittingComment, setIsSubmittingComment] = useState({});
-  const [isAnonymousComment, setIsAnonymousComment] = useState(false);
   const [blockingPostId, setBlockingPostId] = useState(null);
   const [filter, setFilter] = useState('all');
   const [openMenuPostId, setOpenMenuPostId] = useState(null);
@@ -86,7 +84,6 @@ function PostFeed({ schoolName }) {
   const user = auth.currentUser;
   const location = useLocation();
   const commentsRef = useRef({});
-  const submittingCommentRef = useRef({});
   const menuRefs = useRef({});
 
   const displayErrorModal = (title, message) => {
@@ -219,54 +216,7 @@ function PostFeed({ schoolName }) {
     fetchVerificationStatus();
   }, [user, schoolName]);
 
-  const handleCommentChange = (postId, text) => {
-    setCommentTexts((prev) => ({ ...prev, [postId]: text }));
-  };
 
-  const handleAddComment = async (postId) => {
-    if (submittingCommentRef.current[postId]) {
-      console.log(`[Local Guard] Comment for post ${postId} is already being submitted. Ignoring duplicate click.`);
-      return;
-    }
-    submittingCommentRef.current[postId] = true;
-
-    const commentText = commentTexts[postId]?.trim();
-
-    if (!commentText) {
-      displayErrorModal("Error", "Comment cannot be empty.");
-      submittingCommentRef.current[postId] = false;
-      return;
-    }
-    if (!user) {
-      displayErrorModal("Error", "You must be logged in to comment.");
-      submittingCommentRef.current[postId] = false;
-      return;
-    }
-
-    setIsSubmittingComment(prev => ({ ...prev, [postId]: true }));
-    const postRef = doc(db, 'schools', schoolName, 'LostItems', postId);
-    const commentAuthorName = isAnonymousComment ? 'Anonymous' : (user?.displayName || 'Anonymous');
-
-    const newComment = {
-      text: commentText,
-      author: commentAuthorName,
-      authorId: user.uid,
-      isAnonymous: isAnonymousComment,
-      timestamp: Timestamp.now(),
-    };
-
-    try {
-      await updateDoc(postRef, { comments: arrayUnion(newComment) });
-      setCommentTexts((prev) => ({ ...prev, [postId]: '' }));
-      setIsAnonymousComment(false);
-    } catch (error) {
-      console.error('Error adding comment:', error);
-      displayErrorModal("Error", "Failed to add comment. Please try again.");
-    } finally {
-      setIsSubmittingComment(prev => ({ ...prev, [postId]: false }));
-      submittingCommentRef.current[postId] = false;
-    }
-  };
 
   const toggleComments = (postId) => {
     setOpenCommentPostId(prevId => prevId === postId ? null : postId);
@@ -334,11 +284,6 @@ function PostFeed({ schoolName }) {
     setIsSubmittingReport(false);
   }
 };
-
-  const cancelReport = () => {
-    setShowReportModalId(null);
-    setReportMessage('');
-  };
 
   const handleEditPost = (post) => {
     setEditingPost(post);
@@ -484,10 +429,11 @@ function PostFeed({ schoolName }) {
             >
               <div className="ui-post-header">
                 <div className="ui-post-author">
-                  <div className="ui-profile-pic"></div>
                   <div className="ui-author-info">
                     <p className="ui-author-name">
-                      {post.authorName || 'Anonymous'}
+                    {(post.authorName && post.authorName.length > 30)
+                      ? post.authorName.slice(0, 30) + '...'
+                      : (post.authorName || 'Anonymous')}
                       {post.isAnonymous && user && post.authorId === user.uid && (
                         <span className="ui-my-anonymous-badge" title="This is your anonymous post">
                           <FontAwesomeIcon icon={faUser} />
@@ -597,86 +543,27 @@ function PostFeed({ schoolName }) {
                   postId={post.id}
                   reportMessage={reportMessage}
                   setReportMessage={setReportMessage}
-                  onCancel={cancelReport}
+                  onCancel={() => setShowReportModalId(null)}
                   onSubmit={confirmReport}
                   isSubmittingReport={isSubmittingReport}
                   selectedReason={selectedReason}
                   setSelectedReason={setSelectedReason}
+                  user={user}
+                  schoolName={schoolName}
+                  displayErrorModal={displayErrorModal}
+                  setShowReportModalId={setShowReportModalId}
                 />
 
               {openCommentPostId === post.id && (
-                <div className="ui-comments-section">
-                  <div ref={(el) => (commentsRef.current[post.id] = el)} className="ui-comments-container">
-                    {post.comments?.length > 0 ? (
-                      post.comments.map((comment, index) => (
-                        <div key={index} className="ui-comment">
-                          <div className="ui-comment-author">
-                          <span className="ui-comment-author-name">
-                            {comment.author}
-                            {comment.isAnonymous && user && comment.authorId === user.uid && (
-                              <span className="ui-my-anonymous-badge" title="This is your anonymous comment">
-                                <FontAwesomeIcon icon={faUser} />
-                              </span>
-                            )}
-                          </span>
-                        </div>
-                          <p className="ui-comment-text">{comment.text}</p>
-                          <p className="ui-comment-time">{comment.timestamp ? timeAgo(comment.timestamp) : 'Just now'}</p>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="ui-empty-comments">No comments yet. Be the first to comment!</p>
-                    )}
-                  </div>
-
-                  {!user ? (
-                    <p className="ui-login-to-comment-message">Log in to add a comment.</p>
-                  ) : verificationStatus !== 'verified' ? (
-                    <div className="verify-warning">
-                      <p>You must be verified to comment. Please complete verification in your profile.</p>
-                    </div>
-                  ) : (
-                    <div className="ui-comment-form">
-                         <textarea
-                        placeholder="Write a comment..."
-                        value={commentTexts[post.id] || ''}
-                        onChange={(e) => {
-                          const value = e.target.value.slice(0, 33); // Limit to 35 chars
-                          handleCommentChange(post.id, value);
-                        }}
-                        maxLength={33}
-                        className="ui-comment-textarea"
-                        rows="1"
-                        disabled={isSubmittingComment[post.id]}
-                      />
-                      <div className="ui-comment-char-count">
-                        {(commentTexts[post.id]?.length || 0)}/33
-                      </div>
-                      {(commentTexts[post.id]?.length === 33) && (
-                        <div className="ui-comment-warning" style={{ color: '#e74c3c', fontSize: '0.92rem', marginTop: '2px' }}>
-                          The text reached the limit.
-                        </div>
-                      )}
-                      <div className="ui-comment-actions">
-                        <label className="ui-anonymous-toggle">
-                          <input
-                            type="checkbox"
-                            checked={isAnonymousComment}
-                            onChange={(e) => setIsAnonymousComment(e.target.checked)}
-                          />
-                          Anonymous
-                        </label>
-                        <button
-                          onClick={() => handleAddComment(post.id)}
-                          className="ui-btn ui-btn-sm ui-btn-primary"
-                          disabled={isSubmittingComment[post.id] || !commentTexts[post.id]?.trim()}
-                        >
-                          {isSubmittingComment[post.id] ? 'Sending...' : 'Post'}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <Comment
+                  post={post}
+                  user={user}
+                  verificationStatus={verificationStatus}
+                  commentsRef={commentsRef}
+                  timeAgo={timeAgo}
+                  displayErrorModal={displayErrorModal}
+                  schoolName={schoolName}
+                />
               )}
             </div>
           ))}

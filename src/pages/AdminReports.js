@@ -172,7 +172,7 @@ export default function AdminReport() {
                   className="manage-btn"
                   onClick={() => setManageMode(!manageMode)}
                 >
-                  {manageMode ? "Exit Manage Mode" : "Manage Reports"}
+                  {manageMode ? "Exit" : "Manage"}
                 </button>
 
                 {manageMode && (

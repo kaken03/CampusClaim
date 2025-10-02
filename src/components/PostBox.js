@@ -214,7 +214,6 @@ function PostBox({ schoolName }) {
             {loading && (
               <div className="ui-post-box-progress">
                 <div className="ui-progress-bar" style={{ width: `${progress}%` }}></div>
-                <span className="ui-progress-text">Uploading...</span>
               </div>
             )}
             <button

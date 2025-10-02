@@ -1,40 +1,49 @@
-import React from 'react';
-import Navbar from './components/Navbar';
-import campusClaimImg from './assets/images/CAMPUSCLAIM.png';
-
-import './App.css';
+import React, { useState } from "react";
+import "./App.css";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import campusClaimLogo from "./assets/images/CAMPUSCLAIM.png"; // <-- your logo path
 
 function App() {
+  const [showSignup, setShowSignup] = useState(false);
+
   return (
-    <div className="App">
-      <Navbar />
-      <div className="hero-section">
-        {/* LEFT SIDE */}
-        <div className="hero-content">
-          <h1 className="hero-title">Welcome to CampusClaim</h1>
-          <p className="hero-tagline">
-            The ultimate platform to manage lost and found items on campus.
-          </p>
-          <div className="hero-cta">
-            <a
-              href="/signup"
-              className="cta-button"
-            >
-              GET STARTED
-            </a>
+    <>
+      <div className="landing-container">
+        {/* Left Branding Section */}
+        <div className="branding-section">
+          <div className="branding-logo-row">
+            <img
+              src={campusClaimLogo}
+              alt="CampusClaim Logo"
+              className="branding-logo"
+            />
+            <span className="branding-title">CampusClaim</span>
           </div>
+          <h2 className="branding-headline">
+            Lost it? Found it? <span className="highlight">Claim it!</span>
+          </h2>
+          {/* <p className="branding-tagline">
+            A secure and school-specific lost & found system designed to keep your
+            campus connected.
+          </p> */}
         </div>
 
-        {/* RIGHT SIDE */}
-        <div className="hero-illustration">
-          <img
-            src={campusClaimImg}
-            alt="CampusClaim Logo"
-            className="illustration-image"
-          />
-        </div>
+        {/* Right Form Section */}
+        <div className="login-section">
+            {showSignup ? (
+              <Signup onSwitchToLogin={() => setShowSignup(false)} />
+            ) : (
+              <Login onSwitchToSignup={() => setShowSignup(true)} />
+            )}
+          </div>
       </div>
-    </div>
+
+      {/* Footer */}
+      <footer className="footer">
+        © {new Date().getFullYear()} CampusClaim
+      </footer>
+    </>
   );
 }
 

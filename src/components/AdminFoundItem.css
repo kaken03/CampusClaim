@@ -76,10 +76,10 @@
   text-transform: capitalize;
 }
 .admin-status-text.claimed {
-  color: #27ae60;
+  color: #38c172;
 }
 .admin-status-text.unclaimed {
-  color: #e67e22;
+  color: #e3342f;
 }
 
 .admin-card-category {

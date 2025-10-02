@@ -431,10 +431,11 @@ function MyPost({ schoolName }) {
             >
               <div className="ui-post-header">
                 <div className="ui-post-author">
-                  <div className="ui-profile-pic"></div>
                   <div className="ui-author-info">
                     <p className="ui-author-name">
-                      {post.authorName || 'Anonymous'}
+                      {(post.authorName && post.authorName.length > 30)
+                        ? post.authorName.slice(0, 30) + '...'
+                        : (post.authorName || 'Anonymous')}
                       {post.isAnonymous && user && post.authorId === user.uid && (
                         <span className="ui-my-anonymous-badge" title="This is your anonymous post">
                           <FontAwesomeIcon icon={faUser} />

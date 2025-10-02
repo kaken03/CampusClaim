@@ -148,7 +148,7 @@
 }
 
 /* --- Responsive Styles --- */
-@media (max-width: 768px) {
+@media (max-width: 850px) {
   .admin-menu-toggle {
     display: flex;
   }

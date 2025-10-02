@@ -19,7 +19,7 @@ function NavbarAdmin() {
   const handleLogout = async () => {
     await auth.signOut();
     localStorage.clear();
-    navigate('/login', { replace: true });
+    navigate('/', { replace: true });
   };
 
   return (

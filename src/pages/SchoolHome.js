@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebase';
 import { useParams } from 'react-router-dom';
 import NavbarHome from '../components/NavbarHome';
 import PostBox from '../components/PostBox';
@@ -7,12 +9,15 @@ import UserPostFeed from '../components/UserPostFeed';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlusCircle, faSearch } from '@fortawesome/free-solid-svg-icons';
 import './Home.css';
+import './SchoolHome.css';
 
 function SchoolHome() {
   const { schoolName } = useParams();
   const [userSchool, setUserSchool] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('lost'); // New state to manage active tab
+  const [foundBadge, setFoundBadge] = useState(false);
+  const [latestFoundTime, setLatestFoundTime] = useState(null);
 
   useEffect(() => {
     // Get user data from localStorage
@@ -23,6 +28,39 @@ function SchoolHome() {
     }
     setLoading(false);
   }, []);
+
+  useEffect(() => {
+    // Listen for the latest found item only
+    const q = query(
+      collection(db, 'schools', schoolName, 'FoundItems'),
+      orderBy('createdAt', 'desc'),
+      limit(1)
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (!snapshot.empty) {
+        const latest = snapshot.docs[0].data();
+        console.log('Latest found item:', latest);
+        const latestTime = latest.createdAt?.toMillis?.() || latest.createdAt;
+        setLatestFoundTime(latestTime);
+
+        // Compare with last seen
+        const lastSeen = localStorage.getItem(`found_last_seen_${schoolName}`);
+        if (!lastSeen || latestTime > Number(lastSeen)) {
+          setFoundBadge(true);
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, [schoolName]);
+
+  // When user clicks Found tab, reset badge
+  const handleFoundClick = () => {
+    setActiveTab('found');
+    if (latestFoundTime) {
+      localStorage.setItem(`found_last_seen_${schoolName}`, latestFoundTime);
+      setFoundBadge(false);
+    }
+  };
 
   // Show loading while checking user data
   if (loading) {
@@ -37,26 +75,16 @@ function SchoolHome() {
   return (
     <div className="home-page">
       <NavbarHome />
-      <div style={{
-        textAlign: 'center',
-        marginBottom: '30px',
-        padding: '20px',
-        boxShadow: '0 4px 16px rgba(29,53,87,0.2)',
-        backgroundColor: '#fff',
-        borderRadius: '12px'
-      }}>
-        <h1 style={{ margin: '0 0 10px 0', fontSize: '2.5rem', fontWeight: 'bold', color: '#2c3e50' }}>
-          {schoolName}
-        </h1>
-        <p style={{ margin: '0', fontSize: '1.2rem', opacity: '0.9', color: '#7f8c8d' }}>
-          lost and found community
-        </p>
+      <div className="school-header-card">
+        <h1 className="school-header-title">{schoolName}</h1>
+        <p className="school-header-desc">lost and found community</p>
       </div>
 
-      <div style={{ textAlign: 'center', margin: '20px auto', maxWidth: '600px', display: 'flex', gap: '10px' }}>
-        {/* Found Item Button */}
+      <div className="tab-buttons-container" style={{ textAlign: 'center', margin: '20px auto', maxWidth: '600px', display: 'flex', gap: '10px' }}>
+        {/* Found Item Button with Badge */}
         <button 
-          onClick={() => setActiveTab('found')} 
+          onClick={handleFoundClick}
+          className={`tab-btn ${activeTab === 'found' ? 'active-found' : ''}`}
           style={{
             flex: 1,
             padding: '12px 24px',
@@ -73,10 +101,14 @@ function SchoolHome() {
         >
           <FontAwesomeIcon icon={faSearch} style={{ marginRight: '10px' }} />
           Found Items
+          {foundBadge && (
+            <span className="notif-badge"></span>
+          )}
         </button>
         {/* Lost Item Button */}
         <button 
           onClick={() => setActiveTab('lost')} 
+          className={`tab-btn ${activeTab === 'lost' ? 'active-lost' : ''}`}
           style={{
             flex: 1,
             padding: '12px 24px',

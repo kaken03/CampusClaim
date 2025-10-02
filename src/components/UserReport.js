@@ -1,6 +1,8 @@
-
+import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faCheckSquare, faSquare } from '@fortawesome/free-solid-svg-icons';
+import { collection, query, where, getDocs, addDoc, Timestamp } from 'firebase/firestore';
+import { db } from '../firebase';
 
 const REPORT_REASONS = [
   {
@@ -25,25 +27,68 @@ const REPORT_REASONS = [
   },
 ];
 
-
 const UserReport = ({
   show,
   postId,
-  reportMessage,
-  setReportMessage,
   onCancel,
   onSubmit,
   isSubmittingReport,
-  selectedReason,
-  setSelectedReason,
+  user, // add this
+  schoolName, // add this
+  displayErrorModal, // add this
+  setShowReportModalId, // add this
 }) => {
+  const [selectedReason, setSelectedReason] = useState('');
+  const [reportMessage, setReportMessage] = useState('');
+  const [alreadyReported] = useState(false);
+
+  useEffect(() => {
+    if (show) {
+      setSelectedReason('');
+      setReportMessage('');
+    }
+  }, [show]);
+
+
+
   const handleReasonSelect = (key) => {
     setSelectedReason(key);
     if (key !== 'other') setReportMessage(REPORT_REASONS.find(r => r.key === key).label);
     else setReportMessage('');
   };
 
-  if (!show) return null;
+  const confirmReport = async () => {
+    if (!user) {
+      displayErrorModal("Permission Denied", "You must be logged in to report a post.");
+      return;
+    }
+    if (!reportMessage.trim()) {
+      displayErrorModal("Error", "Please provide a reason for the report.");
+      return;
+    }
+
+    // Check if user already reported this post
+    const reportRef = collection(db, 'schools', schoolName, 'LostItems', postId, 'reports');
+    const q = query(reportRef, where('reporterId', '==', user.uid));
+    const existingReports = await getDocs(q);
+
+    if (!existingReports.empty) {
+  displayErrorModal("Error", "You have already reported this post.");
+  setShowReportModalId(null); // Close the modal
+  return;
+}
+
+    await addDoc(reportRef, {
+      reporterId: user.uid,
+      reason: reportMessage,
+      createdAt: Timestamp.now(),
+    });
+    displayErrorModal("Success", "Post reported successfully. An admin will review it shortly.");
+    setShowReportModalId(null);
+    setReportMessage('');
+  };
+
+  if (!show || alreadyReported) return null;
 
   return (
     <div className="ui-modal-overlay">
@@ -80,7 +125,7 @@ const UserReport = ({
         <div className="ui-modal-actions">
           <button onClick={onCancel} className="ui-btn ui-btn-secondary">Cancel</button>
           <button
-            onClick={() => onSubmit(postId)}
+            onClick={confirmReport}
             className="ui-btn ui-btn-primary"
             disabled={isSubmittingReport || (!reportMessage && selectedReason === 'other')}
           >
