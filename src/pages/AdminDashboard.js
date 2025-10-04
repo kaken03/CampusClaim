@@ -27,10 +27,10 @@ function AdminDashboard() {
           padding: '20px',
           boxShadow: '0 4px 16px rgba(29,53,87,0.2)'
         }}>
-          <h1 style={{ margin: '0 0 10px 0', fontSize: '2.5rem', fontWeight: 'bold' }}>
+          <h1 className='school-header-title' >
             {schoolName || "Admin Dashboard"}
           </h1>
-          <p style={{ margin: '0', fontSize: '1.2rem', opacity: '0.9' }}>
+          <p className="school-header-desc">
             lost and found community
           </p>
         </div>

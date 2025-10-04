@@ -13,42 +13,38 @@ export default function AdminReport() {
   const [selectedReports, setSelectedReports] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
   const [manageMode, setManageMode] = useState(false); // 🔹 New state
+  const [actionMessage, setActionMessage] = useState('');
 
   useEffect(() => {
+    setLoading(true);
+
     const fetchReports = async () => {
-      try {
-        let allReports = [];
-        const postsSnapshot = await getDocs(
-          collection(db, "schools", "Consolatrix College of Toledo City", "LostItems")
-        );
+      const postsRef = collection(db, "schools", "Consolatrix College of Toledo City", "LostItems");
+      const postsSnapshot = await getDocs(postsRef);
+      let allReports = [];
 
-        for (const postDoc of postsSnapshot.docs) {
-          const postId = postDoc.id;
-          const reportsSnapshot = await getDocs(
-            collection(db, "schools", "Consolatrix College of Toledo City", "LostItems", postId, "reports")
-          );
+      for (const postDoc of postsSnapshot.docs) {
+        const postId = postDoc.id;
+        const reportsRef = collection(db, "schools", "Consolatrix College of Toledo City", "LostItems", postId, "reports");
+        const reportsSnapshot = await getDocs(reportsRef);
 
-          reportsSnapshot.forEach((reportDoc) => {
-            allReports.push({
-              id: reportDoc.id,
-              postId,
-              ...reportDoc.data(),
-            });
+        reportsSnapshot.forEach(reportDoc => {
+          allReports.push({
+            id: reportDoc.id,
+            postId,
+            ...reportDoc.data(),
           });
-        }
-
-        allReports.sort((a, b) => {
-          const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
-          const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
-          return dateB - dateA;
         });
-
-        setReports(allReports);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching reports:", error);
-        setLoading(false);
       }
+
+      allReports.sort((a, b) => {
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
+        return dateB - dateA;
+      });
+
+      setReports(allReports);
+      setLoading(false);
     };
 
     fetchReports();
@@ -94,35 +90,41 @@ export default function AdminReport() {
   };
 
   const deleteSelectedReports = async () => {
-    if (selectedReports.length === 0) return alert("No reports selected.");
-    if (!window.confirm("Delete selected reports?")) return;
+  if (selectedReports.length === 0) {
+    setActionMessage("No reports selected.");
+    setTimeout(() => setActionMessage(''), 2000);
+    return;
+  }
+  if (!window.confirm("Delete selected reports?")) return;
 
-    try {
-      await Promise.all(
-        selectedReports.map((reportId) => {
-          const report = reports.find((r) => r.id === reportId);
-          const reportRef = doc(
-            db,
-            "schools",
-            "Consolatrix College of Toledo City",
-            "LostItems",
-            report.postId,
-            "reports",
-            report.id
-          );
-          return deleteDoc(reportRef);
-        })
-      );
+  try {
+    await Promise.all(
+      selectedReports.map((reportId) => {
+        const report = reports.find((r) => r.id === reportId);
+        const reportRef = doc(
+          db,
+          "schools",
+          "Consolatrix College of Toledo City",
+          "LostItems",
+          report.postId,
+          "reports",
+          report.id
+        );
+        return deleteDoc(reportRef);
+      })
+    );
 
-      setReports((prev) => prev.filter((r) => !selectedReports.includes(r.id)));
-      setSelectedReports([]);
-      setSelectAll(false);
-      alert("Selected reports deleted successfully.");
-    } catch (error) {
-      console.error("Error deleting reports:", error);
-      alert("Failed to delete selected reports.");
-    }
-  };
+    setReports((prev) => prev.filter((r) => !selectedReports.includes(r.id)));
+    setSelectedReports([]);
+    setSelectAll(false);
+    setActionMessage("Selected reports deleted successfully.");
+    setTimeout(() => setActionMessage(''), 2000);
+  } catch (error) {
+    console.error("Error deleting reports:", error);
+    setActionMessage("Failed to delete selected reports.");
+    setTimeout(() => setActionMessage(''), 2000);
+  }
+};
 
   const deleteAllReports = async () => {
     if (!window.confirm("Are you sure you want to delete ALL reports?")) return;
@@ -146,18 +148,27 @@ export default function AdminReport() {
       setReports([]);
       setSelectedReports([]);
       setSelectAll(false);
-      alert("All reports deleted successfully.");
+      setActionMessage("All reports deleted successfully.");
+    setTimeout(() => setActionMessage(''), 2000);
+      // alert("All reports deleted successfully.");
     } catch (error) {
       console.error("Error deleting all reports:", error);
-      alert("Failed to delete all reports.");
+      setActionMessage("Failed to delete all reports.");
+    setTimeout(() => setActionMessage(''), 2000);
+      // alert("Failed to delete all reports.");
     }
   };
 
   return (
     <div>
       <Navbar />
+      
       <div className="admin-report">
+        {actionMessage && (
+        <div className="postbox-action-message">{actionMessage}</div>
+      )}
         <div className="report-container">
+          
           <h2>All Reports</h2>
 
           {loading ? (
@@ -244,7 +255,7 @@ export default function AdminReport() {
 
         {/* Modal */}
         {selectedPost && (
-          <div className="modal-overlay">
+          <div className="ui-modal-overlay">
             <div className="modal-content">
               <div className="modal-header">
                 <button className="close-btn" onClick={closeModal}>
