@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { db } from '../firebase';
-import { collection, query, onSnapshot, doc, updateDoc, Timestamp, addDoc, deleteDoc, getDoc, orderBy } from 'firebase/firestore';
+import { collection, query, onSnapshot, doc, updateDoc, Timestamp, deleteDoc, getDoc, orderBy } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { useLocation } from 'react-router-dom';
 import './PostFeed.css';
@@ -32,6 +32,9 @@ const EditPostModal = ({ post, onSave, onCancel }) => {
   const [editedText, setEditedText] = useState(post.text);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Disable save if text is unchanged or empty
+  const isTextChanged = editedText.trim() !== post.text.trim();
+
   const handleSave = async () => {
     setIsSaving(true);
     await onSave(post.id, { text: editedText });
@@ -53,7 +56,11 @@ const EditPostModal = ({ post, onSave, onCancel }) => {
         </div>
         <div className="ui-modal-actions">
           <button onClick={onCancel} className="ui-btn ui-btn-secondary" disabled={isSaving}>Cancel</button>
-          <button onClick={handleSave} className="ui-btn ui-btn-primary" disabled={isSaving}>
+          <button
+            onClick={handleSave}
+            className="ui-btn ui-btn-primary"
+            disabled={isSaving || !isTextChanged}
+          >
             {isSaving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
@@ -70,15 +77,14 @@ function PostFeed({ schoolName }) {
   const [filter, setFilter] = useState('all');
   const [openMenuPostId, setOpenMenuPostId] = useState(null);
   const [showReportModalId, setShowReportModalId] = useState(null);
-  const [reportMessage, setReportMessage] = useState(''); 
   const [showErrorModal, setShowErrorModal] = useState({ show: false, title: '', message: '' }); 
   const [deletingPostId, setDeletingPostId] = useState(null); 
   const [editingPost, setEditingPost] = useState(null); 
   const [verificationStatus, setVerificationStatus] = useState(''); 
   const [showImageModal, setShowImageModal] = useState(false); 
   const [selectedImage, setSelectedImage] = useState(null); 
-  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
-  const [selectedReason, setSelectedReason] = useState('');
+  const [isSubmittingReport,] = useState(false);
+  const [actionMessage, setActionMessage] = useState(''); // <-- NEW
 
   const auth = getAuth();
   const user = auth.currentUser;
@@ -100,7 +106,8 @@ function PostFeed({ schoolName }) {
     const now = new Date();
     const seconds = Math.floor((now - date) / 1000);
 
-    if (seconds < 60) return `${seconds}s ago`;
+    if (seconds < 5) return "Just now";
+    if (seconds < 60)  return "Just now"; 
     const minutes = Math.floor(seconds / 60);
     if (minutes < 60) return `${minutes}m ago`;
     const hours = Math.floor(minutes / 60);
@@ -216,7 +223,13 @@ function PostFeed({ schoolName }) {
     fetchVerificationStatus();
   }, [user, schoolName]);
 
-
+  // Floating message auto-hide
+  useEffect(() => {
+    if (actionMessage) {
+      const timer = setTimeout(() => setActionMessage(''), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [actionMessage]);
 
   const toggleComments = (postId) => {
     setOpenCommentPostId(prevId => prevId === postId ? null : postId);
@@ -235,7 +248,7 @@ function PostFeed({ schoolName }) {
     try {
       const postRef = doc(db, 'schools', schoolName, 'LostItems', postId);
       await updateDoc(postRef, { isBlocked: true });
-      displayErrorModal("Success", "Post blocked successfully!");
+      setActionMessage("✅ Post blocked successfully!");
     } catch (error) {
       console.error('Error blocking post:', error);
       displayErrorModal("Error", "Failed to block post.");
@@ -253,37 +266,6 @@ function PostFeed({ schoolName }) {
     setOpenMenuPostId(null);
   };
 
-  const confirmReport = async (postId) => {
-  if (isSubmittingReport) return; // Prevent duplicate submissions
-  setIsSubmittingReport(true);
-
-  if (!user) {
-    displayErrorModal("Permission Denied", "You must be logged in to report a post.");
-    setIsSubmittingReport(false);
-    return;
-  }
-  if (!reportMessage.trim()) {
-    displayErrorModal("Error", "Please provide a reason for the report.");
-    setIsSubmittingReport(false);
-    return;
-  }
-  try {
-    const reportRef = collection(db, 'schools', schoolName, 'LostItems', postId, 'reports');
-    await addDoc(reportRef, {
-      reporterId: user.uid,
-      reason: reportMessage,
-      createdAt: Timestamp.now(),
-    });
-    displayErrorModal("Success", "Post reported successfully. An admin will review it shortly.");
-    setShowReportModalId(null);
-    setReportMessage('');
-  } catch (error) {
-    console.error("Error reporting post:", error);
-    displayErrorModal("Error", "Failed to report post. Please try again.");
-  } finally {
-    setIsSubmittingReport(false);
-  }
-};
 
   const handleEditPost = (post) => {
     setEditingPost(post);
@@ -294,7 +276,7 @@ function PostFeed({ schoolName }) {
     try {
       const postRef = doc(db, 'schools', schoolName, 'LostItems', postId);
       await updateDoc(postRef, updatedData);
-      displayErrorModal("Success", "Post updated successfully!");
+      setActionMessage("✅ Post updated successfully!");
     } catch (error) {
       console.error("Error updating post:", error);
       displayErrorModal("Error", "Failed to update post.");
@@ -316,6 +298,7 @@ function PostFeed({ schoolName }) {
     try {
       const postRef = doc(db, 'schools', schoolName, 'LostItems', postId);
       await deleteDoc(postRef);
+      setActionMessage("✅ Post deleted successfully!");
     } catch (error) {
       console.error("Error deleting post:", error);
       setPosts(originalPosts);
@@ -334,6 +317,11 @@ function PostFeed({ schoolName }) {
     try {
       const postRef = doc(db, 'schools', schoolName, 'LostItems', postId);
       await updateDoc(postRef, { claimed: newClaimedStatus });
+      setActionMessage(
+        newClaimedStatus
+          ? "✅ Post marked as claimed!"
+          : "✅ Post unmarked as claimed!"
+      );
     } catch (error) {
       console.error("Error updating claim status:", error);
       setPosts(originalPosts);
@@ -362,6 +350,11 @@ function PostFeed({ schoolName }) {
 
   return (
     <div className="user-post-feed-container">
+
+      {/* Floating success message */}
+      {actionMessage && (
+        <div className="postfeed-action-message">{actionMessage}</div>
+      )}
 
       {showErrorModal.show && (
         <CustomModal
@@ -523,7 +516,7 @@ function PostFeed({ schoolName }) {
                   className="ui-comments-toggle-btn"
                 >
                   <FontAwesomeIcon icon={faComment} />
-                  <span>Comments ({post.comments?.length || 0})</span>
+                  <span>Comments</span>
                 </button>
               </div>
 
@@ -538,21 +531,16 @@ function PostFeed({ schoolName }) {
                 />
               )}
 
-                              <UserReport
-                  show={showReportModalId === post.id}
-                  postId={post.id}
-                  reportMessage={reportMessage}
-                  setReportMessage={setReportMessage}
-                  onCancel={() => setShowReportModalId(null)}
-                  onSubmit={confirmReport}
-                  isSubmittingReport={isSubmittingReport}
-                  selectedReason={selectedReason}
-                  setSelectedReason={setSelectedReason}
-                  user={user}
-                  schoolName={schoolName}
-                  displayErrorModal={displayErrorModal}
-                  setShowReportModalId={setShowReportModalId}
-                />
+              <UserReport
+                show={showReportModalId === post.id}
+                postId={post.id}
+                onCancel={() => setShowReportModalId(null)}
+                isSubmittingReport={isSubmittingReport}
+                user={user}
+                schoolName={schoolName}
+                setShowReportModalId={setShowReportModalId}
+                setActionMessage={setActionMessage} // <-- Pass this prop
+              />
 
               {openCommentPostId === post.id && (
                 <Comment

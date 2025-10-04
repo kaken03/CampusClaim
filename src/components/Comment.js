@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { db } from '../firebase';
-import { doc, updateDoc, arrayUnion, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
 import './Comment.css';
@@ -21,15 +21,23 @@ const Comment = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [expandedComments, setExpandedComments] = useState({});
+  const [comments, setComments] = useState([]);
 
   const submittingRef = useRef(false);
 
   useEffect(() => {
-    if (commentsRef && commentsRef.current && commentsRef.current[post.id]) {
-      const ref = commentsRef.current[post.id];
-      ref.scrollTop = ref.scrollHeight;
-    }
-  }, [post.comments, commentsRef, post.id]);
+    const commentsRef = collection(db, 'schools', schoolName, 'LostItems', post.id, 'comments');
+    const q = query(commentsRef, orderBy('timestamp', 'asc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setComments(snapshot.docs.map(doc => doc.data()));
+      // Scroll to bottom when new comment arrives
+      if (commentsRef && commentsRef.current && commentsRef.current[post.id]) {
+        const ref = commentsRef.current[post.id];
+        ref.scrollTop = ref.scrollHeight;
+      }
+    });
+    return () => unsubscribe();
+  }, [schoolName, post.id]);
 
   const handleAddComment = async () => {
     if (submittingRef.current) return;
@@ -48,7 +56,6 @@ const Comment = ({
     }
 
     setIsSubmitting(true);
-    const postRef = doc(db, 'schools', schoolName, 'LostItems', post.id);
     const authorName = isAnonymous ? 'Anonymous' : (user?.displayName || 'Anonymous');
 
     const newComment = {
@@ -56,11 +63,14 @@ const Comment = ({
       author: authorName,
       authorId: user.uid,
       isAnonymous,
-      timestamp: Timestamp.now(),
     };
 
     try {
-      await updateDoc(postRef, { comments: arrayUnion(newComment) });
+      const commentsRef = collection(db, 'schools', schoolName, 'LostItems', post.id, 'comments');
+      await addDoc(commentsRef, {
+        ...newComment,
+        timestamp: Timestamp.now(),
+      });
       setCommentText('');
       setIsAnonymous(false);
     } catch (error) {
@@ -82,8 +92,8 @@ const Comment = ({
   return (
     <div className="ui-comments-section">
       <div ref={el => commentsRef.current[post.id] = el} className="ui-comments-container">
-        {post.comments?.length > 0 ? (
-          post.comments.map((comment, index) => {
+        {comments.length > 0 ? (
+          comments.map((comment, index) => {
             const isLong = comment.text.length > PREVIEW_LENGTH;
             const isExpanded = expandedComments[index];
             const displayText = isLong && !isExpanded
@@ -125,7 +135,7 @@ const Comment = ({
       {!user ? (
         <p className="ui-login-to-comment-message">Log in to add a comment.</p>
       ) : verificationStatus !== 'verified' ? (
-        <div className="verify-warning">
+        <div className="ui-verify-warning">
           <p>You must be verified to comment. Please complete verification in your profile.</p>
         </div>
       ) : (

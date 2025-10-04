@@ -12,7 +12,6 @@ function AdminPostBox({ schoolName }) {
   const [text, setText] = useState('');
   const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [selectedFileName, setSelectedFileName] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
   const [category, setCategory] = useState('');
@@ -38,7 +37,6 @@ function AdminPostBox({ schoolName }) {
       return;
     }
     setLoading(true);
-    setProgress(0);
 
     try {
       let imageUrl = '';
@@ -48,7 +46,6 @@ function AdminPostBox({ schoolName }) {
           throw new Error('Image upload failed. No secure URL returned from Cloudinary.');
         }
         imageUrl = uploadResult.secure_url;
-        setProgress(100);
       }
 
       const postUser = auth.currentUser;
@@ -146,7 +143,7 @@ function AdminPostBox({ schoolName }) {
                   onChange={(e) => setText(e.target.value)}
                   disabled={loading}
                 />
-              <div className="ui-post-box-actions">
+              <div className="ui-post-box-actions-admin">
                 <div className="ui-file-upload-container">
                                 <label htmlFor="file-upload" className="ui-custom-file-upload-btn">
                                   <FontAwesomeIcon icon={faImage} />
@@ -166,14 +163,6 @@ function AdminPostBox({ schoolName }) {
                                )}
                               </div>
               </div>
-              {loading && (
-                <div className="ui-admin-post-box-progress">
-                  <div
-                    className="ui-progress-bar"
-                    style={{ width: `${progress}%` }}
-                  ></div>
-                </div>
-              )}
               <button
                 className="ui-post-box-button"
                 type="submit"

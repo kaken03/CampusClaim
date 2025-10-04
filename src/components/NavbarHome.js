@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { getAuth } from 'firebase/auth';
 import './NavbarHome.css';
 import logo from '../assets/images/CAMPUSCLAIM.png';
+import { FaBars } from 'react-icons/fa';
 
 // You'd typically import these from an icon library like react-icons or use SVG components
 // For demonstration, let's assume you have simple placeholders or will add an icon library.
@@ -55,9 +56,7 @@ const NavbarHome = () => {
 
         {/* Hamburger Menu Toggle for Mobile */}
         <div className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)}>
-          <div className="bar"></div>
-          <div className="bar"></div>
-          <div className="bar"></div>
+          <FaBars size={24} color="#ffffffff" />
         </div>
 
         <div className={`nav-links ${menuOpen ? 'open' : ''}`}>

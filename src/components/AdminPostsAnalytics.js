@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import './AdminAnalytics.css';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 export default function AdminPostsAnalytics({ posts }) {
   const [timeframe, setTimeframe] = useState('daily');
-  const [lostData, setLostData] = useState({ labels: [], datasets: [] });
-  const [foundData, setFoundData] = useState({ labels: [], datasets: [] });
-  const [claimedData, setClaimedData] = useState({ labels: [], datasets: [] });
+  const [showType, setShowType] = useState('all'); // 'lost', 'found', 'claimed', 'all'
+  const [chartData, setChartData] = useState({ labels: [], datasets: [] });
 
   useEffect(() => {
     if (!posts || posts.length === 0) return;
@@ -22,7 +22,6 @@ export default function AdminPostsAnalytics({ posts }) {
       data.forEach(item => {
         const date = new Date(item.createdAt.seconds * 1000);
         let key = '';
-
         if (timeframe === 'daily') {
           key = date.toISOString().split('T')[0];
         } else if (timeframe === 'weekly') {
@@ -45,44 +44,48 @@ export default function AdminPostsAnalytics({ posts }) {
 
     const allLabels = Object.keys({ ...lostCounts, ...foundCounts, ...claimedCounts }).sort();
 
-    setLostData({
-      labels: allLabels,
-      datasets: [{
+    const datasets = [];
+    if (showType === 'lost' || showType === 'all') {
+      datasets.push({
         label: 'Lost Items',
         data: allLabels.map(label => lostCounts[label] || 0),
         fill: false,
-        backgroundColor: 'rgb(255, 99, 132)',
-        borderColor: 'rgba(255, 99, 132, 0.2)',
-      }],
-    });
-    setFoundData({
-      labels: allLabels,
-      datasets: [{
+        backgroundColor: '#ff6384',
+        borderColor: '#ff6384',
+        tension: 0.3,
+      });
+    }
+    if (showType === 'found' || showType === 'all') {
+      datasets.push({
         label: 'Found Items',
         data: allLabels.map(label => foundCounts[label] || 0),
         fill: false,
-        backgroundColor: 'rgb(54, 162, 235)',
-        borderColor: 'rgba(54, 162, 235, 0.2)',
-      }],
-    });
-    setClaimedData({
-      labels: allLabels,
-      datasets: [{
+        backgroundColor: '#36a2eb',
+        borderColor: '#36a2eb',
+        tension: 0.3,
+      });
+    }
+    if (showType === 'claimed' || showType === 'all') {
+      datasets.push({
         label: 'Claimed Items',
         data: allLabels.map(label => claimedCounts[label] || 0),
         fill: false,
-        backgroundColor: 'rgb(75, 192, 192)',
-        borderColor: 'rgba(75, 192, 192, 0.2)',
-      }],
-    });
-  }, [posts, timeframe]);
+        backgroundColor: '#4bc0c0',
+        borderColor: '#4bc0c0',
+        tension: 0.3,
+      });
+    }
+
+    setChartData({ labels: allLabels, datasets });
+  }, [posts, timeframe, showType]);
 
   const chartOptions = {
     responsive: true,
     plugins: {
       legend: { position: 'top' },
-      title: { display: true, text: 'Lost and Found Post Statistics' },
+      title: { display: false },
     },
+    maintainAspectRatio: false,
     scales: {
       y: { beginAtZero: true }
     }
@@ -94,49 +97,38 @@ export default function AdminPostsAnalytics({ posts }) {
 
   return (
     <div className="analytics-container">
-      <div className="analytics-summary">
+      <div className="analytics-summary-row">
         <div className="summary-card">
-          <h4>Total Lost Items</h4>
-          <h2>{totalLost}</h2>
+          <div className="summary-label">Total Lost</div>
+          <div className="summary-value">{totalLost}</div>
         </div>
         <div className="summary-card">
-          <h4>Total Found Items</h4>
-          <h2>{totalFound}</h2>
+          <div className="summary-label">Total Found</div>
+          <div className="summary-value">{totalFound}</div>
         </div>
         <div className="summary-card">
-          <h4>Total Claimed Items</h4>
-          <h2>{totalClaimed}</h2>
+          <div className="summary-label">Total Claimed</div>
+          <div className="summary-value">{totalClaimed}</div>
         </div>
-      </div>
-      
-      <div className="analytics-controls">
-        <button onClick={() => setTimeframe('daily')} className={timeframe === 'daily' ? 'active' : ''}>Daily</button>
-        <button onClick={() => setTimeframe('weekly')} className={timeframe === 'weekly' ? 'active' : ''}>Weekly</button>
-        <button onClick={() => setTimeframe('monthly')} className={timeframe === 'monthly' ? 'active' : ''}>Monthly</button>
-        <button onClick={() => setTimeframe('annually')} className={timeframe === 'annually' ? 'active' : ''}>Annually</button>
       </div>
 
-      <div className="analytics-charts">
-        <div className="chart-card">
-          <h3>Lost and Found Posts Over Time</h3>
-          <Line
-            data={{
-              labels: lostData.labels,
-              datasets: [...lostData.datasets, ...foundData.datasets],
-            }}
-            options={{ ...chartOptions, plugins: { ...chartOptions.plugins, title: { ...chartOptions.plugins.title, text: 'Lost and Found Posts Over Time' } } }}
-          />
+      <div className="analytics-controls-row">
+        <select value={timeframe} onChange={e => setTimeframe(e.target.value)}>
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+          <option value="annually">Annually</option>
+        </select>
+        <div className="toggle-btn-group">
+          <button className={showType === 'all' ? 'active' : ''} onClick={() => setShowType('all')}>All</button>
+          <button className={showType === 'lost' ? 'active' : ''} onClick={() => setShowType('lost')}>Lost</button>
+          <button className={showType === 'found' ? 'active' : ''} onClick={() => setShowType('found')}>Found</button>
+          <button className={showType === 'claimed' ? 'active' : ''} onClick={() => setShowType('claimed')}>Claimed</button>
         </div>
-        <div className="chart-card">
-          <h3>Claimed Items Over Time</h3>
-          <Line
-            data={{
-              labels: claimedData.labels,
-              datasets: claimedData.datasets,
-            }}
-            options={{ ...chartOptions, plugins: { ...chartOptions.plugins, title: { ...chartOptions.plugins.title, text: 'Claimed Items Over Time' } } }}
-          />
-        </div>
+      </div>
+
+      <div className="analytics-chart-card">
+        <Line data={chartData} options={chartOptions} height={280} />
       </div>
     </div>
   );

@@ -1,17 +1,113 @@
-.notification-container {
-  max-width: 600px;
-  height: 100% ;
-  margin: 0 auto;
-  background: #fff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  margin-top: 30px;
+.notification-page-bg {
+  background: #f5f7fb;
+  min-height: 100vh;
+  padding-top: 0;
 }
 
-.notification-container h1 {
-  font-size: 1.8rem;
+.notification-main-card {
+  width: 100%;
+  max-width: 480px;
+  margin: 32px auto;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(24,119,242,0.09);
+  padding: 28px 22px 18px 22px;
+}
+
+.notification-title {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #1877f2;
+  margin-bottom: 18px;
+  border-bottom: 1px solid #f0f2f5;
+  padding-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+.notification-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.notification-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: #f7fafd;
+  border-radius: 10px;
+  margin-bottom: 14px;
+  padding: 14px 12px;
+  box-shadow: 0 2px 8px rgba(24,119,242,0.04);
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.notification-card:hover {
+  background: #e9f0ff;
+}
+
+.notification-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.notification-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.notification-author {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-right: 4px;
+  font-size: 0.95rem;
+}
+
+.notification-text {
+  color: #222;
+  font-size: 0.9rem;
+  margin-bottom: 2px;
+}
+
+.notification-post {
+  font-weight: 500;
   color: #333;
+}
+
+.more-comments {
+  color: #555;
+  font-size: 0.92rem;
+  margin-left: 5px;
+}
+
+.notification-timestamp {
+  font-size: 0.85rem;
+  color: #888;
+  margin-top: 2px;
+}
+
+.loading,
+.no-notifications {
   text-align: center;
-  margin-bottom: 20px;
+  color: #777;
+  padding: 18px 0;
+  font-size: 1.08rem;
+}
+
+@media (max-width: 600px) {
+  .notification-main-card {
+    max-width: 85vw;
+    padding: 10px 2vw;
+    margin: 18px auto;
+  }
+  .notification-title {
+    font-size: 1.15rem;
+    padding-bottom: 5px;
+  }
+  .notification-card {
+    padding: 10px 15px;
+    gap: 8px;
+  }
 }

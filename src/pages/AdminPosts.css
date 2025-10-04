@@ -455,7 +455,7 @@ body {
         flex: 1;
         flex-direction: row;
         flex-wrap: wrap;
-        padding: 15px;
+        padding: 0px;
     }
 
     .admin-tabs-nav, .user-filter-section, .filter-buttons-group {

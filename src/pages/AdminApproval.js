@@ -133,8 +133,8 @@ function AdminApproval() {
                             <div className="approval-card" key={user.id}>
                                 <div className="card-header">
                                 <h4 className="user-name" title={user.fullName}>
-                                    {user.fullName && user.fullName.length > 20
-                                    ? user.fullName.slice(0, 20) + '...'
+                                    {user.fullName && user.fullName.length > 30
+                                    ? user.fullName.slice(0, 30) + '...'
                                     : user.fullName || 'N/A'}
                                 </h4>
                                 <p className="user-email" title={user.email}>

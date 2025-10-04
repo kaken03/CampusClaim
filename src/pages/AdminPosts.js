@@ -6,12 +6,11 @@ import AdminPostsAnalytics from '../components/AdminPostsAnalytics';
 import './AdminPosts.css';
 
 // Modal component for confirmations and info messages
-const ActionModal = ({ message, onConfirm, onCancel, showConfirm = false, title = 'Notification' }) => {
+const ActionModal = ({ message, onConfirm, onCancel, showConfirm = false }) => {
   if (!message) return null;
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <h4 className="modal-title">{title}</h4>
+    <div className="ui-modal-overlay">
+      <div className="ui-modal-content">
         <p>{message}</p>
         {showConfirm ? (
           <div className="modal-actions">
@@ -40,6 +39,7 @@ export default function AdminPosts() {
     targetPost: null,
   });
   const [isProcessing, setIsProcessing] = useState(false);
+  const [actionMessage, setActionMessage] = useState('');
 
   const userFromLocalStorage = JSON.parse(localStorage.getItem('user'));
   const schoolName = userFromLocalStorage?.school;
@@ -102,7 +102,9 @@ export default function AdminPosts() {
             : post
         )
       );
-      showInfoModal(`✅ Post successfully ${!isBlocked ? 'blocked' : 'unblocked'}.`);
+      setActionMessage(`✅ Post successfully ${!isBlocked ? 'blocked' : 'unblocked'}.`);
+      setTimeout(() => setActionMessage(''), 2000);
+      // showInfoModal(`✅ Post successfully ${!isBlocked ? 'blocked' : 'unblocked'}.`);
     } catch (error) {
       console.error("Error blocking/unblocking post:", error);
       showInfoModal("An error occurred.");
@@ -116,7 +118,9 @@ export default function AdminPosts() {
     try {
       await deleteDoc(doc(db, 'schools', schoolName, collectionName, postId));
       setPosts(prevPosts => prevPosts.filter(p => !(p.id === postId && p.collection === collectionName)));
-      showInfoModal("✅ Post has been successfully deleted.");
+      setActionMessage("✅ Post has been successfully deleted.");
+      setTimeout(() => setActionMessage(''), 2000);
+      // showInfoModal("✅ Post has been successfully deleted.");
     } catch (error) {
       console.error("Error deleting post:", error);
       showInfoModal("An error occurred while deleting the post.");
@@ -183,8 +187,14 @@ export default function AdminPosts() {
             <div key={post.id} className={`user-card ${post.isBlocked ? 'user-card-blocked' : ''}`}>
               <div className="user-card-header">
                 <div className="user-card-info">
-                  <h4 className="user-card-name">{post.collection === 'FoundItems' ? 'Found Item' : 'Lost Item'}</h4>
-                  <p className="user-card-email">By {post.authorName || 'Unknown'}</p>
+                  <h4 className="user-card-name">
+                    {post.collection === 'FoundItems' ? 'Found Item' : 'Lost Item'}
+                    </h4>
+                  <p className="user-card-email">
+                    By {(post.authorName && post.authorName.length > 30)
+                      ? post.authorName.slice(0, 30) + '...'
+                      : (post.authorName || 'Unknown')}
+                  </p>
                 </div>
               </div>
               <div className="user-card-details-summary">
@@ -211,6 +221,7 @@ export default function AdminPosts() {
                   onClick={() => showConfirmModal(`Are you sure you want to ${post.isBlocked ? 'unblock' : 'block'} this post?`, 'block', post.id, post)}
                   disabled={isProcessing}
                 >
+                  {/* notification */}
                   {post.isBlocked ? 'Unblock' : 'Block'}
                 </button>
                 <button
@@ -232,6 +243,9 @@ export default function AdminPosts() {
     <div>
       <Navbar />
       <div className="admin-page-container">
+        {actionMessage && (
+        <div className="postbox-action-message">{actionMessage}</div>
+      )}
         <header className="admin-page-header">
           <h1>Post Management</h1>
         </header>

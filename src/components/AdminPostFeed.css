@@ -95,6 +95,7 @@
 .ui-category-filter-select {
   padding: 7px 12px;
   border-radius: 6px;
+  width: 160px;
   border: 1.5px solid #dbe6f6;
   font-size: 1rem;
   background: #f8fafc;

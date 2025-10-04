@@ -22,11 +22,11 @@ const RequireUser = ({ children }) => {
 
   const handleLogout = () => {
     localStorage.removeItem('user');
-    window.location.href = '/login';
+    window.location.href = '/';
   };
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
   if (user.role === 'admin' && user.role !== 'main-admin') {
     return <Navigate to="/admin-dashboard" replace />;

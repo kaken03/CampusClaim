@@ -128,9 +128,9 @@ function UserPostFeed({ schoolName }) {
   if (loading) {
     return (
       <div className="user-post-feed-container">
-        <h2 className="admin-post-feed-title">
+        {/* <h2 className="admin-post-feed-title">
           Recently Found – Visit the Lost & Found Office to Claim
-        </h2>
+        </h2> */}
         <FilterBar />
         <div className="skeleton-loader">
           <div className="skeleton-card"></div>
@@ -143,13 +143,13 @@ function UserPostFeed({ schoolName }) {
   if (!loading && filteredItems.length === 0) {
     return (
       <div className="user-post-feed-container">
-        <h2 className="admin-post-feed-title">
+        {/* <h2 className="admin-post-feed-title">
           Recently Found – Visit the Lost & Found Office to Claim
-        </h2>
+        </h2> */}
         <FilterBar />
         <div className="empty-state">
           <p className="no-items-message">
-            No {filter} found items have been posted yet.
+            No found items have been posted yet.
           </p>
         </div>
       </div>
@@ -158,9 +158,9 @@ function UserPostFeed({ schoolName }) {
 
   return (
     <div className="user-post-feed-container">
-      <h2 className="admin-post-feed-title">
+      {/* <h2 className="ui-admin-post-feed-title">
         Recently Found – Visit the Lost & Found Office to Claim
-      </h2>
+      </h2> */}
       <FilterBar />
       <div className="user-item-list">
         {filteredItems.map((item) => (

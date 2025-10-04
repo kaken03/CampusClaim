@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { db } from '../firebase';
-import { collection, query, where, onSnapshot, doc, updateDoc, arrayUnion, Timestamp,  deleteDoc, orderBy, getDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, Timestamp,  deleteDoc, orderBy, getDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { useLocation } from 'react-router-dom';
 import './PostFeed.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faComment, faEllipsisH, faCheckCircle, faBan, faEdit, faTrash, faTimes, faImage, faUser } from '@fortawesome/free-solid-svg-icons';
+import Comment from './Comment'; // Add this import at the top with other imports
 
 
 // A reusable modal component
@@ -66,9 +67,6 @@ function MyPost({ schoolName }) {
   const [posts, setPosts] = useState([]);
   const [highlightedPostId, setHighlightedPostId] = useState(null);
   const [openCommentPostId, setOpenCommentPostId] = useState(null);
-  const [commentTexts, setCommentTexts] = useState({});
-  const [isSubmittingComment, setIsSubmittingComment] = useState({});
-  const [isAnonymousComment, setIsAnonymousComment] = useState(false);
   const [filter, setFilter] = useState('all');
   const [openMenuPostId, setOpenMenuPostId] = useState(null);
   const [showErrorModal, setShowErrorModal] = useState({ show: false, title: '', message: '' });
@@ -84,7 +82,6 @@ function MyPost({ schoolName }) {
   const user = auth.currentUser;
   const location = useLocation();
   const commentsRef = useRef({});
-  const submittingCommentRef = useRef({});
   const menuRefs = useRef({});
 
   const displayErrorModal = (title, message) => {
@@ -101,7 +98,8 @@ function MyPost({ schoolName }) {
     const now = new Date();
     const seconds = Math.floor((now - date) / 1000);
 
-    if (seconds < 60) return `${seconds}s ago`;
+    if (seconds < 5) return "Just now";
+    if (seconds < 60)  return "Just now"; 
     const minutes = Math.floor(seconds / 60);
     if (minutes < 60) return `${minutes}m ago`;
     const hours = Math.floor(minutes / 60);
@@ -234,54 +232,7 @@ function MyPost({ schoolName }) {
     fetchVerificationStatus();
   }, [user, schoolName]);
 
-  const handleCommentChange = (postId, text) => {
-    setCommentTexts((prev) => ({ ...prev, [postId]: text }));
-  };
 
-  const handleAddComment = async (postId) => {
-    if (submittingCommentRef.current[postId]) {
-      console.log(`[Local Guard] Comment for post ${postId} is already being submitted. Ignoring duplicate click.`);
-      return;
-    }
-    submittingCommentRef.current[postId] = true;
-
-    const commentText = commentTexts[postId]?.trim();
-
-    if (!commentText) {
-      displayErrorModal("Error", "Comment cannot be empty.");
-      submittingCommentRef.current[postId] = false;
-      return;
-    }
-    if (!user) {
-      displayErrorModal("Error", "You must be logged in to comment.");
-      submittingCommentRef.current[postId] = false;
-      return;
-    }
-
-    setIsSubmittingComment(prev => ({ ...prev, [postId]: true }));
-    const postRef = doc(db, 'schools', schoolName, 'LostItems', postId);
-    const commentAuthorName = isAnonymousComment ? 'Anonymous User' : (user?.displayName || 'Anonymous User');
-
-    const newComment = {
-      text: commentText,
-      author: commentAuthorName,
-      authorId: user.uid,
-      isAnonymous: isAnonymousComment,
-      timestamp: Timestamp.now(),
-    };
-
-    try {
-      await updateDoc(postRef, { comments: arrayUnion(newComment) });
-      setCommentTexts((prev) => ({ ...prev, [postId]: '' }));
-      setIsAnonymousComment(false);
-    } catch (error) {
-      console.error('Error adding comment:', error);
-      displayErrorModal("Error", "Failed to add comment. Please try again.");
-    } finally {
-      setIsSubmittingComment(prev => ({ ...prev, [postId]: false }));
-      submittingCommentRef.current[postId] = false;
-    }
-  };
 
   const toggleComments = (postId) => {
     setOpenCommentPostId(prevId => prevId === postId ? null : postId);
@@ -514,65 +465,20 @@ function MyPost({ schoolName }) {
                   className="ui-comments-toggle-btn"
                 >
                   <FontAwesomeIcon icon={faComment} />
-                  <span>Comments ({post.comments?.length || 0})</span>
+                  <span>Comments</span>
                 </button>
               </div>
 
               {openCommentPostId === post.id && (
-                <div className="ui-comments-section">
-                  <div ref={(el) => (commentsRef.current[post.id] = el)} className="ui-comments-container">
-                    {post.comments?.length > 0 ? (
-                      post.comments.map((comment, index) => (
-                        <div key={index} className="ui-comment">
-                          <div className="ui-comment-author">
-                            <span className="ui-comment-author-name">{comment.author}</span>
-                            {comment.isAnonymous && <span className="ui-badge ui-badge-anonymous ui-badge-small">Anonymous</span>}
-                          </div>
-                          <p className="ui-comment-text">{comment.text}</p>
-                          <p className="ui-comment-time">{comment.timestamp ? timeAgo(comment.timestamp) : 'Just now'}</p>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="ui-empty-comments">No comments yet. Be the first to comment!</p>
-                    )}
-                  </div>
-
-                  {!user ? (
-                    <p className="ui-login-to-comment-message">Log in to add a comment.</p>
-                  ) : verificationStatus !== 'verified' ? (
-                    <div className="verify-warning">
-                      <p>You must be verified to comment. Please complete verification in your profile.</p>
-                    </div>
-                  ) : (
-                    <div className="ui-comment-form">
-                      <textarea
-                        placeholder="Write a comment..."
-                        value={commentTexts[post.id] || ''}
-                        onChange={(e) => handleCommentChange(post.id, e.target.value)}
-                        className="ui-comment-textarea"
-                        rows="1"
-                        disabled={isSubmittingComment[post.id]}
-                      />
-                      <div className="ui-comment-actions">
-                        <label className="ui-anonymous-toggle">
-                          <input
-                            type="checkbox"
-                            checked={isAnonymousComment}
-                            onChange={(e) => setIsAnonymousComment(e.target.checked)}
-                          />
-                          Anonymous
-                        </label>
-                        <button
-                          onClick={() => handleAddComment(post.id)}
-                          className="ui-btn ui-btn-sm ui-btn-primary"
-                          disabled={isSubmittingComment[post.id] || !commentTexts[post.id]?.trim()}
-                        >
-                          {isSubmittingComment[post.id] ? 'Sending...' : 'Post'}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <Comment
+                  post={post}
+                  user={user}
+                  verificationStatus={verificationStatus}
+                  commentsRef={commentsRef}
+                  timeAgo={timeAgo}
+                  displayErrorModal={displayErrorModal}
+                  schoolName={schoolName}
+                />
               )}
             </div>
           ))}

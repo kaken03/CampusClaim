@@ -125,6 +125,15 @@
   margin-top: 2px;
   text-align: right;
 }
+.ui-verify-warning {
+  background: #fff3cd;
+  border: 1px solid #ffeeba;
+  color: #856404;
+  padding: 2px 4px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  text-align: center;
+}
 
 .ui-comment-actions {
   display: flex;

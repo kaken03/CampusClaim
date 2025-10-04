@@ -185,7 +185,7 @@ function AdminFoundItem({ item, type }) {
 
       {/* --- Modals --- */}
       {showEditModal && (
-        <div className="modal-overlay">
+        <div className="ui-modal-overlay">
           <div className="modal-content-edit">
             <h3>Edit Post</h3>
             <textarea
@@ -227,7 +227,7 @@ function AdminFoundItem({ item, type }) {
       )}
 
       {showDeleteModal && (
-        <div className="modal-overlay">
+        <div className="ui-modal-overlay">
           <div className="modal-content-delete">
             <p>
               Are you sure you want to delete this post? This action cannot be

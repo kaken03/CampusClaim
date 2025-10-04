@@ -10,12 +10,11 @@ import { faEllipsisH } from '@fortawesome/free-solid-svg-icons';
 import ReactDOM from 'react-dom';
 
 // Modal component for confirmations and info messages
-const ActionModal = ({ message, onConfirm, onCancel, showConfirm = false, title = 'Notification' }) => {
+const ActionModal = ({ message, onConfirm, onCancel, showConfirm = false }) => {
   if (!message) return null;
   return (
-    <div className="modal-overlay">
+    <div className="ui-modal-overlay">
       <div className="modal-content">
-        <h4 className="modal-title">{title}</h4>
         <p>{message}</p>
         {showConfirm ? (
           <div className="modal-actions">

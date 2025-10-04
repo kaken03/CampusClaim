@@ -25,7 +25,30 @@
 .ui-minimized-post-box:hover {
   background-color: #f0f2f5;
 }
+.postbox-action-message {
+  position: fixed;
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #effff6;
+  color: #000000;
+  padding: 12px 28px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  box-shadow: 0 4px 24px rgba(39,174,96,0.18);
+  z-index: 9999;
+  animation: fadeInOut 2s;
+  text-align: center;
+  pointer-events: none;
+}
 
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-10px);}
+  10% { opacity: 1; transform: translateX(-50%) translateY(0);}
+  90% { opacity: 1; transform: translateX(-50%) translateY(0);}
+  100% { opacity: 0; transform: translateX(-50%) translateY(-10px);}
+}
 .ui-minimized-post-box-btn {
   width: 100%;
   background-color: #f0f2f5;
@@ -151,6 +174,16 @@
   justify-content: space-between;
   gap: 16px;
   margin-top: 2px;
+}
+
+.ui-post-box-actions-admin {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 14px;
+  margin-bottom: 18px;
 }
 
 /* File Upload */

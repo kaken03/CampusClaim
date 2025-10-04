@@ -19,6 +19,7 @@ function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [schoolName, setSchoolName] = useState('');
   const [loadingSchool, setLoadingSchool] = useState(true);
+  const [actionMessage, setActionMessage] = useState('');
 
   // 1. Watch for auth state changes (fixes refresh issue)
   useEffect(() => {
@@ -70,6 +71,14 @@ function Profile() {
     return () => unsubscribe();
   }, [user, schoolName]);
 
+  // Floating message auto-hide
+  useEffect(() => {
+    if (actionMessage) {
+      const timer = setTimeout(() => setActionMessage(''), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [actionMessage]);
+
   const handleUpdate = async () => {
     if (!user || !schoolName) {
       alert('Missing user or school name!');
@@ -87,9 +96,9 @@ function Profile() {
       const topUserRef = doc(db, 'users', user.uid);
       await setDoc(topUserRef, { fullName, email, school: schoolName }, { merge: true });
 
-      alert('Profile updated successfully!');
+      setActionMessage('Profile updated successfully!');
     } catch (error) {
-      alert('Error updating profile: ' + error.message);
+      setActionMessage('Error updating profile: ' + error.message);
     }
   };
 
@@ -100,6 +109,9 @@ function Profile() {
     <div>
       <NavbarHome />
       <div className="profile-main-fb">
+        {actionMessage && (
+          <div className="profile-action-message">{actionMessage}</div>
+        )}
         {loadingSchool ? (
           <div className="skeleton-card">
             <div className="skeleton-title"></div>
@@ -221,9 +233,9 @@ function Profile() {
                   );
                   setVerificationStatus('pending');
                   setShowVerifyForm(false);
-                  alert('Verification request sent! Please wait for admin approval.');
+                  setActionMessage('Verification request sent! Please wait for admin approval.');
                 } catch (err) {
-                  alert('Failed to send verification request: ' + err.message);
+                  setActionMessage('Failed to send verification request');
                   console.error(err);
                 }
                 setIsVerifying(false);

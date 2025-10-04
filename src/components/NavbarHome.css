@@ -29,7 +29,7 @@
 }
 
 /* --- Logo Text --- */
-.logo a {
+.logo-text {
   text-decoration: none;
   color: #2c3e50;
   font-size: 26px;
@@ -38,9 +38,10 @@
   display: flex;
   align-items: center;
   transition: color 0.3s ease;
+  margin-right: 10px;
 }
 
-.logo a:hover {
+.logo-text:hover {
   color: #4a6a8c;
 }
 
@@ -199,40 +200,49 @@
     align-items: center;
     position: absolute;
     width: 100%;
+    left: 0vw;
     top: 100%;
-    left: 0;
     background-color: #34495e;
-    padding: 20px 0;
-    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-    transform: translateY(-100%);
+    border-radius: 0 0 18px 18px;
+    box-shadow: 0 8px 32px rgba(44,62,80,0.18);
+    padding: 18px 0 24px 0;
+    margin-top: 0;
+    z-index: 999;
     opacity: 0;
     pointer-events: none;
-    transition: transform 0.4s ease, opacity 0.4s ease;
-    z-index: 999;
+    transform: translateY(-100%);
+    transition: transform 0.4s, opacity 0.4s;
   }
 
   .nav-links.open {
-    transform: translateY(0);
     opacity: 1;
     pointer-events: auto;
+    transform: translateY(0);
   }
 
   .nav-links a,
   .nav-links .nav-link-item,
   .logout-button {
-    margin: 10px 0;
+    margin: 8px 0;
     width: 90%;
     text-align: center;
-    padding: 12px;
+    padding: 12px 0;
+    font-size: 1.08rem;
+    border-radius: 8px;
+    transition: background 0.18s, color 0.18s;
   }
 
-  .nav-links a::after,
-  .nav-links .nav-link-item::after {
-    display: none;
+  .nav-links a:hover,
+  .nav-links .nav-link-item:hover {
+    background: #22313a;
+    color: #a7d9f7;
   }
 
   .logout-button {
-    margin-top: 20px;
+    margin-top: 18px;
+    box-shadow: 0 2px 8px rgba(231,76,60,0.10);
+    border-radius: 8px;
+    font-size: 1.08rem;
   }
 
   .menu-toggle.open .bar:nth-child(1) {

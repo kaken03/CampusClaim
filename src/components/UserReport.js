@@ -5,38 +5,21 @@ import { collection, query, where, getDocs, addDoc, Timestamp } from 'firebase/f
 import { db } from '../firebase';
 
 const REPORT_REASONS = [
-  {
-    key: 'spam',
-    label: 'Spam',
-    description: 'Unwanted or repetitive content, advertisements, or irrelevant posts.',
-  },
-  {
-    key: 'scam',
-    label: 'Scam or Fraud',
-    description: 'Attempts to deceive, scam, or defraud users.',
-  },
-  {
-    key: 'inappropriate',
-    label: 'Inappropriate Content',
-    description: 'Offensive, abusive, or inappropriate language or images.',
-  },
-  {
-    key: 'misleading',
-    label: 'Misleading Information',
-    description: 'False or misleading claims about lost/found items.',
-  },
+  { key: 'spam', label: 'Spam', description: 'Unwanted or repetitive content, advertisements, or irrelevant posts.' },
+  { key: 'scam', label: 'Scam or Fraud', description: 'Attempts to deceive, scam, or defraud users.' },
+  { key: 'inappropriate', label: 'Inappropriate Content', description: 'Offensive, abusive, or inappropriate language or images.' },
+  { key: 'misleading', label: 'Misleading Information', description: 'False or misleading claims about lost/found items.' },
 ];
 
 const UserReport = ({
   show,
   postId,
   onCancel,
-  onSubmit,
   isSubmittingReport,
-  user, // add this
-  schoolName, // add this
-  displayErrorModal, // add this
-  setShowReportModalId, // add this
+  user,
+  schoolName,
+  setShowReportModalId,
+  setActionMessage, // <-- Add this prop
 }) => {
   const [selectedReason, setSelectedReason] = useState('');
   const [reportMessage, setReportMessage] = useState('');
@@ -49,8 +32,6 @@ const UserReport = ({
     }
   }, [show]);
 
-
-
   const handleReasonSelect = (key) => {
     setSelectedReason(key);
     if (key !== 'other') setReportMessage(REPORT_REASONS.find(r => r.key === key).label);
@@ -59,11 +40,13 @@ const UserReport = ({
 
   const confirmReport = async () => {
     if (!user) {
-      displayErrorModal("Permission Denied", "You must be logged in to report a post.");
+      setActionMessage("❌ You must be logged in to report a post.");
+      setTimeout(() => setActionMessage(''), 2000);
       return;
     }
     if (!reportMessage.trim()) {
-      displayErrorModal("Error", "Please provide a reason for the report.");
+      setActionMessage("❌ Please provide a reason for the report.");
+      setTimeout(() => setActionMessage(''), 2000);
       return;
     }
 
@@ -73,17 +56,19 @@ const UserReport = ({
     const existingReports = await getDocs(q);
 
     if (!existingReports.empty) {
-  displayErrorModal("Error", "You have already reported this post.");
-  setShowReportModalId(null); // Close the modal
-  return;
-}
+      setActionMessage("⚠️ You have already reported this post.");
+      setTimeout(() => setActionMessage(''), 2000);
+      setShowReportModalId(null); // Close the modal
+      return;
+    }
 
     await addDoc(reportRef, {
       reporterId: user.uid,
       reason: reportMessage,
       createdAt: Timestamp.now(),
     });
-    displayErrorModal("Success", "Post reported successfully. An admin will review it shortly.");
+    setActionMessage("✅ Post reported successfully!");
+    setTimeout(() => setActionMessage(''), 2000);
     setShowReportModalId(null);
     setReportMessage('');
   };

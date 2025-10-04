@@ -4,6 +4,31 @@
   background: #fff;
   font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
 }
+
+.profile-action-message {
+  position: fixed;
+  top: 95px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #effff6;
+  color: #000000;
+  padding: 12px 28px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  box-shadow: 0 4px 24px rgba(39,174,96,0.18);
+  z-index: 9999;
+  animation: fadeInOut 2s;
+  text-align: center;
+  pointer-events: none;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-10px);}
+  10% { opacity: 1; transform: translateX(-50%) translateY(0);}
+  90% { opacity: 1; transform: translateX(-50%) translateY(0);}
+  100% { opacity: 0; transform: translateX(-50%) translateY(-10px);}
+}
 /* Skeleton Loader Styles */
 .skeleton-card {
   background: #fff;

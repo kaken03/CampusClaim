@@ -21,11 +21,11 @@ function PostBox({ schoolName }) {
   const [text, setText] = useState("");
   const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [selectedFileName, setSelectedFileName] = useState("");
   const [verificationStatus, setVerificationStatus] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
+  const [actionMessage, setActionMessage] = useState('');
 
   // ✅ Auth state
   const [user, setUser] = useState(null);
@@ -82,7 +82,9 @@ function PostBox({ schoolName }) {
     }
 
     if (verificationStatus !== "verified") {
-      alert("❌ You must be verified to post Lost Items. Please complete verification in your profile.");
+       setActionMessage("❌ You must be verified to post. Please complete verification in your profile.");
+      setTimeout(() => setActionMessage(''), 2000);
+      // alert("❌ You must be verified to post Lost Items. Please complete verification in your profile.");
       return;
     }
 
@@ -92,7 +94,6 @@ function PostBox({ schoolName }) {
     }
 
     setLoading(true);
-    setProgress(0);
 
     try {
       let imageUrl = "";
@@ -104,7 +105,6 @@ function PostBox({ schoolName }) {
         }
 
         imageUrl = uploadResult.secure_url;
-        setProgress(100);
       }
 
       const authorName = isAnonymous ? "Anonymous" : user?.displayName || "Anonymous";
@@ -130,7 +130,8 @@ function PostBox({ schoolName }) {
       setIsAnonymous(false);
       setIsExpanded(false);
 
-      alert("✅ Lost item posted! Good luck finding your item.");
+      setActionMessage("✅ Posted successfully!");
+      setTimeout(() => setActionMessage(''), 2000);
     } catch (err) {
       console.error("Post error:", err);
       alert(`⚠️ Failed to post. Reason: ${err.message || "An unknown error occurred."}`);
@@ -151,7 +152,10 @@ function PostBox({ schoolName }) {
 
   // ✅ Main UI (always visible now)
   return (
-    <div className="ui-post-box-container">
+    <div className="ui-post-box-container" style={{ position: "relative" }}>
+      {actionMessage && (
+        <div className="postbox-action-message">{actionMessage}</div>
+      )}
       {isExpanded ? (
         <div className="ui-post-box">
           <button onClick={() => setIsExpanded(false)} className="ui-close-btn" disabled={loading}>
@@ -211,11 +215,6 @@ function PostBox({ schoolName }) {
                 </label>
               </div>
             </div>
-            {loading && (
-              <div className="ui-post-box-progress">
-                <div className="ui-progress-bar" style={{ width: `${progress}%` }}></div>
-              </div>
-            )}
             <button
               className="ui-post-box-button"
               onClick={handlePost}
