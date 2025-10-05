@@ -94,7 +94,7 @@ function Signup({ onSwitchToLogin }) {
             >
               <option value="">Select your school</option>
               <option value="Consolatrix College of Toledo City">Consolatrix College of Toledo City</option>
-              <option value="Kaken College of Toledo City">Kaken College of Toledo City</option>
+              {/* <option value="Kaken College of Toledo City">Kaken College of Toledo City</option> */}
             </select>
             <button type="submit" className="signup-button">Sign Up</button>
             <p className="login-prompt">

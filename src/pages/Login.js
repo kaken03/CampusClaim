@@ -41,8 +41,10 @@ function Login({ onSwitchToSignup }) {
       // First, try to find which school the user belongs to
       
       const schools = ['Consolatrix College of Toledo City', 
-                       'Kaken College of Toledo City'];
+                       'Kaken College of Toledo City'
                        // (add more schools as needed)
+                      ];
+                       
       let userData = null;
       let userSchool = null;
 
