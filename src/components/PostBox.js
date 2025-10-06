@@ -13,7 +13,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faInfoCircle,
   faTimes,
-  faImage,
+  // faImage,
 } from "@fortawesome/free-solid-svg-icons";
 import "./PostBox.css";
 
@@ -22,7 +22,7 @@ function PostBox({ schoolName }) {
   const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(false);
-  const [selectedFileName, setSelectedFileName] = useState("");
+  // const [selectedFileName, setSelectedFileName] = useState("");
   const [verificationStatus, setVerificationStatus] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
   const [actionMessage, setActionMessage] = useState('');
@@ -64,16 +64,16 @@ function PostBox({ schoolName }) {
     fetchVerificationStatus();
   }, [user, schoolName]);
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    setImage(file);
-    setSelectedFileName(file ? file.name : "");
-  };
+  // const handleFileChange = (e) => {
+  //   const file = e.target.files[0];
+  //   setImage(file);
+  //   setSelectedFileName(file ? file.name : "");
+  // };
 
-  const clearImage = () => {
-    setImage(null);
-    setSelectedFileName("");
-  };
+  // const clearImage = () => {
+  //   setImage(null);
+  //   setSelectedFileName("");
+  // };
 
   const handlePost = async () => {
     if (!user) {
@@ -126,7 +126,7 @@ function PostBox({ schoolName }) {
       // Reset form
       setText("");
       setImage(null);
-      setSelectedFileName("");
+      // setSelectedFileName("");
       setIsAnonymous(false);
       setIsExpanded(false);
 
@@ -177,13 +177,13 @@ function PostBox({ schoolName }) {
           <div className="ui-post-box-form">
             <textarea
               className="ui-post-box-textarea"
-              placeholder="Describe your lost item in detail (color, brand, model, where you lost it, etc.)..."
+              placeholder="Describe your lost item (e.g., phone, bag, wallet, last seen location). Keep unique details private."
               value={text}
               onChange={(e) => setText(e.target.value)}
               disabled={loading}
             />
             <div className="ui-post-box-actions">
-              <div className="ui-file-upload-container">
+              {/* <div className="ui-file-upload-container">
                 <label htmlFor="file-upload" className="ui-custom-file-upload-btn">
                   <FontAwesomeIcon icon={faImage} />
                   <span>&nbsp;{selectedFileName || "Choose Image"}</span>
@@ -200,7 +200,7 @@ function PostBox({ schoolName }) {
                     <FontAwesomeIcon icon={faTimes} />
                   </button>
                 )}
-              </div>
+              </div> */}
               <div className="ui-anonymous-option">
                 <input
                   type="checkbox"
