@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
 import UserFoundItem from './UserFoundItem';
-import './UserPostFeed.css';
+import './UserFoundItemPage.css';
 
 const itemCategories = [
   'Cellphone',

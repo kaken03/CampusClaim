@@ -90,7 +90,7 @@ const Comment = ({
   };
 
   return (
-    <div className="ui-comments-section">
+    <div className="ui-comment-section">
       <div ref={el => commentsRef.current[post.id] = el} className="ui-comments-container">
         {comments.length > 0 ? (
           comments.map((comment, index) => {
@@ -155,10 +155,9 @@ const Comment = ({
             className="ui-comment-textarea"
             rows="2"
             disabled={isSubmitting}
+            
           />
-          <div className="ui-comment-char-count">
-            {commentText.length}/{MAX_COMMENT_LENGTH}
-          </div>
+          
           {commentText.length === MAX_COMMENT_LENGTH && (
             <div className="ui-comment-warning" style={{ color: '#e74c3c', fontSize: '0.92rem', marginTop: '2px' }}>
               The text reached the limit.

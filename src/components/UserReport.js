@@ -76,7 +76,7 @@ const UserReport = ({
   if (!show || alreadyReported) return null;
 
   return (
-    <div className="ui-modal-overlay">
+    <div className="ui-modal-overlay-report">
       <div className="ui-modal-content ui-report-modal">
         <div className="ui-modal-header">
           <h4 className="ui-modal-title">Report Post</h4>

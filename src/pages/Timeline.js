@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import NavbarHome from '../components/NavbarHome';
-import MyPost from '../components/MyPost'; // Import MyPost component
+import UserTimeline from '../components/UserTimeline'; // Import MyPost component
 import PostBox from '../components/PostBox';
 
 function Timeline() {
@@ -30,7 +30,7 @@ function Timeline() {
       <div className="timeline-container">
         {/* Render MyPost component with schoolName prop */}
         <PostBox schoolName={userSchool} />
-        <MyPost schoolName={userSchool} />
+        <UserTimeline schoolName={userSchool} />
       </div>
     </div>
   );

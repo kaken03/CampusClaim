@@ -113,7 +113,7 @@
 }
 
 .ui-comment-char-count {
-  font-size: 0.93rem;
+  font-size: 0.6rem;
   color: #888;
   text-align: right;
   margin-bottom: 2px;
@@ -187,7 +187,7 @@
     font-size: 0.97rem;
   }
   .ui-comment-textarea {
-    font-size: 0.97rem;
+    font-size: 0.78rem;
     padding: 8px 8px;
   }
   .ui-comment-char-count,
