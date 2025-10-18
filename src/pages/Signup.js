@@ -38,8 +38,8 @@ function Signup({ onSwitchToLogin }) {
       if (err.code === "auth/weak-password") {
         setError("Password should be at least 6 or more characters");
       }
-      else if (err.code === "auth/invalid-email") {
-        setError("Invalid email");
+      else if (err.code === "auth/email-already-in-use") {
+        setError("Email already in use. Please use a different email.");
       } else {
         setError(err.message);
       }

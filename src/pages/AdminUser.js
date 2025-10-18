@@ -38,7 +38,6 @@ const DetailsModal = ({ user, onClose }) => {
         <h4 className="modal-title">User Details</h4>
         <p><strong>Full Name:</strong> {user.fullName || 'N/A'}</p>
         <p><strong>Email:</strong> {user.email || 'N/A'}</p>
-        <p><strong>Role:</strong> {user.role || 'N/A'}</p>
         <p><strong>User ID:</strong> {user.id}</p>
         <p><strong>Registered:</strong> {user.createdAt?.seconds ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}</p>
         <button onClick={onClose} className="modal-close-btn">Close</button>
