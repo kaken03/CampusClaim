@@ -24,7 +24,7 @@
   100% { opacity: 0; transform: translateX(-50%) translateY(-10px);}
 }
 :root {
-  --ui-primary-color: #1877f2; /* Facebook Blue */
+  /* --ui-primary-color: #1877f2;*/
   --ui-secondary-color: #65676b; /* Grey text */
   --ui-background-color: #f0f2f5; /* Light grey background */
   --ui-card-background-color: #ffffff;
@@ -190,16 +190,18 @@
 }
 
 .ui-author-name {
-  font-weight: 600;
   font-size: 15px;
+  font-weight: 640;
   color: #1c1e21;
   margin: 0;
 }
 
 .ui-post-time {
-  font-size: 13px;
-  color: var(--ui-secondary-color);
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 2px;
   margin: 0;
+  font-weight: 500;
 }
 
 .ui-post-body {

@@ -29,18 +29,34 @@ const NavbarHome = () => {
     setMenuOpen(false); // Close menu on click
   };
 
-  const handleLogout = () => {
-    auth.signOut()
-      .then(() => {
-        localStorage.removeItem('user');
-        localStorage.removeItem('lastSeen');
-        navigate('/'); // Redirect to homepage or login page
-      })
-      .catch((error) => {
-        console.error('Error logging out:', error.message);
-        alert('Failed to log out. Please try again.');
-      });
-  };
+useEffect(() => {
+  const unsubscribe = auth.onAuthStateChanged((user) => {
+    if (!user) {
+      localStorage.removeItem('user');
+      navigate('/');
+    }
+  });
+
+  return () => unsubscribe();
+}, [auth, navigate]);
+
+
+  const handleLogout = async () => {
+  try {
+    await auth.signOut(); // wait for Firebase to fully log out
+    localStorage.removeItem('user');
+    localStorage.removeItem('lastSeen');
+
+    // Delay navigation a bit to ensure state is cleared
+    setTimeout(() => {
+      navigate('/');
+    }, 300);
+  } catch (error) {
+    console.error('Error logging out:', error.message);
+    alert('Failed to log out. Please try again.');
+  }
+};
+
 
   return (
     <>

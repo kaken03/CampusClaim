@@ -190,6 +190,15 @@
   object-fit: cover;
   box-shadow: 0 3px 8px rgba(0,0,0,0.1);
 }
+.clickable-id {
+  cursor: pointer;
+  color: #007bff;
+  text-decoration: underline;
+}
+
+.clickable-id:hover {
+  color: #0056b3;
+}
 
 /* Animation */
 @keyframes fadeIn {

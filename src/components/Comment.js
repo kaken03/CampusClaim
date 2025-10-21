@@ -103,12 +103,15 @@ const Comment = ({
               <div key={index} className="ui-comment">
                 <div className="ui-comment-author">
                   <span className="ui-comment-author-name">
+                    
                     {comment.author}
                     {comment.isAnonymous && user && comment.authorId === user.uid && (
                       <span className="ui-my-anonymous-badge" title="This is your anonymous comment">
                         <FontAwesomeIcon icon={faUser} />
                       </span>
+                      
                     )}
+                    <p className="ui-comment-time">{comment.timestamp ? timeAgo(comment.timestamp) : 'Just now'}</p>
                   </span>
                 </div>
                 <p className="ui-comment-text">
@@ -123,7 +126,7 @@ const Comment = ({
                     </span>
                   )}
                 </p>
-                <p className="ui-comment-time">{comment.timestamp ? timeAgo(comment.timestamp) : 'Just now'}</p>
+                
               </div>
             );
           })

@@ -65,11 +65,24 @@ function NavbarAdmin() {
 
       {showLogoutDialog && (
         <div className="logout-modal-overlay">
-          <div className="logout-modal">
-            <h3>Are you sure you want to log out?</h3>
-            <div className="logout-modal-actions">
-              <span className="modal-link cancel" onClick={() => setShowLogoutDialog(false)}>Cancel</span>
-              <span className="modal-link confirm" onClick={handleLogout}>Continue</span>
+          <div className="dialog-box">
+            <div className="dialog-title">Are you sure you want to log out?</div>
+            <div className="dialog-actions">
+              <button
+                className="dialog-button cancel-btn"
+                onClick={() => setShowLogoutDialog(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="dialog-button confirm-btn" // Changed 'continue-btn' to 'confirm-btn' for clarity
+                onClick={() => {
+                  setShowLogoutDialog(false);
+                  handleLogout();
+                }}
+              >
+                Confirm
+              </button>
             </div>
           </div>
         </div>

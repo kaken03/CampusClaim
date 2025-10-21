@@ -213,7 +213,7 @@ export default function AdminReport() {
                     <th>Post ID</th>
                     <th>Reason</th>
                     <th>Reporter ID</th>
-                    <th>Created At</th>
+                    <th>Reported At</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -229,9 +229,31 @@ export default function AdminReport() {
                           />
                         </td>
                       )}
-                      <td data-label="Post ID">{report.postId}</td>
+                      <td
+                        data-label="Post ID"
+                        className="clickable-id"
+                        onClick={() => {
+                          navigator.clipboard.writeText(report.postId);
+                          setActionMessage("Post ID copied!");
+                          setTimeout(() => setActionMessage(""), 1500);
+                        }}
+                        title="Click to copy Post ID"
+                      >
+                        {report.postId}
+                      </td>
                       <td data-label="Reason">{report.reason}</td>
-                      <td data-label="Reporter ID">{report.reporterId}</td>
+                      <td
+                        data-label="Reporter ID"
+                        className="clickable-id"
+                        onClick={() => {
+                          navigator.clipboard.writeText(report.reporterId);
+                          setActionMessage("Reporter ID copied!");
+                          setTimeout(() => setActionMessage(""), 1500);
+                        }}
+                        title="Click to copy Reporter ID"
+                      >
+                        {report.reporterId}
+                      </td>
                       <td data-label="Created At">
                         {report.createdAt?.toDate
                           ? report.createdAt.toDate().toLocaleString()
