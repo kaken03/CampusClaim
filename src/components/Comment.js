@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
 import './Comment.css';
 
-const MAX_COMMENT_LENGTH = 200;
+const MAX_COMMENT_LENGTH = 500;
 const PREVIEW_LENGTH = 80;
 
 const Comment = ({
@@ -122,7 +122,7 @@ const Comment = ({
                       style={{ color: "#1877f2", cursor: "pointer", marginLeft: 4, fontWeight: 450 }}
                       onClick={() => toggleExpand(index)}
                     >
-                      {isExpanded ? " See less" : " See more..."}
+                      {isExpanded ? " See less" : " See more"}
                     </span>
                   )}
                 </p>
@@ -143,47 +143,48 @@ const Comment = ({
         </div>
       ) : (
         <div className="ui-comment-form">
-          <textarea
-            placeholder="Write a comment..."
-            value={commentText}
-            onChange={e => {
-              const value = e.target.value;
-              if (value.length <= MAX_COMMENT_LENGTH) {
-                setCommentText(value);
-              } else {
-                setCommentText(value.slice(0, MAX_COMMENT_LENGTH));
-              }
-            }}
-            maxLength={MAX_COMMENT_LENGTH}
-            className="ui-comment-textarea"
-            rows="2"
-            disabled={isSubmitting}
-            
-          />
-          
-          {commentText.length === MAX_COMMENT_LENGTH && (
-            <div className="ui-comment-warning" style={{ color: '#e74c3c', fontSize: '0.92rem', marginTop: '2px' }}>
-              The text reached the limit.
-            </div>
-          )}
-          <div className="ui-comment-actions">
-            <label className="ui-anonymous-toggle">
-              <input
-                type="checkbox"
-                checked={isAnonymous}
-                onChange={e => setIsAnonymous(e.target.checked)}
-              />
-              Anonymous
-            </label>
-            <button
-              onClick={handleAddComment}
-              className="ui-btn ui-btn-sm ui-btn-primary"
-              disabled={isSubmitting || !commentText.trim()}
-            >
-              {isSubmitting ? 'Sending...' : 'Post'}
-            </button>
-          </div>
-        </div>
+  <div className="ui-comment-input-wrapper">
+    <textarea
+      placeholder="Write a comment..."
+      value={commentText}
+      onChange={e => {
+        const value = e.target.value;
+        if (value.length <= MAX_COMMENT_LENGTH) {
+          setCommentText(value);
+        } else {
+          setCommentText(value.slice(0, MAX_COMMENT_LENGTH));
+        }
+      }}
+      maxLength={MAX_COMMENT_LENGTH}
+      className="ui-comment-textarea"
+      rows="2"
+      disabled={isSubmitting}
+    />
+  </div>
+  {commentText.length === MAX_COMMENT_LENGTH && (
+    <div className="ui-comment-warning">
+      The text reached the limit.
+    </div>
+  )}
+  <div className="ui-comment-actions">
+    
+    <label className="ui-anonymous-toggle">
+      <input
+        type="checkbox"
+        checked={isAnonymous}
+        onChange={e => setIsAnonymous(e.target.checked)}
+      />
+      <span>Anonymous</span>
+    </label>
+    <button
+      onClick={handleAddComment}
+      className="ui-post-btn"
+      disabled={isSubmitting || !commentText.trim()}
+    >
+      {isSubmitting ? 'Sending...' : 'Post'}
+    </button>
+  </div>
+  </div>
       )}
     </div>
   );

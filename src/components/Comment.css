@@ -24,12 +24,13 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  border: 1px solid #e4e6eb;
 }
-
+.ui-comment-form {
+  margin-bottom: -10px;
+}
 /* --- Author --- */
 .ui-comment-author-name {
-  font-size: 15px;
+  font-size: 12.8px;
   font-weight: 640;
 }
 
@@ -75,74 +76,93 @@
   margin: 18px 0;
 }
 
-/* --- Comment Form --- */
-.ui-comment-form {
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(24,119,242,0.07);
-  padding: 18px 18px 14px 18px;
-  border: 1px solid #e4e6eb;
-  margin-bottom: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+/* Wrapper to make textarea full width */
+.ui-comment-input-wrapper {
+  width: 100%;
+  margin-left: -10px;
+
 }
 
 .ui-comment-textarea {
   width: 100%;
-  border-radius: 7px;
-  border: 1.5px solid #dbe6f6;
-  padding: 12px 14px;
-  font-size: 1rem;
-  background: #f8fafc;
   resize: none;
-  margin-bottom: 2px;
-  box-sizing: border-box;
-  transition: border 0.18s;
-}
-.ui-comment-textarea:focus {
-  border-color: #1877f2;
+  padding: 10px 10px;
+  border-radius: 18px;
+  border: 1px solid #ccc;
   outline: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 0.94rem;
+  background: #fff;
+  transition: border-color 0.2s ease;
 }
+
+.ui-comment-textarea:focus {
+  border-color: #2c3e50;
+  background: #fff;
+}
+
+/* Warning text */
+.ui-comment-warning {
+  color: #e74c3c;
+  font-size: 0.85rem;
+  margin-left: 6px;
+  text-align: center;
+}
+
+/* Actions row */
+.ui-comment-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+  gap: 10px;
+}
+
+/* Anonymous toggle styling */
+.ui-anonymous-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: #555;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ui-anonymous-toggle input {
+  transform: scale(1.1);
+}
+
+/* Post button */
+.ui-post-btn {
+  background-color: #1877f2;
+  color: #fff;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.ui-post-btn:hover:not(:disabled) {
+  background-color: #166fe5;
+}
+
+.ui-post-btn:disabled {
+  background-color: #a5c4fa;
+  cursor: not-allowed;
+}
+
+
+
 
 .ui-comment-char-count {
   font-size: 0.6rem;
   color: #888;
   text-align: right;
   margin-bottom: 2px;
-}
-
-.ui-comment-warning {
-  color: #e74c3c;
-  font-size: 0.93rem;
-  margin-top: 2px;
-  text-align: right;
-}
-.ui-verify-warning {
-  background: #fff3cd;
-  border: 1px solid #ffeeba;
-  color: #856404;
-  padding: 2px 4px;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  text-align: center;
-}
-
-.ui-comment-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  margin-top: 6px;
-}
-
-.ui-anonymous-toggle {
-  font-size: 1rem;
-  color: #555;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  user-select: none;
 }
 
 .ui-btn {
@@ -175,10 +195,6 @@
     padding-right: 0;
   }
   .ui-comment,
-  .ui-comment-form {
-    padding: 10px 20px 8px 8px;
-    font-size: 0.97rem;
-  }
   .ui-comment-textarea {
     font-size: 0.78rem;
     padding: 8px 8px;
@@ -192,6 +208,34 @@
     font-size: 0.97rem;
     padding: 7px 10px;
   }
+
+  .ui-comment-textarea {
+    font-size: 0.9rem;
+    border-radius: 14px;
+  }
+
+  .ui-comment-actions {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 2px;
+  }
+
+  .ui-post-btn {
+    padding: 5px 12px;
+    font-size: 0.85rem;
+  }
+  .ui-anonymous-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #555;
+  cursor: pointer;
+  user-select: none;
+}
+.ui-anonymous-toggle input {
+  transform: scale(0.95);
+}
 }
 
 /* --- Consistent Font --- */

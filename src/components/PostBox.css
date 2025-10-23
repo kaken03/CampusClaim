@@ -10,7 +10,20 @@
   border-radius: 12px;
   font-family: Arial, sans-serif;
 }
+.ui-anonymous-toggle-postbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: #555;
+  cursor: pointer;
+  user-select: none;
+  margin-left: 8px;
+}
 
+.ui-anonymous-toggle-postbox input {
+  transform: scale(1.1);
+}
 /* Minimized Post Box Styles */
 .ui-minimized-post-box {
   background-color: #fff;
@@ -162,8 +175,7 @@
 
 .ui-post-box-textarea:focus {
   outline: none;
-  border-color: #6495ed;
-  box-shadow: 0 0 0 3px rgba(100, 149, 237, 0.2);
+  border-color: #2c3e50;
 }
 
 /* Actions Bar */

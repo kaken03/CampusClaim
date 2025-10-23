@@ -201,7 +201,7 @@ function PostBox({ schoolName }) {
                   </button>
                 )}
               </div> */}
-              <div className="ui-anonymous-option">
+              {/* <div className="ui-anonymous-option">
                 <input
                   type="checkbox"
                   id="anonymous-post"
@@ -213,7 +213,15 @@ function PostBox({ schoolName }) {
                 <label htmlFor="anonymous-post" className="ui-checkbox-label">
                   Post Anonymously
                 </label>
-              </div>
+              </div> */}
+              <label className="ui-anonymous-toggle-postbox">
+            <input
+              type="checkbox"
+              checked={isAnonymous}
+              onChange={e => setIsAnonymous(e.target.checked)}
+            />
+            <span>Anonymous</span>
+          </label>
             </div>
             <button
               className="ui-post-box-button"
