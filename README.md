@@ -2,7 +2,9 @@
 
 **Tagline:** *"Lost it? Found it? Claim it!"*
 
-CampusClaim is a web application designed to help students and faculty efficiently report, track, and claim lost and found items within a school campus. The app ensures smoother communication between finders and owners by using a streamlined interface and Firebase backend.
+CampusClaim is a school-based web application designed to manage lost and found items efficiently. It modernizes the process within school campuses by enabling students and other users to report lost items and view found items posted by the Lost and Found Office. By integrating features such as profile verification, categorized item posting, personal timelines, notifications, and responsive design, CampusClaim offers a reliable and modern alternative to traditional methods of handling lost and found items.
+
+The system is powered by Firebase for real-time data handling, Cloudinary for image hosting, and React.js for the front-end interface. The process is simple: when someone loses an item, they can post it under “Lost Items” while keeping unique details private for security. If someone finds an item, it must be submitted to the Lost and Found Office, which then verifies, posts, and notifies users about the found item. Users can browse the list of found items, and the rightful owner can visit the Lost and Found Office to claim it. In essence, CampusClaim serves as a digital bridge between the campus community and the Lost and Found Office, promoting organized communication and efficient item recovery.
 
 ---
 
@@ -34,5 +36,5 @@ Works seamlessly on mobile and desktop; clean, modern interface
 ## 🛠️ Tech Stack
 
 - **Frontend**: React.js
-- **Backend**: Firebase (Authentication, Firestore, Storage)
+- **Backend**: Firebase (Authentication, Firestore, Cloudinary)
 
