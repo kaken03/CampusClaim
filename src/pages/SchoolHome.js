@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom';
 import NavbarHome from '../components/NavbarHome';
 import PostBox from '../components/PostBox';
 import UserLostItemPage from '../components/UserLostItemPage';
-import UserFoundItemPage from '../components/UserFoundItemPage';
+import AdminFoundItemPage from '../components/AdminFoundItemPage';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlusCircle, faSearch } from '@fortawesome/free-solid-svg-icons';
 import './Home.css';
@@ -139,7 +139,7 @@ function SchoolHome() {
       {/* For the Found tab, we only need to show the AdminPostFeed */}
       {activeTab === 'found' && (
         <>
-          <UserFoundItemPage schoolName={schoolName} postType="found"/>
+          <AdminFoundItemPage schoolName={schoolName} postType="found"/>
         </>
       )}
     </div>

@@ -44,6 +44,8 @@ function NavbarAdmin() {
         </div>
 
         <ul className={`navbar-admin-links ${menuOpen ? 'open' : ''}`}>
+          <li><Link to="/admin-timeline" onClick={() => setMenuOpen(false)}>Timeline</Link></li>
+          {/* <li><Link to="/admin-notifications" onClick={() => setMenuOpen(false)}>Notifications</Link></li> */}
           <li><Link to="/admin-users" onClick={() => setMenuOpen(false)}>Users</Link></li>
           <li><Link to="/admin-posts" onClick={() => setMenuOpen(false)}>Posts</Link></li>
           <li><Link to="/admin-approval" onClick={() => setMenuOpen(false)}>Approval</Link></li>

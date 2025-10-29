@@ -154,7 +154,12 @@
   background-color: #a5c4fa;
   cursor: not-allowed;
 }
-
+.ui-verify-warning {
+  color: #e74c3c;
+  font-size: 0.9rem;
+  text-align: center;
+  margin-bottom: 8px;
+}
 
 
 

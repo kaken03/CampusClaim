@@ -158,9 +158,50 @@ export default function AdminReport() {
       // alert("Failed to delete all reports.");
     }
   };
+  
+  const copyToClipboard = async (value, label) => {
+  // 1. Clear previous message
+  setActionMessage(''); 
+
+  // 2. Try modern Clipboard API (navigator.clipboard)
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(value);
+      setActionMessage(`${label} copied!`);
+      setTimeout(() => setActionMessage(''), 1500);
+      return; // Success, exit function
+    } catch (err) {
+      console.error("Modern Clipboard API failed:", err);
+      // Fall through to the older method if the modern one fails
+    }
+  }
+
+  // 3. Fallback method using document.execCommand (for older/restricted environments)
+  try {
+    const textArea = document.createElement("textarea");
+    textArea.value = value;
+    textArea.style.position = "fixed"; // Prevents scrolling to bottom of page
+    textArea.style.opacity = "0"; // Make it invisible
+    document.body.appendChild(textArea);
+    
+    // Select the text and copy
+    textArea.focus();
+    textArea.select();
+    document.execCommand('copy');
+    
+    document.body.removeChild(textArea);
+    setActionMessage(`${label} copied!`);
+  } catch (err) {
+    console.error("Fallback copy failed:", err);
+    setActionMessage(`Failed to copy ${label}. Please copy manually.`);
+  }
+
+  // 4. Clear message after 1.5s
+  setTimeout(() => setActionMessage(''), 1500);
+};
 
   return (
-    <div>
+    <div className="admin-reports-page">
       <Navbar />
       
       <div className="admin-report">
@@ -229,31 +270,41 @@ export default function AdminReport() {
                           />
                         </td>
                       )}
-                      <td
-                        data-label="Post ID"
-                        className="clickable-id"
-                        onClick={() => {
-                          navigator.clipboard.writeText(report.postId);
-                          setActionMessage("Post ID copied!");
-                          setTimeout(() => setActionMessage(""), 1500);
-                        }}
-                        title="Click to copy Post ID"
-                      >
-                        {report.postId}
-                      </td>
+                      <td data-label="Post ID">
+                      <p>
+                        
+                        {report.postId ? (
+                          <span
+                            className="clickable-id"
+                            onClick={() => copyToClipboard(report.postId, "Post ID")}
+                            title="Click to copy Post ID"
+                            style={{ cursor: 'pointer', color: '#1877f2' }}
+                          >
+                            {report.postId}
+                          </span>
+                        ) : (
+                          'N/A'
+                        )}
+                      </p>
+                    </td>
                       <td data-label="Reason">{report.reason}</td>
-                      <td
-                        data-label="Reporter ID"
-                        className="clickable-id"
-                        onClick={() => {
-                          navigator.clipboard.writeText(report.reporterId);
-                          setActionMessage("Reporter ID copied!");
-                          setTimeout(() => setActionMessage(""), 1500);
-                        }}
-                        title="Click to copy Reporter ID"
-                      >
-                        {report.reporterId}
-                      </td>
+                      <td data-label="Reporter ID">
+                      <p>
+                        
+                        {report.reporterId ? (
+                          <span
+                            className="clickable-id"
+                            onClick={() => copyToClipboard(report.reporterId, "Reporter ID")}
+                            title="Click to copy Reporter ID"
+                            style={{ cursor: 'pointer', color: '#1877f2' }}
+                          >
+                            {report.reporterId}
+                          </span>
+                        ) : (
+                          'N/A'
+                        )}
+                      </p>
+                    </td>
                       <td data-label="Created At">
                         {report.createdAt?.toDate
                           ? report.createdAt.toDate().toLocaleString()

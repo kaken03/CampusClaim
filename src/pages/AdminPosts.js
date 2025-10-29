@@ -1,6 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../firebase';
-import { collection, getDocs, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import {
+  collection,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  doc,
+  writeBatch,
+  query,
+  limit
+} from 'firebase/firestore';
 import Navbar from '../components/AdminNavbar';
 import AdminPostsAnalytics from '../components/AdminPostsAnalytics';
 import './AdminPosts.css';
@@ -24,6 +33,25 @@ const ActionModal = ({ message, onConfirm, onCancel, showConfirm = false }) => {
     </div>
   );
 };
+
+/**
+ * Deletes all documents in a collection reference in batches.
+ * Uses a loop to page through documents and commit batches of deletes.
+ * batchSize must be <= 500 (300 is a safe default).
+ */
+async function deleteCollectionInBatches(collectionRef, batchSize = 300) {
+  while (true) {
+    const q = query(collectionRef, limit(batchSize));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) break;
+
+    const batch = writeBatch(db);
+    snapshot.docs.forEach(docSnap => batch.delete(docSnap.ref));
+    await batch.commit();
+
+    // if snapshot.size < batchSize then we'll exit on next loop because collection is empty
+  }
+}
 
 export default function AdminPosts() {
   const [posts, setPosts] = useState([]);
@@ -104,7 +132,6 @@ export default function AdminPosts() {
       );
       setActionMessage(`✅ Post successfully ${!isBlocked ? 'blocked' : 'unblocked'}.`);
       setTimeout(() => setActionMessage(''), 2000);
-      // showInfoModal(`✅ Post successfully ${!isBlocked ? 'blocked' : 'unblocked'}.`);
     } catch (error) {
       console.error("Error blocking/unblocking post:", error);
       showInfoModal("An error occurred.");
@@ -113,16 +140,34 @@ export default function AdminPosts() {
     }
   };
 
+  /**
+   * confirmDelete now:
+   * - deletes comments and reports subcollections (in batches)
+   * - then deletes the post document itself
+   * - updates local state and shows an action message
+   */
   const confirmDelete = async (postId, collectionName) => {
     setIsProcessing(true);
     try {
+      if (!schoolName) throw new Error("School name missing.");
+
+      // Build collection refs for subcollections using modular SDK helpers
+      const commentsRef = collection(db, 'schools', schoolName, collectionName, postId, 'comments');
+      const reportsRef = collection(db, 'schools', schoolName, collectionName, postId, 'reports');
+
+      // Delete subcollections in batches first
+      await deleteCollectionInBatches(commentsRef);
+      await deleteCollectionInBatches(reportsRef);
+
+      // Finally delete the post document
       await deleteDoc(doc(db, 'schools', schoolName, collectionName, postId));
+
+      // Update local UI state
       setPosts(prevPosts => prevPosts.filter(p => !(p.id === postId && p.collection === collectionName)));
-      setActionMessage("✅ Post has been successfully deleted.");
+      setActionMessage("✅ Post and its comments/reports deleted.");
       setTimeout(() => setActionMessage(''), 2000);
-      // showInfoModal("✅ Post has been successfully deleted.");
     } catch (error) {
-      console.error("Error deleting post:", error);
+      console.error("Error deleting post and subcollections:", error);
       showInfoModal("An error occurred while deleting the post.");
     } finally {
       setIsProcessing(false);
@@ -176,6 +221,37 @@ export default function AdminPosts() {
     return 'Unclaimed';
   }
 
+  // helper to copy id to clipboard and show temporary action message
+  const copyAuthorId = async (authorId) => {
+    if (!authorId) return;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(authorId);
+        setActionMessage("Author ID copied!");
+      } else {
+        // fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.value = authorId;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          document.execCommand('copy');
+          setActionMessage("Author ID copied!");
+        } catch {
+          setActionMessage("Failed to copy ID");
+        }
+        document.body.removeChild(textarea);
+      }
+    } catch (err) {
+      console.error("Clipboard copy failed:", err);
+      setActionMessage("Failed to copy ID");
+    } finally {
+      setTimeout(() => setActionMessage(''), 1500);
+    }
+  };
+
   // --- RENDER CARDS ---
   function renderCards(group) {
     return (
@@ -189,7 +265,7 @@ export default function AdminPosts() {
                 <div className="user-card-info">
                   <h4 className="user-card-name">
                     {post.collection === 'FoundItems' ? 'Found Item' : 'Lost Item'}
-                    </h4>
+                  </h4>
                   <p className="user-card-email">
                     By {(post.authorName && post.authorName.length > 30)
                       ? post.authorName.slice(0, 30) + '...'
@@ -199,7 +275,21 @@ export default function AdminPosts() {
               </div>
               <div className="user-card-details-summary">
                 <p><strong>Post ID:</strong> {post.id}</p>
-                <p><strong>Author ID:</strong> {post.authorId || 'N/A'}</p>
+                <p>
+                  <strong>Author ID:</strong>{' '}
+                  {post.authorId ? (
+                    <span
+                      className="clickable-id"
+                      onClick={() => copyAuthorId(post.authorId)}
+                      title="Click to copy Author ID"
+                      style={{ cursor: 'pointer', color: '#1877f2' }}
+                    >
+                      {post.authorId}
+                    </span>
+                  ) : (
+                    'N/A'
+                  )}
+                </p>
                 <p>
                   <strong>Text:</strong>{' '}
                   {post.text
@@ -221,7 +311,6 @@ export default function AdminPosts() {
                   onClick={() => showConfirmModal(`Are you sure you want to ${post.isBlocked ? 'unblock' : 'block'} this post?`, 'block', post.id, post)}
                   disabled={isProcessing}
                 >
-                  {/* notification */}
                   {post.isBlocked ? 'Unblock' : 'Block'}
                 </button>
                 <button
@@ -244,8 +333,8 @@ export default function AdminPosts() {
       <Navbar />
       <div className="admin-page-container">
         {actionMessage && (
-        <div className="postbox-action-message">{actionMessage}</div>
-      )}
+          <div className="postbox-action-message">{actionMessage}</div>
+        )}
         <header className="admin-page-header">
           <h1>Post Management</h1>
         </header>

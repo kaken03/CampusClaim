@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '../firebase';
 import AdminFoundItem from './AdminFoundItem'; // Assuming you have this component
-import './AdminPostFeed.css'; // Styling for this component
+import './AdminFoundItemPage.css'; // Styling for this component
 
 /**
  * A component for the admin dashboard to display all "Found Item" posts
@@ -138,7 +138,6 @@ function AdminPostFeed({ schoolName }) {
 
   return (
     <div className="admin-post-feed-container">
-      <h2 className="admin-post-feed-title">Found Items</h2>
       <FilterBar />
       {loading ? (
         <p className="loading-message">Loading found items...</p>

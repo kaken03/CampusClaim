@@ -6,9 +6,11 @@ import {
   faImage,
   faEllipsisV,
   faEdit,
+  faBan,
 } from "@fortawesome/free-solid-svg-icons";
 import { db } from "../firebase";
 import { doc, deleteDoc, updateDoc, Timestamp } from "firebase/firestore";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import "./AdminFoundItem.css";
 
 function AdminFoundItem({ item, type }) {
@@ -16,37 +18,54 @@ function AdminFoundItem({ item, type }) {
   const [showImageModal, setShowImageModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editText, setEditText] = useState(item.text || "");
+  const [editText, setEditText] = useState(item?.text || "");
   const [isExpanded, setIsExpanded] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
   const menuRef = useRef(null);
+  const auth = getAuth();
 
   const itemRef = doc(
     db,
     "schools",
-    item.school,
+    item?.school || "",
     type === "found" ? "FoundItems" : "LostItems",
-    item.id
+    item?.id || ""
   );
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setCurrentUser(u);
+    });
+    return () => unsubscribe();
+  }, [auth]);
+
   const timeAgo = (timestamp) => {
-  if (!timestamp) return '';
-  const date = timestamp instanceof Timestamp ? timestamp.toDate() : new Date(timestamp);
-  const now = new Date();
-  const seconds = Math.floor((now - date) / 1000);
+    if (!timestamp) return "";
+    // normalize Firestore Timestamp or object with seconds to a Date
+    let date;
+    if (timestamp instanceof Timestamp) {
+      date = timestamp.toDate();
+    } else if (timestamp && typeof timestamp === "object" && timestamp.seconds) {
+      date = new Date(timestamp.seconds * 1000);
+    } else {
+      date = new Date(timestamp);
+    }
 
-  if (seconds < 5) return "Just now";          // 👈 New line
-  if (seconds < 60)  return "Just now"; 
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  const weeks = Math.floor(days / 7);
-  return `${weeks}w ago`;
-};
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
 
+    if (seconds < 5) return "Just now";
+    if (seconds < 60) return "Just now";
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`;
+    const weeks = Math.floor(days / 7);
+    return `${weeks}w ago`;
+  };
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -86,19 +105,31 @@ function AdminFoundItem({ item, type }) {
     }
     setShowEditModal(false);
   };
-  
+
+  // if item is not provided, don't render (hooks have already been declared)
+  if (!item) return null;
+
+  // Determine whether current user is the author of this post
+  const isAuthor = currentUser && item.authorId === currentUser.uid;
+
+  // =========================================================================
+  // >>> MODIFICATION HERE: Implement the blocked post visibility rule
+  // =========================================================================
+  if (item.isBlocked && !isAuthor) {
+    return null; // Don't render the post if it's blocked AND the user is not the author
+  }
+  // =========================================================================
+  // >>> END MODIFICATION
+  // =========================================================================
+
   // --- Display ---
   const claimedClass = item.claimed ? "claimed" : "unclaimed";
   const claimedText = item.claimed ? "Claimed" : "Unclaimed";
 
   const maxPreviewLength = 100;
-  const isLongText = item.text.length > maxPreviewLength;
+  const isLongText = (item.text || "").length > maxPreviewLength;
   const displayedText =
-    isExpanded || !isLongText
-      ? item.text
-      : item.text.slice(0, maxPreviewLength);
-
-  if (!item) return null;
+    isExpanded || !isLongText ? (item.text || "") : (item.text || "").slice(0, maxPreviewLength);
 
   return (
     <>
@@ -110,39 +141,48 @@ function AdminFoundItem({ item, type }) {
             {item.createdAt && (
               <div className="admin-card-time">{timeAgo(item.createdAt)}</div>
             )}
-
-          </div>
-          <div className="admin-card-menu" ref={menuRef}>
-            <button
-              className="ellipsis-btn"
-              onClick={() => setShowMenu((prev) => !prev)}
-            >
-              <FontAwesomeIcon icon={faEllipsisV} />
-            </button>
-            {showMenu && (
-              <div className="menu-dropdown">
-                <button
-                  onClick={() => {
-                    setShowEditModal(true);
-                    setShowMenu(false);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faEdit} /> Edit
-                </button>
-                <button
-                  onClick={() => {
-                    setShowDeleteModal(true);
-                    setShowMenu(false);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faTrash} /> Delete
-                </button>
-                <button onClick={handleClaimedToggle}>
-                  {item.claimed ? "Mark Unclaimed" : "Mark Claimed"}
-                </button>
+            {item.isBlocked && (
+              <div className="ui-blocked-warning">
+                <FontAwesomeIcon icon={faBan} /> This post is blocked by the admin.
               </div>
             )}
           </div>
+
+          {/* Only the original author may see/use the ellipsis/menu and actions */}
+          {isAuthor && (
+            <div className="admin-card-menu" ref={menuRef}>
+              <button
+                className="ellipsis-btn"
+                onClick={() => setShowMenu((prev) => !prev)}
+                aria-label="Open post menu"
+              >
+                <FontAwesomeIcon icon={faEllipsisV} />
+              </button>
+              {showMenu && (
+                <div className="menu-dropdown">
+                  <button
+                    onClick={() => {
+                      setShowEditModal(true);
+                      setShowMenu(false);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faEdit} /> Edit
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDeleteModal(true);
+                      setShowMenu(false);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faTrash} /> Delete
+                  </button>
+                  <button onClick={handleClaimedToggle}>
+                    {item.claimed ? "Mark Unclaimed" : "Mark Claimed"}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <hr className="admin-card-divider" />
@@ -184,7 +224,7 @@ function AdminFoundItem({ item, type }) {
       </div>
 
       {/* --- Modals --- */}
-      {showEditModal && (
+      {showEditModal && isAuthor && (
         <div className="ui-modal-overlay">
           <div className="modal-content-edit">
             <h3>Edit Post</h3>
@@ -220,13 +260,13 @@ function AdminFoundItem({ item, type }) {
             >
               <FontAwesomeIcon icon={faTimes} />
             </button>
-            
+
             <img src={item.imageUrl} alt={item.text} className="modal-image" />
           </div>
         </div>
       )}
 
-      {showDeleteModal && (
+      {showDeleteModal && isAuthor && (
         <div className="ui-modal-overlay">
           <div className="modal-content-delete">
             <p>

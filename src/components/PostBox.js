@@ -24,6 +24,7 @@ function PostBox({ schoolName }) {
   const [isAnonymous, setIsAnonymous] = useState(false);
   // const [selectedFileName, setSelectedFileName] = useState("");
   const [verificationStatus, setVerificationStatus] = useState("");
+  const [role, setRole] = useState(""); // <-- added role state
   const [isExpanded, setIsExpanded] = useState(false);
   const [actionMessage, setActionMessage] = useState('');
 
@@ -41,7 +42,7 @@ function PostBox({ schoolName }) {
     return () => unsubscribe();
   }, [auth]);
 
-  // ✅ Fetch verification status when user changes
+  // ✅ Fetch verification status and role when user changes
   useEffect(() => {
     if (!user || !schoolName) return;
 
@@ -51,13 +52,17 @@ function PostBox({ schoolName }) {
         const docSnap = await getDoc(userDocRef);
 
         if (docSnap.exists()) {
-          setVerificationStatus(docSnap.data()?.verificationStatus || "");
+          const data = docSnap.data();
+          setVerificationStatus(data?.verificationStatus || "");
+          setRole(data?.role || ""); // <-- set role from doc
         } else {
           setVerificationStatus("");
+          setRole("");
         }
       } catch (error) {
-        console.error("Error fetching verification status:", error);
+        console.error("Error fetching verification status and role:", error);
         setVerificationStatus("");
+        setRole("");
       }
     };
 
@@ -81,7 +86,11 @@ function PostBox({ schoolName }) {
       return;
     }
 
-    if (verificationStatus !== "verified") {
+    // Allow posting if the user is verified OR has an admin role
+    const isAdmin =
+      role === "admin" || role === "main-admin" || role === "super-admin";
+
+    if (verificationStatus !== "verified" && !isAdmin) {
        setActionMessage("❌ You must be verified to post. Please complete verification in your profile.");
       setTimeout(() => setActionMessage(''), 2000);
       // alert("❌ You must be verified to post Lost Items. Please complete verification in your profile.");

@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Line } from 'react-chartjs-2';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Line, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
+  ArcElement,
   Title,
   Tooltip,
   Legend,
@@ -17,10 +18,34 @@ ChartJS.register(
   LinearScale,
   PointElement,
   LineElement,
+  ArcElement,
   Title,
   Tooltip,
   Legend
 );
+
+// Center text plugin for Doughnut (shows total users in the middle)
+const centerTextPlugin = {
+  id: 'centerText',
+  beforeDraw: (chart) => {
+    const { ctx, data } = chart;
+    const total = data.datasets?.[0]?.data?.reduce((a, b) => a + (b || 0), 0) || 0;
+    const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
+    const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+
+    ctx.save();
+    ctx.font = '600 20px Inter, system-ui, -apple-system, "Segoe UI", Roboto';
+    ctx.fillStyle = '#222';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(total.toString(), centerX, centerY - 10);
+
+    ctx.font = '400 12px Inter, system-ui, -apple-system, "Segoe UI", Roboto';
+    ctx.fillStyle = '#666';
+    ctx.fillText('Total', centerX, centerY + 12);
+    ctx.restore();
+  },
+};
 
 export default function AdminUserAnalytics({ users }) {
   const [timeframe, setTimeframe] = useState('monthly');
@@ -30,7 +55,12 @@ export default function AdminUserAnalytics({ users }) {
   const [verifiedUsers, setVerifiedUsers] = useState(0);
 
   useEffect(() => {
-    if (!users || users.length === 0) return;
+    if (!users || users.length === 0) {
+      setTotalUsers(0);
+      setVerifiedUsers(0);
+      setChartData({ labels: [], datasets: [] });
+      return;
+    }
 
     const registeredUsers = users.filter(user => user.createdAt?.seconds);
     const verifiedUsersList = users.filter(user => user.verificationStatus === 'verified' && user.createdAt?.seconds);
@@ -91,30 +121,75 @@ export default function AdminUserAnalytics({ users }) {
     setChartData({ labels, datasets });
   }, [users, timeframe, showType]);
 
-  const options = {
+  const lineOptions = {
     responsive: true,
     plugins: {
       legend: { position: 'top' },
       title: { display: false },
+      tooltip: { mode: 'index', intersect: false },
     },
     maintainAspectRatio: false,
   };
 
+  // Pie/Doughnut data
+  const unverifiedUsers = Math.max(totalUsers - verifiedUsers, 0);
+  const pieData = useMemo(() => ({
+    datasets: [
+      {
+        data: [verifiedUsers, unverifiedUsers],
+        backgroundColor: ['#36a2eb', '#ff9f40'],
+        borderColor: ['#ffffff', '#ffffff'],
+        hoverOffset: 6,
+      },
+    ],
+  }), [verifiedUsers, unverifiedUsers]);
+
+  const pieOptions = {
+    responsive: true,
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12 } },
+      tooltip: {
+        callbacks: {
+          label: function (context) {
+            const label = context.label || '';
+            const value = context.raw || 0;
+            const percent = totalUsers ? ((value / totalUsers) * 100).toFixed(1) : '0.0';
+            return `${label}: ${value} (${percent}%)`;
+          },
+        },
+      },
+    },
+    maintainAspectRatio: false,
+    cutout: '68%',
+  };
+
   return (
-    <div className="analytics-container">
+    <div>
       <div className="analytics-summary-row">
-        <div className="summary-card">
-          <div className="summary-label">Total Users</div>
-          <div className="summary-value">{totalUsers}</div>
+        <div className="pie-card">
+          <div className="pie-chart-wrapper">
+            <Doughnut
+              data={pieData}
+              options={pieOptions}
+              plugins={[centerTextPlugin]}
+            />
+          </div>
+
+          <div className="pie-stats">
+            <div className="pie-breakdown">
+              <div className="pie-breakdown-item">
+                <span className="swatch verified" /> <span>Verified</span>
+                <strong>{verifiedUsers}</strong>
+              </div>
+              <div className="pie-breakdown-item">
+                <span className="swatch unverified" /> <span>Unverified</span>
+                <strong>{unverifiedUsers}</strong>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="summary-card">
-          <div className="summary-label">Verified</div>
-          <div className="summary-value">{verifiedUsers}</div>
-        </div>
-        <div className="summary-card">
-          <div className="summary-label">Unverified</div>
-          <div className="summary-value">{totalUsers - verifiedUsers}</div>
-        </div>
+
+        {/* Optionally you can keep small metric cards here if needed */}
       </div>
 
       <div className="analytics-controls-row">
@@ -141,7 +216,7 @@ export default function AdminUserAnalytics({ users }) {
       </div>
 
       <div className="analytics-chart-card">
-        <Line data={chartData} options={options} height={280} />
+        <Line data={chartData} options={lineOptions} height={280} />
       </div>
     </div>
   );

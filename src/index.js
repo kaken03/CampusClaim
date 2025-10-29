@@ -13,6 +13,8 @@ import Notification from './pages/Notification';
 import reportWebVitals from './reportWebVitals';
 import PostDetails from './components/PostDetails';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminTimeline from './pages/AdminTimeline';
+import AdminNotification from './pages/AdminNotification';
 import AdminUser from './pages/AdminUser';
 import AdminPosts from './pages/AdminPosts'
 import AdminApproval from './pages/AdminApproval';
@@ -68,6 +70,16 @@ root.render(
         <Route path="/admin-dashboard" element={
           <RequireAdmin>
             <AdminDashboard />
+          </RequireAdmin>
+        } />
+        <Route path="/admin-timeline" element={
+          <RequireAdmin>
+            <AdminTimeline />
+          </RequireAdmin>
+        } />
+        <Route path="/admin-notifications" element={
+          <RequireAdmin>
+            <AdminNotification />
           </RequireAdmin>
         } />
         <Route path="/admin-posts" element={

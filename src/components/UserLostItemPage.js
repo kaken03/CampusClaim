@@ -409,8 +409,8 @@ function PostFeed({ schoolName }) {
       </div>
 
       {filteredPosts.length === 0 ? (
-        <div className="ui-empty-state">
-          <p>No lost items to display yet. Be the first to post!</p>
+        <div>
+          <p className="no-items-message">No lost items have been posted yet.</p>
         </div>
       ) : (
         <div className="ui-post-list">

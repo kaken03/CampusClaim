@@ -1,17 +1,69 @@
-import React, { useState, useEffect } from 'react';
-import { Line } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Line, Doughnut } from 'react-chartjs-2'; // Import Doughnut
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  ArcElement, // Import ArcElement for Doughnut
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
 import './AdminAnalytics.css';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  ArcElement, // Register ArcElement
+  Title,
+  Tooltip,
+  Legend
+);
+
+// Center text plugin for Doughnut (shows total users in the middle) - ADAPTED FOR POSTS
+const centerTextPlugin = {
+  id: 'centerTextPosts',
+  beforeDraw: (chart) => {
+    const { ctx, data } = chart;
+    const total = data.datasets?.[0]?.data?.reduce((a, b) => a + (b || 0), 0) || 0;
+    const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
+    const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+
+    ctx.save();
+    // Use the same font styles as the original
+    ctx.font = '600 20px Inter, system-ui, -apple-system, "Segoe UI", Roboto';
+    ctx.fillStyle = '#222';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(total.toString(), centerX, centerY - 10);
+
+    ctx.font = '400 12px Inter, system-ui, -apple-system, "Segoe UI", Roboto';
+    ctx.fillStyle = '#666';
+    ctx.fillText('Total Posts', centerX, centerY + 12); // Adjusted label
+    ctx.restore();
+  },
+};
 
 export default function AdminPostsAnalytics({ posts }) {
   const [timeframe, setTimeframe] = useState('daily');
   const [showType, setShowType] = useState('all'); // 'lost', 'found', 'claimed', 'all'
   const [chartData, setChartData] = useState({ labels: [], datasets: [] });
 
+  // Summary counts
+  const totalPosts = posts ? posts.length : 0;
+  const totalLost = posts ? posts.filter(p => p.collection === 'LostItems').length : 0;
+  const totalFound = posts ? posts.filter(p => p.collection === 'FoundItems').length : 0;
+  const totalClaimed = posts ? posts.filter(p => p.claimed).length : 0;
+
   useEffect(() => {
-    if (!posts || posts.length === 0) return;
+    if (!posts || posts.length === 0) {
+      setChartData({ labels: [], datasets: [] });
+      return;
+    }
 
     const lostPosts = posts.filter(p => p.collection === 'LostItems' && p.createdAt?.seconds);
     const foundPosts = posts.filter(p => p.collection === 'FoundItems' && p.createdAt?.seconds);
@@ -91,25 +143,75 @@ export default function AdminPostsAnalytics({ posts }) {
     }
   };
 
-  const totalLost = posts.filter(p => p.collection === 'LostItems').length;
-  const totalFound = posts.filter(p => p.collection === 'FoundItems').length;
-  const totalClaimed = posts.filter(p => p.claimed).length;
+  // Pie/Doughnut data and options
+  const unClaimedPosts = Math.max(totalFound - totalClaimed, 0); // Total found - total claimed = currently found/unclaimed.
+  const pieData = useMemo(() => ({
+    
+    datasets: [
+      {
+        data: [totalClaimed, unClaimedPosts, totalLost],
+        backgroundColor: ['#4bc0c0', '#ff9f40', '#ff6384'],
+        borderColor: ['#ffffff', '#ffffff', '#ffffff'],
+        hoverOffset: 6,
+      },
+    ],
+  }), [totalClaimed, unClaimedPosts, totalLost]);
+
+  const pieOptions = {
+    responsive: true,
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12 } },
+      tooltip: {
+        callbacks: {
+          label: function (context) {
+            const label = context.label || '';
+            const value = context.raw || 0;
+            const percent = totalPosts ? ((value / totalPosts) * 100).toFixed(1) : '0.0';
+            return `${label}: ${value} (${percent}%)`;
+          },
+        },
+      },
+    },
+    maintainAspectRatio: false,
+    cutout: '68%',
+  };
+
 
   return (
     <div className="analytics-container">
       <div className="analytics-summary-row">
-        <div className="summary-card">
-          <div className="summary-label">Total Lost</div>
-          <div className="summary-value">{totalLost}</div>
+        {/* Pie Chart Card - Copied from AdminUserAnalytics, adapted for posts */}
+        <div className="pie-card">
+          <div className="pie-chart-wrapper">
+            <Doughnut
+              data={pieData}
+              options={pieOptions}
+              plugins={[centerTextPlugin]}
+            />
+          </div>
+
+          <div className="pie-stats">
+            <div className="pie-breakdown">
+              <div className="pie-breakdown-item">
+                <span className="swatch verified" style={{ backgroundColor: '#4bc0c0' }} />
+                <span>Claimed</span>
+                <strong>{totalClaimed}</strong>
+              </div>
+              <div className="pie-breakdown-item">
+                <span className="swatch unverified" style={{ backgroundColor: '#ff9f40' }} />
+                <span>Unclaimed</span>
+                <strong>{unClaimedPosts}</strong>
+              </div>
+              <div className="pie-breakdown-item">
+                <span className="swatch lost" style={{ backgroundColor: '#ff6384' }} />
+                <span>Lost</span>
+                <strong>{totalLost}</strong>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="summary-card">
-          <div className="summary-label">Total Found</div>
-          <div className="summary-value">{totalFound}</div>
-        </div>
-        <div className="summary-card">
-          <div className="summary-label">Total Claimed</div>
-          <div className="summary-value">{totalClaimed}</div>
-        </div>
+
+        {/* Small Metric Cards - Removed to match the single card layout from the User Analytics, but keeping the calculations above in case they are needed for separate cards. */}
       </div>
 
       <div className="analytics-controls-row">
