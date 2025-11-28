@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { getAuth, onAuthStateChanged, updateProfile, updateEmail } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db } from '../config/firebase';
 import AdminNavbar from '../components/AdminNavbar';
 import './Profile.css';
 

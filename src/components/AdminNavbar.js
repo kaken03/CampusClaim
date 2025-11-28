@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { auth } from '../firebase';
+import { auth } from '../config/firebase';
 import './AdminNavbar.css'; // ✅ Make sure this is imported
 import logo from '../assets/images/CAMPUSCLAIM.png';
 

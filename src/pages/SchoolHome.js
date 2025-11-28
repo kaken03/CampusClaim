@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db } from '../config/firebase';
 import { useParams } from 'react-router-dom';
 import NavbarHome from '../components/NavbarHome';
 import PostBox from '../components/PostBox';

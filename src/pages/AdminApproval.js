@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, updateDoc, doc,addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db } from '../config/firebase';
 import NavbarAdmin from '../components/AdminNavbar';
 import './AdminApproval.css';
 

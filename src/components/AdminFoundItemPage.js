@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db } from '../config/firebase';
 import AdminFoundItem from './AdminFoundItem'; // Assuming you have this component
 import './AdminFoundItemPage.css'; // Styling for this component
 

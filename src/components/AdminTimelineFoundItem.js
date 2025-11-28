@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, onSnapshot, orderBy, where } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import { db } from '../firebase';
+import { db } from '../config/firebase';
 import AdminFoundItem from './AdminFoundItem';
 import './AdminFoundItemPage.css';
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getAuth, onAuthStateChanged, updateProfile, updateEmail } from 'firebase/auth';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db } from '../config/firebase';
 import NavbarHome from '../components/NavbarHome';
 import VerificationForm from '../components/VerificationForm';
 import './Profile.css';

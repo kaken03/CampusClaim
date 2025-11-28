@@ -1,6 +1,6 @@
 // src/pages/AdminReport.js
 import React, { useEffect, useState } from "react";
-import { db } from "../firebase";
+import { db } from "../config/firebase";
 import { collection, getDocs, doc, getDoc, deleteDoc } from "firebase/firestore";
 import Navbar from "../components/AdminNavbar";
 import "./AdminReports.css";

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faCheckSquare, faSquare } from '@fortawesome/free-solid-svg-icons';
 import { collection, query, where, getDocs, addDoc, Timestamp } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db } from '../config/firebase';
 
 const REPORT_REASONS = [
   { key: 'spam', label: 'Spam', description: 'Unwanted or repetitive content, advertisements, or irrelevant posts.' },

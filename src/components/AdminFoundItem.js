@@ -8,7 +8,7 @@ import {
   faEdit,
   faBan,
 } from "@fortawesome/free-solid-svg-icons";
-import { db } from "../firebase";
+import { db } from "../config/firebase";
 import { doc, deleteDoc, updateDoc, Timestamp } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import "./AdminFoundItem.css";
