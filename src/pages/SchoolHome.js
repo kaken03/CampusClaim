@@ -77,7 +77,8 @@ function SchoolHome() {
       <NavbarHome />
       <div className="school-header-card">
         <h1 className="school-header-title">{schoolName}</h1>
-        <p className="school-header-desc">lost and found community</p>
+        <p className="school-header-desc">Lost & Found Office: CCS Faculty Office, 2nd Floor
+</p>
       </div>
 
       <div className="tab-buttons-container" style={{ textAlign: 'center', margin: '20px auto', maxWidth: '600px', display: 'flex', gap: '10px' }}>

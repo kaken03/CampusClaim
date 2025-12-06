@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { getAuth } from 'firebase/auth';
 import { uploadToCloudinary } from '../utils/uploadToCloudinary';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {  faTimes, faImage } from '@fortawesome/free-solid-svg-icons';
-import './PostBox.css'; // New CSS file for AdminPostBox
+import { faTimes, faImage } from '@fortawesome/free-solid-svg-icons';
+import './PostBox.css';
 
-// This component is specifically for admins to post found items.
 function AdminPostBox({ schoolName }) {
   const [text, setText] = useState('');
   const [image, setImage] = useState(null);
@@ -19,15 +18,23 @@ function AdminPostBox({ schoolName }) {
 
   const auth = getAuth();
 
+  // 🔥 FIX #1 — file input ref
+  const fileInputRef = useRef(null);
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     setImage(file);
     setSelectedFileName(file ? file.name : '');
   };
 
+  // 🔥 FIX #1 — now resets input value so same image can be selected again
   const clearImage = () => {
     setImage(null);
     setSelectedFileName('');
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handlePost = async (e) => {
@@ -52,117 +59,111 @@ function AdminPostBox({ schoolName }) {
       const authorName = postUser?.displayName || 'Lost & Found Staff';
       const authorId = postUser?.uid || null;
 
-      // Posting to a separate 'FoundItems' collection
       await addDoc(collection(db, 'schools', schoolName, 'FoundItems'), {
         text,
         imageUrl,
         createdAt: serverTimestamp(),
-        authorName: authorName,
-        authorId: authorId,
+        authorName,
+        authorId,
         type: 'found',
         school: schoolName,
         claimed: false,
-        category, // Include category in the posted data
-        description, // Include description in the posted data
+        category,
+        description,
       });
 
-      // Reset form
       setText('');
       setImage(null);
       setSelectedFileName('');
-      setCategory(''); // Reset category
-      setDescription(''); // Reset description
-      // Use a custom modal or message box instead of alert()
-      console.log('Found item posted successfully!');
-      setIsExpanded(false); // Minimize the PostBox after a successful post
+      setCategory('');
+      setDescription('');
+      setIsExpanded(false);
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
     } catch (err) {
       console.error('Post error:', err);
-      // Use a custom modal or message box instead of alert()
-      console.error(`Failed to post. Reason: ${err.message || 'An unknown error occurred.'}`);
+      console.error(`Failed to post. Reason: ${err.message}`);
     } finally {
       setLoading(false);
     }
   };
 
   const itemCategories = [
-    "Cellphone",
-    "Tablet",
-    "Laptop",
-    "Bag/Backpack",
-    "Keys",
-    "Watch",
-    "Wallet/Purse",
-    "ID Card/Student Card",
-    "Umbrella",
-    "Book/Notebook",
-    "Calculator",
-    "Earphones/Headphones",
-    "Charger/Powerbank",
-    "Clothing (Jacket, Hoodie, etc.)",
-    "Shoes/Slippers",
-    "Eyeglasses",
-    "Water Bottle",
-    "Sports Equipment",
-    "USB/Flash Drive",
-    "Other"
+    "Cellphone", "Tablet", "Laptop", "Bag/Backpack", "Keys", "Watch",
+    "Wallet/Purse", "ID Card/Student Card", "Umbrella", "Book/Notebook",
+    "Calculator", "Earphones/Headphones", "Charger/Powerbank",
+    "Clothing (Jacket, Hoodie, etc.)", "Shoes/Slippers", "Eyeglasses",
+    "Water Bottle", "Sports Equipment", "USB/Flash Drive", "Other"
   ];
 
   return (
     <div className="ui-post-box-container">
       {isExpanded ? (
-        // Expanded PostBox
         <div className="ui-post-box">
           <button onClick={() => setIsExpanded(false)} className="ui-close-btn">
             <FontAwesomeIcon icon={faTimes} />
           </button>
+
           <div className="ui-post-box-header">
             <h2 className="ui-post-box-title">Post a Found Item</h2>
           </div>
+
           <div className="ui-post-box-form">
             <form onSubmit={handlePost}>
+
               <div className="ui-category-group">
-              <label className="ui-category-label">
-                Item Category<span style={{color: 'red'}}>*</span>
-              </label>
-              <select
-                className="ui-category-select"
-                value={category}
-                onChange={e => setCategory(e.target.value)}
-                required
-              >
-                <option value="">Select category</option>
-                {itemCategories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
-                <textarea
-                  className="ui-post-box-textarea"
-                  placeholder="Any other details about the found item..."
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  disabled={loading}
-                />
+                <label className="ui-category-label">
+                  Item Category<span style={{ color: 'red' }}>*</span>
+                </label>
+                <select
+                  className="ui-category-select"
+                  value={category}
+                  onChange={e => setCategory(e.target.value)}
+                  required
+                >
+                  <option value="">Select category</option>
+                  {itemCategories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+                
+              </div>
+
+              <textarea
+                className="ui-post-box-textarea"
+                placeholder="Any other details about the found item..."
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                disabled={loading}
+              />
+
               <div className="ui-post-box-actions-admin">
                 <div className="ui-file-upload-container">
-                                <label htmlFor="file-upload" className="ui-custom-file-upload-btn">
-                                  <FontAwesomeIcon icon={faImage} />
-                                  <span>&nbsp;{selectedFileName || "Choose Image"}</span>
-                                </label>
-                                <input
-                                  id="file-upload"
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={handleFileChange}
-                                  disabled={loading}
-                                />
-                               {image && (
-                               <button className="ui-clear-image-btn" onClick={clearImage} disabled={loading}>
-                               <FontAwesomeIcon icon={faTimes} />
-                               </button>
-                               )}
-                              </div>
+                  <label htmlFor="file-upload" className="ui-custom-file-upload-btn">
+                    <FontAwesomeIcon icon={faImage} />
+                    <span>&nbsp;{selectedFileName || "Choose Image"}</span>
+                  </label>
+
+                  <input
+                    id="file-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    disabled={loading}
+                    ref={fileInputRef}   // 🔥 FIX #1
+                  />
+
+                  {image && (
+                    <button className="ui-clear-image-btn" onClick={clearImage} disabled={loading}>
+                      <FontAwesomeIcon icon={faTimes} />
+                    </button>
+                  )}
+                </div>
               </div>
+
               <button
                 className="ui-post-box-button"
                 type="submit"
@@ -170,11 +171,11 @@ function AdminPostBox({ schoolName }) {
               >
                 {loading ? 'Posting...' : 'Post Found Item'}
               </button>
+
             </form>
           </div>
         </div>
       ) : (
-        // Minimized "Post" button
         <div className="ui-minimized-post-box" onClick={() => setIsExpanded(true)}>
           <button className="ui-minimized-post-box-btn">What did you found?</button>
         </div>

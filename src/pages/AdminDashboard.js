@@ -34,7 +34,7 @@ function AdminDashboard() {
             {schoolName || "Admin Dashboard"}
           </h1>
           <p className="school-header-desc">
-            lost and found community
+            lost and found admin
           </p>
         </div>
         <div className="tab-buttons-container" style={{ textAlign: 'center', margin: '20px auto', maxWidth: '600px', display: 'flex', gap: '10px' }}>

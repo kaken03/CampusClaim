@@ -35,6 +35,7 @@ const EditPostModal = ({ post, onSave, onCancel }) => {
   // Disable save if text is unchanged or empty
   const isTextChanged = editedText.trim() !== post.text.trim();
 
+
   const handleSave = async () => {
     setIsSaving(true);
     await onSave(post.id, { text: editedText });
@@ -85,6 +86,7 @@ function PostFeed({ schoolName }) {
   const [selectedImage, setSelectedImage] = useState(null); 
   const [isSubmittingReport,] = useState(false);
   const [actionMessage, setActionMessage] = useState(''); // <-- NEW
+  const [loading, setLoading] = useState(true);
 
   const auth = getAuth();
   const user = auth.currentUser;
@@ -128,20 +130,23 @@ function PostFeed({ schoolName }) {
   }, [location]);
 
   useEffect(() => {
-    if (!schoolName) return;
-    const q = query(collection(db, 'schools', schoolName, 'LostItems'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedPosts = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setPosts(fetchedPosts);
-    }, (error) => {
-      console.error("Error fetching posts: ", error);
-      displayErrorModal("Error", "Failed to fetch posts. Please try again later.");
-    });
-    return () => unsubscribe();
-  }, [schoolName]);
+  if (!schoolName) return;
+  const q = query(collection(db, 'schools', schoolName, 'LostItems'), orderBy('createdAt', 'desc'));
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const fetchedPosts = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    setPosts(fetchedPosts);
+    setLoading(false); // ✅ loading finished
+  }, (error) => {
+    console.error("Error fetching posts: ", error);
+    displayErrorModal("Error", "Failed to fetch posts. Please try again later.");
+    setLoading(false); // ✅ stop loading even if there is an error
+  });
+  return () => unsubscribe();
+}, [schoolName]);
+
 
   useEffect(() => {
     if (highlightedPostId && posts.length > 0) {
@@ -407,8 +412,12 @@ function PostFeed({ schoolName }) {
           </button>
         </div>
       </div>
-
-      {filteredPosts.length === 0 ? (
+      
+      {loading ? (
+  <div>
+    <p className="no-items-message">Loading Lost Items...</p>
+  </div>
+    ) :filteredPosts.length === 0 ? (
         <div>
           <p className="no-items-message">No lost items have been posted yet.</p>
         </div>
