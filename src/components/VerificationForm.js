@@ -31,17 +31,33 @@ function VerificationForm({ onSubmit, onCancel, loading }) {
                 type="text"
                 value={form.idNumber}
                 onChange={e => setForm({ ...form, idNumber: e.target.value })}
+                
               />
             </div>
             <div className="profile-field-fb">
               <label>Grade Level</label>
-              <input
+              {/* <input
                 type="text"
                 value={form.yearLevel}
                 onChange={e => setForm({ ...form, yearLevel: e.target.value })}
                 required
                 placeholder="e.g., Grade 1"
-              />
+              /> */}
+              <select
+              value={form.yearLevel}
+              onChange={e => setForm({ ...form, yearLevel: e.target.value })}
+              className="role-select-fb"
+              required
+            >
+              <option value="">Select Grade Level</option>
+              <option value="1st">1st</option>
+              <option value="2nd">2nd</option>
+              <option value="3rd">3rd</option>
+              <option value="4th">4th</option>
+              <option value="5th">5th</option>
+              <option value="6th">6th</option>
+            </select>
+            
             </div>
             <div className="profile-field-fb">
               <label>Section/Class</label>
@@ -69,13 +85,27 @@ function VerificationForm({ onSubmit, onCancel, loading }) {
             </div>
             <div className="profile-field-fb">
               <label>Grade Level</label>
-              <input
+              {/* <input
                 type="text"
                 value={form.yearLevel}
                 onChange={e => setForm({ ...form, yearLevel: e.target.value })}
                 required
                 placeholder="e.g., Grade 10"
-              />
+              /> */}
+              <select
+              value={form.yearLevel}
+              onChange={e => setForm({ ...form, yearLevel: e.target.value })}
+              className="role-select-fb"
+              required
+            >
+              <option value="">Select Grade Level</option>
+              <option value="7th">7th</option>
+              <option value="8th">8th</option>
+              <option value="9th">9th</option>
+              <option value="10th">10th</option>
+              <option value="11th">11th</option>
+              <option value="12th">12th</option>
+            </select>
             </div>
             <div className="profile-field-fb">
               <label>Strand/Section</label>
@@ -103,21 +133,41 @@ function VerificationForm({ onSubmit, onCancel, loading }) {
             </div>
             <div className="profile-field-fb">
               <label>Course</label>
-              <input
-                type="text"
-                value={form.course}
-                onChange={e => setForm({ ...form, course: e.target.value })}
-                required
-              />
+              <select
+              value={form.course}
+              onChange={e => setForm({ ...form, course: e.target.value })}
+              className="role-select-fb"
+              required
+            >
+              <option value="">Select Course</option>
+              <option value="BSIT">BSIT</option>
+              <option value="BSHM">BSHM</option>
+              <option value="BSENTREP">BSENTREP</option>
+              <option value="BSED">BSED</option>
+              <option value="BPED">BPED</option>
+              <option value="BEED">BEED</option>
+            </select>
             </div>
             <div className="profile-field-fb">
               <label>Year Level</label>
-              <input
+              {/* <input
                 type="text"
                 value={form.yearLevel}
                 onChange={e => setForm({ ...form, yearLevel: e.target.value })}
                 required
-              />
+              /> */}
+              <select
+              value={form.yearLevel}
+              onChange={e => setForm({ ...form, yearLevel: e.target.value })}
+              className="role-select-fb"
+              required
+            >
+              <option value="">Select Year Level</option>
+              <option value="1st">1st</option>
+              <option value="2nd">2nd</option>
+              <option value="3rd">3rd</option>
+              <option value="4th">4th</option>
+            </select>
             </div>
           </>
         );
@@ -130,15 +180,6 @@ function VerificationForm({ onSubmit, onCancel, loading }) {
                 type="text"
                 value={form.department}
                 onChange={e => setForm({ ...form, department: e.target.value })}
-                required
-              />
-            </div>
-            <div className="profile-field-fb">
-              <label>Position</label>
-              <input
-                type="text"
-                value={form.position}
-                onChange={e => setForm({ ...form, position: e.target.value })}
                 required
               />
             </div>
@@ -179,7 +220,7 @@ function VerificationForm({ onSubmit, onCancel, loading }) {
                 required
               />
             </div>
-            <div className="profile-field-fb">
+            {/* <div className="profile-field-fb">
               <label>Position</label>
               <input
                 type="text"
@@ -187,7 +228,7 @@ function VerificationForm({ onSubmit, onCancel, loading }) {
                 onChange={e => setForm({ ...form, position: e.target.value })}
                 required
               />
-            </div>
+            </div> */}
           </>
         );
         case 'other':

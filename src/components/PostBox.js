@@ -11,7 +11,8 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faInfoCircle,
+  // CHANGED: Import faExclamationTriangle for warning
+  faExclamationTriangle,
   faTimes,
   // faImage,
 } from "@fortawesome/free-solid-svg-icons";
@@ -70,14 +71,14 @@ function PostBox({ schoolName }) {
   }, [user, schoolName]);
 
   // const handleFileChange = (e) => {
-  //   const file = e.target.files[0];
-  //   setImage(file);
-  //   setSelectedFileName(file ? file.name : "");
+  // 	const file = e.target.files[0];
+  // 	setImage(file);
+  // 	setSelectedFileName(file ? file.name : "");
   // };
 
   // const clearImage = () => {
-  //   setImage(null);
-  //   setSelectedFileName("");
+  // 	setImage(null);
+  // 	setSelectedFileName("");
   // };
 
   const handlePost = async () => {
@@ -91,9 +92,8 @@ function PostBox({ schoolName }) {
       role === "admin" || role === "main-admin" || role === "super-admin";
 
     if (verificationStatus !== "verified" && !isAdmin) {
-       setActionMessage("❌ You must be verified to post. Please complete verification in your profile.");
+      setActionMessage("❌ You must be verified to post. Please complete verification in your profile.");
       setTimeout(() => setActionMessage(''), 2000);
-      // alert("❌ You must be verified to post Lost Items. Please complete verification in your profile.");
       return;
     }
 
@@ -153,7 +153,7 @@ function PostBox({ schoolName }) {
   if (authLoading) {
     return (
       <div className="verify-warning">
-        <FontAwesomeIcon icon={faInfoCircle} style={{ color: "#2c3e50", marginRight: 8 }} />
+        <FontAwesomeIcon icon={faExclamationTriangle} style={{ color: "#2c3e50", marginRight: 8 }} />
         <span>Loading...</span>
       </div>
     );
@@ -171,18 +171,20 @@ function PostBox({ schoolName }) {
             <FontAwesomeIcon icon={faTimes} />
           </button>
           <div className="ui-post-box-header">
-            <h2 className="ui-post-box-title">Report a Lost Item</h2>
-          </div>
-          <div className="ui-post-box-info-message">
-            <FontAwesomeIcon icon={faInfoCircle} className="ui-info-icon" />
-            <p>
-              <b>Did you find something?</b> Please bring all found items
-              directly to the{" "}
-              <b className="ui-highlight-text">Lost & Found Office</b>.<br />
-              Only Lost & Found staff are allowed to post found items for
-              everyone&apos;s safety and security.
-            </p>
-          </div>
+    <h2 className="ui-post-box-title">Report a Lost Item</h2>
+</div>
+
+{/* MODIFIED WARNING MESSAGE BLOCK */}
+<div className="ui-post-box-warning-message">
+    <FontAwesomeIcon icon={faExclamationTriangle} className="ui-warning-icon" />
+    <div className="ui-warning-content">
+        <b className="ui-warning-header">REMINDER:</b>
+        <p>If you found an item, please bring it to the Lost & Found Office.</p>
+        <p className="ui-small-print">Only the Lost & Found staff are permitted to post found items.</p>
+    </div>
+</div>
+          {/* END IMPLEMENTATION */}
+          
           <div className="ui-post-box-form">
             <textarea
               className="ui-post-box-textarea"
@@ -192,45 +194,15 @@ function PostBox({ schoolName }) {
               disabled={loading}
             />
             <div className="ui-post-box-actions">
-              {/* <div className="ui-file-upload-container">
-                <label htmlFor="file-upload" className="ui-custom-file-upload-btn">
-                  <FontAwesomeIcon icon={faImage} />
-                  <span>&nbsp;{selectedFileName || "Choose Image"}</span>
-                </label>
-                <input
-                  id="file-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  disabled={loading}
-                />
-                {image && (
-                  <button className="ui-clear-image-btn" onClick={clearImage} disabled={loading}>
-                    <FontAwesomeIcon icon={faTimes} />
-                  </button>
-                )}
-              </div> */}
-              {/* <div className="ui-anonymous-option">
+              {/* Image upload and anonymous options commented out based on original code */}
+              <label className="ui-anonymous-toggle-postbox">
                 <input
                   type="checkbox"
-                  id="anonymous-post"
-                  className="ui-custom-checkbox"
                   checked={isAnonymous}
-                  onChange={(e) => setIsAnonymous(e.target.checked)}
-                  disabled={loading}
+                  onChange={e => setIsAnonymous(e.target.checked)}
                 />
-                <label htmlFor="anonymous-post" className="ui-checkbox-label">
-                  Post Anonymously
-                </label>
-              </div> */}
-              <label className="ui-anonymous-toggle-postbox">
-            <input
-              type="checkbox"
-              checked={isAnonymous}
-              onChange={e => setIsAnonymous(e.target.checked)}
-            />
-            <span>Anonymous</span>
-          </label>
+                <span>Anonymous</span>
+              </label>
             </div>
             <button
               className="ui-post-box-button"

@@ -20,6 +20,57 @@
   user-select: none;
   margin-left: 8px;
 }
+/* --- Optimized Warning Message Styling --- */
+
+.ui-post-box-warning-message {
+    /* Reduced Padding/Margin */
+    background-color: #fff3cd; 
+    border: 1px solid #ffeeba;
+    color: #856404; 
+    padding: 10px 12px; /* Reduced vertical padding */
+    margin: 10px 0;    /* Reduced vertical margin */
+    border-radius: 6px;
+    
+    /* Responsive Layout (Flexbox) */
+    display: flex;
+    align-items: center; /* Vertically center icon and content */
+    font-size: 14px;
+    line-height: 1.3;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.ui-warning-icon {
+    color: #e38d00;
+    font-size: 18px; /* Slightly smaller icon */
+    margin-right: 10px; /* Reduced margin */
+    /* Removed margin-top */
+    flex-shrink: 0; /* Prevents icon from shrinking on small screens */
+}
+
+.ui-warning-content {
+    /* Allows content to take up remaining space */
+    flex-grow: 1;
+}
+
+.ui-warning-header {
+    font-weight: bold;
+    color: #c90000;
+    display: inline; /* Changed to inline to flow with the first line of text */
+    margin-right: 5px;
+    text-transform: uppercase;
+}
+
+.ui-post-box-warning-message p {
+    margin: 0; /* Remove default paragraph margins */
+    padding: 0;
+}
+
+.ui-small-print {
+    display: block;
+    margin-top: 3px; /* Small separation for the last line */
+    font-size: 12px; /* Smaller font for secondary info */
+    opacity: 0.9;
+}
 
 .ui-anonymous-toggle-postbox input {
   transform: scale(1.1);

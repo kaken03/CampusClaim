@@ -80,12 +80,14 @@ function PostFeed({ schoolName }) {
   const [showReportModalId, setShowReportModalId] = useState(null);
   const [showErrorModal, setShowErrorModal] = useState({ show: false, title: '', message: '' }); 
   const [deletingPostId, setDeletingPostId] = useState(null); 
+  // 1. ADD NEW STATE FOR CLAIMING MODAL
+  const [claimingPostId, setClaimingPostId] = useState(null);
   const [editingPost, setEditingPost] = useState(null); 
   const [verificationStatus, setVerificationStatus] = useState(''); 
   const [showImageModal, setShowImageModal] = useState(false); 
   const [selectedImage, setSelectedImage] = useState(null); 
   const [isSubmittingReport,] = useState(false);
-  const [actionMessage, setActionMessage] = useState(''); // <-- NEW
+  const [actionMessage, setActionMessage] = useState('');
   const [loading, setLoading] = useState(true);
 
   const auth = getAuth();
@@ -109,7 +111,7 @@ function PostFeed({ schoolName }) {
     const seconds = Math.floor((now - date) / 1000);
 
     if (seconds < 5) return "Just now";
-    if (seconds < 60)  return "Just now"; 
+    if (seconds < 60)  return "Just now"; 
     const minutes = Math.floor(seconds / 60);
     if (minutes < 60) return `${minutes}m ago`;
     const hours = Math.floor(minutes / 60);
@@ -167,7 +169,7 @@ function PostFeed({ schoolName }) {
   }, [posts, openCommentPostId]);
 
   useEffect(() => {
-    const isModalOpen = blockingPostId || showErrorModal.show || showReportModalId || deletingPostId || editingPost;
+    const isModalOpen = blockingPostId || showErrorModal.show || showReportModalId || deletingPostId || claimingPostId || editingPost;
     if (isModalOpen) {
       document.body.style.overflow = 'hidden';
       document.body.style.paddingRight = `${getScrollbarWidth()}px`;
@@ -179,7 +181,7 @@ function PostFeed({ schoolName }) {
       document.body.style.overflow = 'unset';
       document.body.style.paddingRight = '0px';
     };
-  }, [blockingPostId, showErrorModal.show, showReportModalId, deletingPostId, editingPost]);
+  }, [blockingPostId, showErrorModal.show, showReportModalId, deletingPostId, claimingPostId, editingPost]);
 
   const getScrollbarWidth = () => {
     const outer = document.createElement('div');
@@ -249,22 +251,22 @@ function PostFeed({ schoolName }) {
     setOpenMenuPostId(null);
   };
 
-  const confirmBlockPost = async (postId) => {
-    try {
-      const postRef = doc(db, 'schools', schoolName, 'LostItems', postId);
-      await updateDoc(postRef, { isBlocked: true });
-      setActionMessage("✅ Post blocked successfully!");
-    } catch (error) {
-      console.error('Error blocking post:', error);
-      displayErrorModal("Error", "Failed to block post.");
-    } finally {
-      setBlockingPostId(null);
-    }
-  };
+  // const confirmBlockPost = async (postId) => {
+  //   try {
+  //     const postRef = doc(db, 'schools', schoolName, 'LostItems', postId);
+  //     await updateDoc(postRef, { isBlocked: true });
+  //     setActionMessage("✅ Post blocked successfully!");
+  //   } catch (error) {
+  //     console.error('Error blocking post:', error);
+  //     displayErrorModal("Error", "Failed to block post.");
+  //   } finally {
+  //     setBlockingPostId(null);
+  //   }
+  // };
 
-  const cancelBlockPost = () => {
-    setBlockingPostId(null);
-  };
+  // const cancelBlockPost = () => {
+  //   setBlockingPostId(null);
+  // };
 
   const handleReportPost = (postId) => {
     setShowReportModalId(postId);
@@ -317,6 +319,7 @@ function PostFeed({ schoolName }) {
 
   const updateClaimStatus = async (postId, newClaimedStatus) => {
     const originalPosts = posts;
+    // Optimistic update to make UI feel faster
     setPosts(posts.map(p => p.id === postId ? { ...p, claimed: newClaimedStatus } : p));
     
     try {
@@ -329,13 +332,30 @@ function PostFeed({ schoolName }) {
       );
     } catch (error) {
       console.error("Error updating claim status:", error);
+      // Revert UI change if update fails
       setPosts(originalPosts);
       displayErrorModal("Error", `Failed to mark post as ${newClaimedStatus ? 'claimed' : 'unclaimed'}. Please try again.`);
     }
   };
+  
+  // 2. MODIFIED handleClaimPost: Shows the modal instead of claiming
+  const handleClaimPost = (postId) => {
+      setClaimingPostId(postId);
+      setOpenMenuPostId(null); // Close the dropdown menu
+  };
 
-  const handleClaimPost = (postId) => updateClaimStatus(postId, true);
-  const handleUnclaimPost = (postId) => updateClaimStatus(postId, false);
+  // 3. NEW confirmClaimPost: Performs the actual Firebase update
+  const confirmClaimPost = async () => {
+      if (claimingPostId) {
+          await updateClaimStatus(claimingPostId, true);
+          setClaimingPostId(null);
+      }
+  };
+
+  const cancelClaimPost = () => {
+      setClaimingPostId(null);
+  };
+  // const handleUnclaimPost = (postId) => updateClaimStatus(postId, false);
 
   const filteredPosts = posts.filter((post) => {
     if (filter === 'claimed' && !post.claimed) return false;
@@ -367,6 +387,18 @@ function PostFeed({ schoolName }) {
           message={showErrorModal.message}
           onCancel={closeErrorModal}
           cancelText="Close"
+        />
+      )}
+      
+      {/* 4. CLAIMING CONFIRMATION MODAL */}
+      {claimingPostId && (
+        <CustomModal
+          title="Confirm Claim"
+          message="Are you sure you want to mark this post as Claimed? This indicates the item has been successfully recovered."
+          onConfirm={confirmClaimPost}
+          onCancel={cancelClaimPost}
+          confirmText="Mark Claimed"
+          cancelText="Cancel"
         />
       )}
 
@@ -404,168 +436,161 @@ function PostFeed({ schoolName }) {
           >
             Claimed
           </button>
-          <button
+          {/* <button
             onClick={() => setFilter('unclaimed')}
             className={filter === 'unclaimed' ? 'ui-filter-btn ui-active-filter ui-unclaimed-filter' : 'ui-filter-btn'}
-          >
+            >
             Unclaimed
-          </button>
+          </button> */}
         </div>
       </div>
       
       {loading ? (
-  <div>
-    <p className="no-items-message">Loading Lost Items...</p>
-  </div>
-    ) :filteredPosts.length === 0 ? (
-        <div>
-          <p className="no-items-message">No lost items have been posted yet.</p>
-        </div>
-      ) : (
-        <div className="ui-post-list">
-          {filteredPosts.map((post) => (
-            <div
-              key={post.id}
-              id={post.id}
-              className={`ui-post-card ${post.id === highlightedPostId ? 'ui-post-highlighted' : ''}`}
-            >
-              <div className="ui-post-header">
-                <div className="ui-post-author">
-                  <div className="ui-author-info">
-                    <p className="ui-author-name">
-                    {(post.authorName && post.authorName.length > 30)
-                      ? post.authorName.slice(0, 30) + '...'
-                      : (post.authorName || 'Anonymous')}
-                      {post.isAnonymous && user && post.authorId === user.uid && (
-                        <span className="ui-my-anonymous-badge" title="This is your anonymous post">
-                          <FontAwesomeIcon icon={faUser} />
-                        </span>
-                      )}
-                    </p>
-                    <p className="ui-post-time">{post.createdAt ? timeAgo(post.createdAt) : '...'}</p>
-                  </div>
-                </div>
-
-                <div className="ui-post-menu-container" ref={(el) => (menuRefs.current[post.id] = el)}>
-                  <button className="ui-post-menu-btn" onClick={(e) => handleEllipsisClick(post.id, e)}>
-                    <FontAwesomeIcon icon={faEllipsisH} />
-                  </button>
-                  {openMenuPostId === post.id && (
-                    <div className="ui-post-menu-dropdown">
-                      {post.isBlocked ? (
-                        (post.authorId === user?.uid || user?.email.endsWith('@admin.com')) && (
-                          <button onClick={() => handleDeletePost(post.id)} className="ui-dropdown-item ui-dropdown-item-danger"><FontAwesomeIcon icon={faTrash} /> Delete Post</button>
-                        )
-                      ) : (
-                        <>
-                          {post.authorId === user?.uid && (
-                            <>
-                              <button onClick={() => handleEditPost(post)} className="ui-dropdown-item"><FontAwesomeIcon icon={faEdit} /> Edit Post</button>
-                              <button onClick={() => handleDeletePost(post.id)} className="ui-dropdown-item ui-dropdown-item-danger"><FontAwesomeIcon icon={faTrash} /> Delete Post</button>
-                              {post.claimed ? (
-                                <button onClick={() => handleUnclaimPost(post.id)} className="ui-dropdown-item"><FontAwesomeIcon icon={faCheckCircle} /> Unmark Claimed</button>
-                              ) : (
-                                <button onClick={() => handleClaimPost(post.id)} className="ui-dropdown-item"><FontAwesomeIcon icon={faCheckCircle} /> Mark as Claimed</button>
-                              )}
-                            </>
-                          )}
-                          {post.authorId !== user?.uid && (
-                            <button onClick={() => handleReportPost(post.id)} className="ui-dropdown-item"><FontAwesomeIcon icon={faExclamationTriangle} /> Report Post</button>
-                          )}
-                          {user?.email.endsWith('@admin.com') && (
-                            <button onClick={() => handleBlockPost(post.id)} className="ui-dropdown-item ui-dropdown-item-danger"><FontAwesomeIcon icon={faBan} /> Block Post</button>
-                          )}
-                        </>
-                      )}
+      <div>
+        <p className="no-items-message">Loading Lost Items...</p>
+      </div>
+        ) :filteredPosts.length === 0 ? (
+          <div>
+            <p className="no-items-message">No lost items have been posted yet.</p>
+          </div>
+        ) : (
+          <div className="ui-post-list">
+            {filteredPosts.map((post) => (
+              <div
+                key={post.id}
+                id={post.id}
+                className={`ui-post-card ${post.id === highlightedPostId ? 'ui-post-highlighted' : ''}`}
+              >
+                <div className="ui-post-header">
+                  <div className="ui-post-author">
+                    <div className="ui-author-info">
+                      <p className="ui-author-name">
+                      {(post.authorName && post.authorName.length > 30)
+                        ? post.authorName.slice(0, 30) + '...'
+                        : (post.authorName || 'Anonymous')}
+                        {post.isAnonymous && user && post.authorId === user.uid && (
+                          <span className="ui-my-anonymous-badge" title="This is your anonymous post">
+                            <FontAwesomeIcon icon={faUser} />
+                          </span>
+                        )}
+                      </p>
+                      <p className="ui-post-time">{post.createdAt ? timeAgo(post.createdAt) : '...'}</p>
                     </div>
-                  )}
-                </div>
-              </div>
+                  </div>
 
-              {post.isBlocked && post.authorId === user?.uid && (
-                <div className="ui-blocked-warning">
-                  <FontAwesomeIcon icon={faBan} /> This post is blocked by the admin.
-                </div>
-              )}
-              
-              <div className="ui-post-body">
-                <p className="ui-post-text">{post.text}</p>
-              </div>
-              {post.imageUrl && (
-                <button
-                  className="see-photo-btn"
-                  onClick={() => {
-                    setSelectedImage(post.imageUrl);
-                    setShowImageModal(true);
-                  }}
-                >
-                  <FontAwesomeIcon icon={faImage} /> See Photo
-                </button>
-              )}
-              {showImageModal && selectedImage && (
-                <div className="ui-modal-overlay" onClick={() => setShowImageModal(false)}>
-                  <div className="ui-modal-content" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      className="close-btn"
-                      onClick={() => setShowImageModal(false)}
-                    >
-                      <FontAwesomeIcon icon={faTimes} />
+                  <div className="ui-post-menu-container" ref={(el) => (menuRefs.current[post.id] = el)}>
+                    <button className="ui-post-menu-btn" onClick={(e) => handleEllipsisClick(post.id, e)}>
+                      <FontAwesomeIcon icon={faEllipsisH} />
                     </button>
-                    <img src={selectedImage} alt="Post" className="modal-image" />
+                    {openMenuPostId === post.id && (
+                      <div className="ui-post-menu-dropdown">
+                        {post.isBlocked ? (
+                          (post.authorId === user?.uid || user?.email.endsWith('@admin.com')) && (
+                            <button onClick={() => handleDeletePost(post.id)} className="ui-dropdown-item ui-dropdown-item-danger"><FontAwesomeIcon icon={faTrash} /> Delete Post</button>
+                          )
+                        ) : (
+                          <>
+                            {post.authorId === user?.uid && (
+                              <>
+                                <button onClick={() => handleEditPost(post)} className="ui-dropdown-item"><FontAwesomeIcon icon={faEdit} /> Edit Post</button>
+                                <button onClick={() => handleDeletePost(post.id)} className="ui-dropdown-item ui-dropdown-item-danger"><FontAwesomeIcon icon={faTrash} /> Delete Post</button>
+                                {!post.claimed && (
+                                  <button
+                                    onClick={() => handleClaimPost(post.id)} // Calls the function that shows the modal
+                                    className="ui-dropdown-item"
+                                  >
+                                    <FontAwesomeIcon icon={faCheckCircle} /> Mark as Claimed
+                                  </button>
+                                )}
+                              </>
+                            )}
+                            {post.authorId !== user?.uid && (
+                              <button onClick={() => handleReportPost(post.id)} className="ui-dropdown-item"><FontAwesomeIcon icon={faExclamationTriangle} /> Report Post</button>
+                            )}
+                            {user?.email.endsWith('@admin.com') && (
+                              <button onClick={() => handleBlockPost(post.id)} className="ui-dropdown-item ui-dropdown-item-danger"><FontAwesomeIcon icon={faBan} /> Block Post</button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
-              )}    
 
-              <div className="ui-post-footer">
-                <div className="ui-status-badges">
-                  {post.claimed && <span className="ui-badge ui-badge-claimed">Claimed</span>}
+                {post.isBlocked && post.authorId === user?.uid && (
+                  <div className="ui-blocked-warning">
+                    <FontAwesomeIcon icon={faBan} /> This post is blocked by the admin.
+                  </div>
+                )}
+                
+                <div className="ui-post-body">
+                  <p className="ui-post-text">{post.text}</p>
                 </div>
-                <button
-                  onClick={() => toggleComments(post.id)}
-                  className="ui-comments-toggle-btn"
-                >
-                  <FontAwesomeIcon icon={faComment} />
-                  <span>Comments</span>
-                </button>
-              </div>
+                {post.imageUrl && (
+                  <button
+                    className="see-photo-btn"
+                    onClick={() => {
+                      setSelectedImage(post.imageUrl);
+                      setShowImageModal(true);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faImage} /> See Photo
+                  </button>
+                )}
+                {showImageModal && selectedImage && (
+                  <div className="ui-modal-overlay" onClick={() => setShowImageModal(false)}>
+                    <div className="ui-modal-content" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        className="close-btn"
+                        onClick={() => setShowImageModal(false)}
+                      >
+                        <FontAwesomeIcon icon={faTimes} />
+                      </button>
+                      <img src={selectedImage} alt="Post" className="modal-image" />
+                    </div>
+                  </div>
+                )}    
 
-              {blockingPostId === post.id && (
-                <CustomModal
-                  title="Confirm Block"
-                  message="Are you sure you want to **block** this post? This action cannot be undone."
-                  onConfirm={() => confirmBlockPost(post.id)}
-                  onCancel={cancelBlockPost}
-                  confirmText="Block"
-                  cancelText="Cancel"
-                />
-              )}
+                <div className="ui-post-footer">
+                  <div className="ui-status-badges">
+                    {post.claimed && <span className="ui-badge ui-badge-claimed">Claimed</span>}
+                  </div>
+                  <button
+                    onClick={() => toggleComments(post.id)}
+                    className="ui-comments-toggle-btn"
+                  >
+                    <FontAwesomeIcon icon={faComment} />
+                    <span>Comments</span>
+                  </button>
+                </div>
 
-              <UserReport
-                show={showReportModalId === post.id}
-                postId={post.id}
-                onCancel={() => setShowReportModalId(null)}
-                isSubmittingReport={isSubmittingReport}
-                user={user}
-                schoolName={schoolName}
-                setShowReportModalId={setShowReportModalId}
-                setActionMessage={setActionMessage} // <-- Pass this prop
-              />
 
-              {openCommentPostId === post.id && (
-                <Comment
-                  post={post}
+                <UserReport
+                  show={showReportModalId === post.id}
+                  postId={post.id}
+                  onCancel={() => setShowReportModalId(null)}
+                  isSubmittingReport={isSubmittingReport}
                   user={user}
-                  verificationStatus={verificationStatus}
-                  commentsRef={commentsRef}
-                  timeAgo={timeAgo}
-                  displayErrorModal={displayErrorModal}
                   schoolName={schoolName}
+                  setShowReportModalId={setShowReportModalId}
+                  setActionMessage={setActionMessage} // <-- Pass this prop
                 />
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+
+                {openCommentPostId === post.id && (
+                  <Comment
+                    post={post}
+                    user={user}
+                    verificationStatus={verificationStatus}
+                    commentsRef={commentsRef}
+                    timeAgo={timeAgo}
+                    displayErrorModal={displayErrorModal}
+                    schoolName={schoolName}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
     </div>
   );
 }

@@ -71,6 +71,7 @@ function MyPost({ schoolName }) {
   const [openMenuPostId, setOpenMenuPostId] = useState(null);
   const [showErrorModal, setShowErrorModal] = useState({ show: false, title: '', message: '' });
   const [deletingPostId, setDeletingPostId] = useState(null);
+  const [claimingPostId, setClaimingPostId ] = useState(null);
   const [editingPost, setEditingPost] = useState(null);
   const [verificationStatus, setVerificationStatus] = useState('');
   const [showImageModal, setShowImageModal] = useState(false);
@@ -171,7 +172,7 @@ function MyPost({ schoolName }) {
   }, [posts, openCommentPostId]);
 
   useEffect(() => {
-    const isModalOpen = showErrorModal.show || deletingPostId || editingPost;
+    const isModalOpen = showErrorModal.show || deletingPostId || claimingPostId || editingPost;
     if (isModalOpen) {
       document.body.style.overflow = 'hidden';
       document.body.style.paddingRight = `${getScrollbarWidth()}px`;
@@ -183,7 +184,7 @@ function MyPost({ schoolName }) {
       document.body.style.overflow = 'unset';
       document.body.style.paddingRight = '0px';
     };
-  }, [showErrorModal.show, deletingPostId, editingPost]);
+  }, [showErrorModal.show, deletingPostId, editingPost, claimingPostId]);
 
   const getScrollbarWidth = () => {
     const outer = document.createElement('div');
@@ -255,7 +256,7 @@ function MyPost({ schoolName }) {
       setEditingPost(null);
     }
   };
-
+  
   const handleDeletePost = (postId) => {
     setDeletingPostId(postId);
     setOpenMenuPostId(null);
@@ -294,9 +295,22 @@ function MyPost({ schoolName }) {
     }
   };
 
-  const handleClaimPost = (postId) => updateClaimStatus(postId, true);
-  const handleUnclaimPost = (postId) => updateClaimStatus(postId, false);
+  const handleClaimPost = (postId) => {
+      setClaimingPostId(postId);
+      setOpenMenuPostId(null); // Close the dropdown menu
+  };
 
+  // 3. NEW confirmClaimPost: Performs the actual Firebase update
+  const confirmClaimPost = async () => {
+      if (claimingPostId) {
+          await updateClaimStatus(claimingPostId, true);
+          setClaimingPostId(null);
+      }
+  };
+
+  const cancelClaimPost = () => {
+      setClaimingPostId(null);
+  };
   const filteredPosts = posts.filter((post) => {
     if (filter === 'claimed' && !post.claimed) return false;
     if (filter === 'unclaimed' && post.claimed) return false;
@@ -317,6 +331,17 @@ function MyPost({ schoolName }) {
           message={showErrorModal.message}
           onCancel={closeErrorModal}
           cancelText="Close"
+        />
+      )}
+
+      {claimingPostId && (
+        <CustomModal
+          title="Confirm Claim"
+          message="Are you sure you want to mark this post as Claimed? This indicates the item has been successfully recovered."
+          onConfirm={confirmClaimPost}
+          onCancel={cancelClaimPost}
+          confirmText="Mark Claimed"
+          cancelText="Cancel"
         />
       )}
 
@@ -409,11 +434,14 @@ function MyPost({ schoolName }) {
                         <>
                           <button onClick={() => handleEditPost(post)} className="ui-dropdown-item"><FontAwesomeIcon icon={faEdit} /> Edit Post</button>
                           <button onClick={() => handleDeletePost(post.id)} className="ui-dropdown-item ui-dropdown-item-danger"><FontAwesomeIcon icon={faTrash} /> Delete Post</button>
-                          {post.claimed ? (
-                            <button onClick={() => handleUnclaimPost(post.id)} className="ui-dropdown-item"><FontAwesomeIcon icon={faCheckCircle} /> Unmark Claimed</button>
-                          ) : (
-                            <button onClick={() => handleClaimPost(post.id)} className="ui-dropdown-item"><FontAwesomeIcon icon={faCheckCircle} /> Mark as Claimed</button>
-                          )}
+                          {!post.claimed && (
+                        <button
+                            onClick={() => handleClaimPost(post.id)} // Calls the function that shows the modal
+                           className="ui-dropdown-item"
+                        >
+                          <FontAwesomeIcon icon={faCheckCircle} /> Mark as Claimed
+                        </button>
+                        )}
                         </>
                       )}
                     </div>
@@ -457,7 +485,7 @@ function MyPost({ schoolName }) {
 
               <div className="ui-post-footer">
                 <div className="ui-status-badges">
-                  {post.isAnonymous && <span className="ui-badge ui-badge-anonymous">Anonymous</span>}
+                  {/* {post.isAnonymous && <span className="ui-badge ui-badge-anonymous">Anonymous</span>} */}
                   {post.claimed && <span className="ui-badge ui-badge-claimed">Claimed</span>}
                 </div>
                 <button

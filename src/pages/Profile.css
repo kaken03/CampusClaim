@@ -314,6 +314,21 @@
   border-color: #2c3e50;
   outline: none;
 }
+.profile-field-fb select {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 7px;
+  border: 1.5px solid #dbe6f6;
+  font-size: 1rem;
+  background: #f8fafc;
+  transition: border 0.18s;
+  margin-top: 2px;
+}
+
+.profile-field-fb select:focus {
+  border-color: #2c3e50;
+  box-shadow: 0 0 0 1px rgba(24, 119, 242, 0.2);
+}
 
 .verified-badge-fb,
 .pending-badge-fb {
