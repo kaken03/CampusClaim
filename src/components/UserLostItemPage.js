@@ -436,12 +436,12 @@ function PostFeed({ schoolName }) {
           >
             Claimed
           </button>
-          {/* <button
+          <button
             onClick={() => setFilter('unclaimed')}
             className={filter === 'unclaimed' ? 'ui-filter-btn ui-active-filter ui-unclaimed-filter' : 'ui-filter-btn'}
             >
             Unclaimed
-          </button> */}
+          </button>
         </div>
       </div>
       

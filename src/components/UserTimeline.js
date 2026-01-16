@@ -33,6 +33,8 @@ const EditPostModal = ({ post, onSave, onCancel }) => {
   const [editedText, setEditedText] = useState(post.text);
   const [isSaving, setIsSaving] = useState(false);
 
+  
+
   const handleSave = async () => {
     setIsSaving(true);
     await onSave(post.id, { text: editedText });
@@ -77,6 +79,7 @@ function MyPost({ schoolName }) {
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [isLoading, setIsLoading] = useState(true); // New state for loading
+  const [actionMessage, setActionMessage] = useState('');
 
   
   const auth = getAuth();
@@ -84,6 +87,14 @@ function MyPost({ schoolName }) {
   const location = useLocation();
   const commentsRef = useRef({});
   const menuRefs = useRef({});
+
+  // Floating message auto-hide
+    useEffect(() => {
+      if (actionMessage) {
+        const timer = setTimeout(() => setActionMessage(''), 2000);
+        return () => clearTimeout(timer);
+      }
+    }, [actionMessage]);
 
   const displayErrorModal = (title, message) => {
     setShowErrorModal({ show: true, title, message });
@@ -198,6 +209,14 @@ function MyPost({ schoolName }) {
     return scrollbarWidth;
   };
 
+  // Floating message auto-hide
+    useEffect(() => {
+      if (actionMessage) {
+        const timer = setTimeout(() => setActionMessage(''), 2000);
+        return () => clearTimeout(timer);
+      }
+    }, [actionMessage]);
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (openMenuPostId && menuRefs.current[openMenuPostId] && !menuRefs.current[openMenuPostId].contains(event.target)) {
@@ -245,17 +264,17 @@ function MyPost({ schoolName }) {
   };
 
   const saveEditedPost = async (postId, updatedData) => {
-    try {
-      const postRef = doc(db, 'schools', schoolName, 'LostItems', postId);
-      await updateDoc(postRef, updatedData);
-      displayErrorModal("Success", "Post updated successfully!");
-    } catch (error) {
-      console.error("Error updating post:", error);
-      displayErrorModal("Error", "Failed to update post.");
-    } finally {
-      setEditingPost(null);
-    }
-  };
+      try {
+        const postRef = doc(db, 'schools', schoolName, 'LostItems', postId);
+        await updateDoc(postRef, updatedData);
+        setActionMessage("✅ Post updated successfully!");
+      } catch (error) {
+        console.error("Error updating post:", error);
+        displayErrorModal("Error", "Failed to update post.");
+      } finally {
+        setEditingPost(null);
+      }
+    };
   
   const handleDeletePost = (postId) => {
     setDeletingPostId(postId);
@@ -324,7 +343,9 @@ function MyPost({ schoolName }) {
 
   return (
     <div className="user-post-feed-container">
-
+      {actionMessage && (
+        <div className="postfeed-action-message">{actionMessage}</div>
+      )}
       {showErrorModal.show && (
         <CustomModal
           title={showErrorModal.title}
